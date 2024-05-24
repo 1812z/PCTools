@@ -21,6 +21,9 @@ Ha里安装mqtt加载项，账户密码就是Ha的账户密码
 可以直接python打开main.pyw，也可以搭配任务计划使用
 推荐搭配参数w,来隐藏窗口
 
+库下载链接
+https://github.com/gwy15/python_aida64
+
 其中第一次需要进行设备发现，如果发现失败请手动改config.json里的discovery为1再次进行发现
 发现成功后到HA里的MQTT中即可查看设备
 ![图片](https://img2.moeblog.vip/images/vZ5X.png "图片")
