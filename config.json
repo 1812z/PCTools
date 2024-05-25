@@ -2,6 +2,9 @@
     "username": "mqtt账户",
     "password": "mqtt密码",
     "secret_id": "巴法云id",
-    "discovery": 1,
-    "count": 22
+    "interval": 10,
+    "fun1": true,
+    "fun2": true,
+    "fun3": true,
+    "fun4": false
 }
