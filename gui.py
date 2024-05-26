@@ -107,17 +107,22 @@ def main(newpage: ft.Page):
            show_snackbar(page,"都还没运行呀")
 
     def switch_fun1(e):
+        global fun1
         fun1 = e.control.value
         save_json_data("fun1",fun1)
     def switch_fun2(e):
+        global fun2
         fun2 = e.control.value
         save_json_data("fun2",fun2)
     def switch_fun3(e):
+        global fun3
         fun3 = e.control.value
         save_json_data("fun3",fun3)
     def switch_fun4(e):
+        global fun4
         fun4 = e.control.value
         save_json_data("fun4",fun4)
+    
     def input_user(e):
         save_json_data("username",e.control.value)
     def input_pass(e):
