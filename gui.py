@@ -302,7 +302,7 @@ if __name__ == "__main__":
         fun3 = json_data.get("fun3")
         fun4 = json_data.get("fun4")
         read_user = json_data.get("username")
-        read_password = json_data.get("password")
+        read_password = "密码已隐藏"
         read_secret_id = json_data.get("secret_id")
         read_interval = json_data.get("interval")
     if fun4:
