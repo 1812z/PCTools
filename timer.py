@@ -38,6 +38,7 @@ class PeriodicTask:
 periodic_task = PeriodicTask(function=send_data)
 
 def start_task():
+    print("启动监控服务..")
     periodic_task.start()
 
 def stop_task():

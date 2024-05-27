@@ -56,40 +56,33 @@ def on_message(client, userdata, message):
 
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code.is_failure:
-
-        print(f"Failed to connect: {
-              reason_code}. loop_forever() will retry connection")
+        print(f"Failed to connect: {reason_code}. loop_forever() will retry connection")
     else:
-        print("Connected to", broker)
+        print("成功连接到:", broker)
         client.subscribe(topic)
         client.subscribe(monitor_topic)  # 订阅 monitor002 主题
 
 
-mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2,client_id=secret_id)
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
 mqttc.user_data_set([])
-mqttc._client_id = secret_id
 mqttc.connect(broker, port)
 
 
-mqtt_thread = threading.Thread(target=mqttc.loop_forever)
-
-
 def start_mqtt():
-    mqtt_thread.start()
-
+    print("MQTT服务启动中...")
+    mqttc.loop_start()
+    
 
 def stop_mqtt_loop():
     mqttc.loop_stop()
-    mqttc.disconnect()
-    mqtt_thread.join()
-
 
 if __name__ == '__main__':
-    mqtt_thread.start()
+    mqttc.loop_start()
     try:
         while True:
+            print("MQTT Running")
             time.sleep(1)
     except KeyboardInterrupt:
-        stop_mqtt_loop()
+        mqttc.disconnect()
