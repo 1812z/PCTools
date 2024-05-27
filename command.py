@@ -6,19 +6,19 @@ import time
 import json
 
 
-#读取账号密码
+# 读取账号密码
 with open('config.json', 'r') as file:
-        json_data = json.load(file)
-        secret_id = json_data.get("secret_id")
+    json_data = json.load(file)
+    secret_id = json_data.get("secret_id")
 
 # MQTT服务器信息
 broker = 'bemfa.com'
 topic = 'dnkz005'
 monitor_topic = 'monitor002'
 port = 9501
- 
 
-#MQTT
+
+# MQTT
 def on_message(client, userdata, message):
     userdata.append(message.payload)
     command = message.payload.decode()
@@ -29,7 +29,7 @@ def on_message(client, userdata, message):
             print("已经开啦")
         elif command == 'off':
             os.system("shutdown -s -t 10")
-        #运行命令
+        # 运行命令
         elif command == 'on#1':
             print("Run 'run.bat'")
             os.system(r"C:\Users\i\Desktop\Coding\xiaoai_remote\run1.bat")
@@ -40,27 +40,30 @@ def on_message(client, userdata, message):
             print("Run 'run.bat'")
             os.system(r"C:\Users\i\Desktop\Coding\xiaoai_remote\run3.bat")
 
-    #显示器控制
+    # 显示器控制
     if message.topic == monitor_topic:
-        #关闭显示器
+        # 关闭显示器
         if command == 'off' or command == '0':
-           run = r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --VCP=0xD6:0x04 '
-           os.system(run)
+            run = r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --VCP=0xD6:0x04 '
+            os.system(run)
         elif command == 'on':
             print("自己开")
-        else: #亮度调节
+        else:  # 亮度调节
             brightness = command[3:]
-            run = 'start /b cmd /c '+r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --Set='+ brightness
-            os.system(run)  
+            run = 'start /b cmd /c '+r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --Set=' + brightness
+            os.system(run)
+
 
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code.is_failure:
-      
-        print(f"Failed to connect: {reason_code}. loop_forever() will retry connection")
+
+        print(f"Failed to connect: {
+              reason_code}. loop_forever() will retry connection")
     else:
         print("Connected to", broker)
         client.subscribe(topic)
         client.subscribe(monitor_topic)  # 订阅 monitor002 主题
+
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqttc.on_connect = on_connect
@@ -70,17 +73,19 @@ mqttc._client_id = secret_id
 mqttc.connect(broker, port)
 
 
-
-
 mqtt_thread = threading.Thread(target=mqttc.loop_forever)
+
 
 def start_mqtt():
     mqtt_thread.start()
 
+
 def stop_mqtt_loop():
     mqttc.loop_stop()
     mqttc.disconnect()
-    mqtt_thread.join()  
+    mqtt_thread.join()
+
+
 if __name__ == '__main__':
     mqtt_thread.start()
     try:
