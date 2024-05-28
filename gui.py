@@ -10,7 +10,7 @@ import json
 from command import start_mqtt, stop_mqtt_loop
 import pystray
 
-version = "V1.0"
+version = "V2.0"
 manager = FlaskAppManager('192.168.44.236', 5000)
 run_flag = False
 page = None
