@@ -1,7 +1,5 @@
 import paho.mqtt.client as mqtt
 import os
-from windows_toasts import Toast, WindowsToaster
-import threading
 import time
 import json
 

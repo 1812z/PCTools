@@ -52,10 +52,10 @@ def main(newpage: ft.Page):
     global page
     page = newpage
 
-    page.window_width = 550
+    page.window_width = 600
     page.window_height = 590
     page.title = "PCTools"
-
+    page.window_resizable = True
     home = ft.Tab(text="主页")
     setting = ft.Tab(text="设置")
 
@@ -144,10 +144,15 @@ def main(newpage: ft.Page):
     def input_interval(e):
         save_json_data("interval", int(e.control.value))
 
+    def input_ip(e):
+            save_json_data("HA_MQTT", int(e.control.value))
+
     def open_repo(e):
         page.launch_url('https://github.com/1812z/PCTools')
 
-    home_page = [ft.Column(
+    home_page = [
+        
+        ft.Column(
         [
 
             ft.Container(
@@ -162,11 +167,15 @@ def main(newpage: ft.Page):
                     version+' by 1812z',
                     size=20,
                 ),
-            ), ft.Row(
-                [
-                    ft.Container(width=210),
-                    ft.TextButton("Github", on_click=open_repo)
-                ]
+            ),
+             ft.Row(
+               []
+            ),
+            ft.Container(
+                content=ft.TextButton(
+                    "Github",
+                    animate_size=20,on_click=open_repo
+                ),
             ),
             ft.ElevatedButton(
                 content=ft.Row(
@@ -242,12 +251,22 @@ def main(newpage: ft.Page):
     ), ft.Row(
         [
             ft.Container(width=90),
+            ft.Switch(label="凑数按钮", label_position='left', scale=1.2),
+            ft.Container(width=10),
+            ft.TextField(label="HA_MQTT_IP", width=200,
+                         on_submit=input_ip, value=read_ip)
+
+        ]
+    ), ft.Row(
+        [
+            ft.Container(width=90),
             ft.Switch(label="监控反馈", label_position='left',
                       scale=1.2, value=fun1, on_change=switch_fun1),
             ft.Container(width=10),
             ft.TextField(label="HA_MQTT账户", width=200,
                          on_submit=input_user, value=read_user)
         ]
+
     ), ft.Row(
         [
             ft.Container(width=90),
@@ -266,6 +285,7 @@ def main(newpage: ft.Page):
             ft.Container(width=10),
             ft.TextField(label="Secret_id", width=200,
                          on_submit=input_id, value=read_secret_id)
+
         ]
 
     ), ft.Row(
@@ -334,6 +354,7 @@ if __name__ == "__main__":
         read_password = "密码已隐藏"
         read_secret_id = json_data.get("secret_id")
         read_interval = json_data.get("interval")
+        read_ip = json_data.get("HA_MQTT")
     if fun4:
         run_flag = True
         start()

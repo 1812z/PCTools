@@ -8,23 +8,23 @@ broker = 'ha.1812z.top'
 port = 1883
 
 count = 0
-
-
 def send_discovery(device_class, topic_id, name, name_id):
     global count
+    count+=1
     discovery_data = {
         "name": "Sensor1",
         "device_class": "temperature",
         "state_topic": "homeassistant/sensor/aida64/state",
         "unit_of_measurement": "°C",
         "value_template": "{{ float(value_json.temp[1].value) }}",
-        "unique_id": "temp01ae",
+        "object_id": "object_id",
+        "unique_id": "unique_id",
         "device": {
             "identifiers": ["aida64"],
             "name": "PC",
             "manufacturer": "1812z",
             "model": "aida64",
-            "sw_version": "2024.5.24",
+            "sw_version": "2024.5.29",
             "configuration_url": "https://1812z.top"
         }
     }
@@ -32,11 +32,11 @@ def send_discovery(device_class, topic_id, name, name_id):
     discovery_topic = "homeassistant/sensor/" + device_name + name_id + "/config"
     discovery_data["state_topic"] = state_topic
     discovery_data["name"] = name
-    discovery_data["unique_id"] = str(count)
+    discovery_data["object_id"] = name_id
+    discovery_data["unique_id"] = name_id
     discovery_data["value_template"] = "{{ float(value_json." + \
         device_class + "[" + str(topic_id) + "].value) }}"
 
-    count += 1
     if device_class == "pwr":
         discovery_data["device_class"] = "power"
         discovery_data["unit_of_measurement"] = "W"
@@ -60,7 +60,6 @@ def send_discovery(device_class, topic_id, name, name_id):
 
     info = "发现主题:" + discovery_topic
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
-    # time.sleep(0.2)
     return info
 
 # 初始化
@@ -74,7 +73,7 @@ def init_data():
         secret_id = json_data.get("secret_id")
         username = json_data.get("username")
         password = json_data.get("password")
-        global discovery_flag
+
 
     global mqttc
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -88,8 +87,6 @@ def init_data():
     pprint(python_aida64.getData())
 
 # 发送传感器信息
-
-
 def send_data():
     init_data()
     info = "a"
@@ -110,9 +107,6 @@ def discovery():
     id3 = 0
     id4 = 0
 
-    json_data['discovery'] = 0
-    with open("config.json", 'w') as file:
-        json.dump(json_data, file, indent=4)
     print("发送discovery MQTT信息")
     for category, items in aida64_data.items():
         if category == "temp":
@@ -139,6 +133,7 @@ def discovery():
                 name_id = item["id"]
                 info += send_discovery(category, id4, name, name_id) + "\n"
                 id4 = id4 + 1
+    info = "发现了" + str(count) + "个实体\n" + info
     return info
 
 
