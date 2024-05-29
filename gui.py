@@ -44,8 +44,10 @@ def start():
 
 
 def close_windows():
-    if page:
+    try:
         page.window_destroy()
+    except:
+        return
 
 
 def main(newpage: ft.Page):
@@ -88,7 +90,9 @@ def main(newpage: ft.Page):
     def button_start(e):
         start()
         global run_flag
-        if fun1 == False and fun2 == False and fun3 == False:
+        if run_flag:
+            show_snackbar(page, "请勿多次启动!")
+        elif fun1 == False and fun2 == False and fun3 == False:
             show_snackbar(page, "未勾选任何服务")
         else:
             run_flag = True
@@ -149,6 +153,9 @@ def main(newpage: ft.Page):
 
     def open_repo(e):
         page.launch_url('https://github.com/1812z/PCTools')
+
+    def follow(e):
+        page.launch_url('https://space.bilibili.com/336130050')
 
     home_page = [
         
@@ -222,6 +229,18 @@ def main(newpage: ft.Page):
                     alignment=ft.MainAxisAlignment.SPACE_AROUND,
                 ),
                 on_click=button_send_data,
+                width=120,
+                height=40
+            ),
+             ft.ElevatedButton(
+                content=ft.Row(
+                    [
+                        ft.Icon(ft.icons.THUMB_UP_ALT_ROUNDED),
+                        ft.Text("关注我", weight=ft.FontWeight.W_600),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ),
+                on_click=follow,
                 width=120,
                 height=40
             ),
@@ -306,7 +325,6 @@ def main(newpage: ft.Page):
     tabbar.tabs = [home, setting]
     page.add(tabbar)
 
-    # Update the page
     page.update()
 
 
@@ -315,6 +333,7 @@ def on_exit(icon, item):
     if (run_flag == False):
         icon_flag = False
         close_windows()
+        time.sleep(1)
         icon.stop()
     else:
         icon.notify("服务正在运行无法关闭托盘")
