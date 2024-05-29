@@ -73,7 +73,7 @@ def init_data():
         secret_id = json_data.get("secret_id")
         username = json_data.get("username")
         password = json_data.get("password")
-
+        broker = json_data.get("HA_MQTT")
 
     global mqttc
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)

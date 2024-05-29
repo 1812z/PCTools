@@ -175,14 +175,14 @@ def main(newpage: ft.Page):
                     size=20,
                 ),
             ),
-             ft.Row(
-               []
-            ),
             ft.Container(
                 content=ft.TextButton(
                     "Github",
                     animate_size=20,on_click=open_repo
                 ),
+            ),
+            ft.Row(
+               []
             ),
             ft.ElevatedButton(
                 content=ft.Row(
