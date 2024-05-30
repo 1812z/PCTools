@@ -148,8 +148,14 @@ def main(newpage: ft.Page):
     def input_interval(e):
         save_json_data("interval", int(e.control.value))
 
-    def input_ip(e):
-            save_json_data("HA_MQTT", int(e.control.value))
+    def input_ha_broker(e):
+        save_json_data("HA_MQTT", e.control.value)
+
+    def input_port(e): 
+        save_json_data("HA_MQTT_port", int(e.control.value))
+
+    def input_device_name(e):
+        save_json_data("device_name", e.control.value)
 
     def open_repo(e):
         page.launch_url('https://github.com/1812z/PCTools')
@@ -270,17 +276,19 @@ def main(newpage: ft.Page):
     ), ft.Row(
         [
             ft.Container(width=90),
-            ft.Switch(label="凑数按钮", label_position='left', scale=1.2),
+            ft.Switch(label="监控反馈", label_position='left',
+                      scale=1.2, value=fun1, on_change=switch_fun1),
             ft.Container(width=10),
-            ft.TextField(label="HA_MQTT_IP", width=200,
-                         on_submit=input_ip, value=read_ip)
-
+            ft.TextField(label="HA_MQTT_Broker", width=130,
+                         on_submit=input_ha_broker, value=read_ha_broker),
+            ft.TextField(label="PORT", width=60,
+                         on_submit=input_port, value=read_port)
         ]
     ), ft.Row(
         [
             ft.Container(width=90),
-            ft.Switch(label="监控反馈", label_position='left',
-                      scale=1.2, value=fun1, on_change=switch_fun1),
+            ft.Switch(label="远程命令", label_position='left',
+                      scale=1.2, value=fun2, on_change=switch_fun2),
             ft.Container(width=10),
             ft.TextField(label="HA_MQTT账户", width=200,
                          on_submit=input_user, value=read_user)
@@ -289,8 +297,8 @@ def main(newpage: ft.Page):
     ), ft.Row(
         [
             ft.Container(width=90),
-            ft.Switch(label="远程命令", label_position='left',
-                      scale=1.2, value=fun2, on_change=switch_fun2),
+            ft.Switch(label="画面传输", label_position='left',
+                      scale=1.2, value=fun3, on_change=switch_fun3),
             ft.Container(width=10),
             ft.TextField(label="HA_MQTT密码", width=200,
                          on_submit=input_pass, value=read_password)
@@ -299,8 +307,8 @@ def main(newpage: ft.Page):
     ), ft.Row(
         [
             ft.Container(width=90),
-            ft.Switch(label="画面传输", label_position='left',
-                      scale=1.2, value=fun3, on_change=switch_fun3),
+            ft.Switch(label="自动运行", label_position='left', scale=1.2,
+                      value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
             ft.Container(width=10),
             ft.TextField(label="Secret_id", width=200,
                          on_submit=input_id, value=read_secret_id)
@@ -309,12 +317,12 @@ def main(newpage: ft.Page):
 
     ), ft.Row(
         [
-            ft.Container(width=90),
-            ft.Switch(label="自动运行", label_position='left', scale=1.2,
-                      value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
-            ft.Container(width=10),
-            ft.TextField(label="监控刷新间隔", width=200,
-                         on_submit=input_interval, value=read_interval)
+            ft.Container(width=85),
+            ft.TextField(label="监控刷新间隔", width=130,
+                         on_submit=input_interval, value=read_interval),
+            ft.Container(width=4),             
+            ft.TextField(label="设备标识符", width=200,
+                         on_submit=input_device_name, value=read_device_name)             
         ]
 
     )
@@ -373,7 +381,10 @@ if __name__ == "__main__":
         read_password = "密码已隐藏"
         read_secret_id = json_data.get("secret_id")
         read_interval = json_data.get("interval")
-        read_ip = json_data.get("HA_MQTT")
+        read_ha_broker = json_data.get("HA_MQTT")
+        read_port = json_data.get("HA_MQTT_port")
+        read_device_name = json_data.get("device_name")
+
     if fun4:
         run_flag = True
         start()

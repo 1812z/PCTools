@@ -4,9 +4,6 @@ import paho.mqtt.client as mqtt
 import json
 
 
-# 设备标识符
-device_name = "PC"
-
 port = 1883
 
 count = 0
@@ -77,12 +74,13 @@ def init_data():
     # 读取账号密码
     with open('config.json', 'r') as file:
         global json_data
+        global device_name
         json_data = json.load(file)
         secret_id = json_data.get("secret_id")
         username = json_data.get("username")
         password = json_data.get("password")
         broker = json_data.get("HA_MQTT")
-
+        device_name = json_data.get("device_name")
     global mqttc
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     mqttc.user_data_set([])
