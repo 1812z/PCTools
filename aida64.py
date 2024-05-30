@@ -3,14 +3,20 @@ from pprint import pprint
 import paho.mqtt.client as mqtt
 import json
 
-device_name = "PCMonitor"
-broker = 'ha.1812z.top'
+
+# 设备标识符
+device_name = "PC"
+
 port = 1883
 
 count = 0
+
+
 def send_discovery(device_class, topic_id, name, name_id):
     global count
-    count+=1
+    count += 1
+
+    # 发现示例
     discovery_data = {
         "name": "Sensor1",
         "device_class": "temperature",
@@ -24,16 +30,19 @@ def send_discovery(device_class, topic_id, name, name_id):
             "name": "PC",
             "manufacturer": "1812z",
             "model": "aida64",
-            "sw_version": "2024.5.29",
+            "sw_version": "2024.5.30",
             "configuration_url": "https://1812z.top"
         }
     }
     state_topic = "homeassistant/sensor/" + device_name + "/state"
     discovery_topic = "homeassistant/sensor/" + device_name + name_id + "/config"
+
     discovery_data["state_topic"] = state_topic
     discovery_data["name"] = name
-    discovery_data["object_id"] = name_id
-    discovery_data["unique_id"] = name_id
+    discovery_data["device"]["name"] = device_name
+    discovery_data["device"]["identifiers"] = [device_name]
+    discovery_data["object_id"] = device_name + name_id
+    discovery_data["unique_id"] = device_name + name_id
     discovery_data["value_template"] = "{{ float(value_json." + \
         device_class + "[" + str(topic_id) + "].value) }}"
 
@@ -62,9 +71,8 @@ def send_discovery(device_class, topic_id, name, name_id):
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
     return info
 
+
 # 初始化
-
-
 def init_data():
     # 读取账号密码
     with open('config.json', 'r') as file:
@@ -85,6 +93,7 @@ def init_data():
     global aida64_data
     aida64_data = python_aida64.getData()
     pprint(python_aida64.getData())
+
 
 # 发送传感器信息
 def send_data():
