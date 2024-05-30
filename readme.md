@@ -46,3 +46,6 @@ Web监控：/screenshot.jpg /video_feed 两个路径对应两个功能，默认�
 
 ## 5.Tips
 推荐软件，openrgb，支持Ha接入控制RGB
+
+感谢大佬的开源库： https://github.com/gwy15/python_aida64  
+让刚学py的我做出来个小工具（（
