@@ -4,12 +4,11 @@ import paho.mqtt.client as mqtt
 import json
 
 
-port = 1883
-
 count = 0
+debug = False
 
 
-def send_discovery(device_class, topic_id, name, name_id):
+def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
     global count
     count += 1
 
@@ -31,9 +30,11 @@ def send_discovery(device_class, topic_id, name, name_id):
             "configuration_url": "https://1812z.top"
         }
     }
-    state_topic = "homeassistant/sensor/" + device_name + "/state"
-    discovery_topic = "homeassistant/sensor/" + device_name + name_id + "/config"
-
+    state_topic = "homeassistant/" + type + "/" + device_name + "/state"
+    discovery_topic = "homeassistant/" + type + \
+        "/" + device_name + name_id + "/config"
+    if (debug):
+        print("状态主题:", state_topic, "发现主题:", discovery_topic)
     discovery_data["state_topic"] = state_topic
     discovery_data["name"] = name
     discovery_data["device"]["name"] = device_name
@@ -80,6 +81,7 @@ def init_data():
         username = json_data.get("username")
         password = json_data.get("password")
         broker = json_data.get("HA_MQTT")
+        port = json_data.get("HA_MQTT_port")
         device_name = json_data.get("device_name")
     global mqttc
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -90,7 +92,8 @@ def init_data():
     mqttc.connect(broker, port)
     global aida64_data
     aida64_data = python_aida64.getData()
-    pprint(python_aida64.getData())
+    if (debug):
+        pprint(python_aida64.getData())
 
 
 # 发送传感器信息
