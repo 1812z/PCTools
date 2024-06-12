@@ -6,12 +6,13 @@ Homeassistant远程运行可执行文件
 ## TODO List
 GUI支持远程执行自定义命令，列如启动程序，设备管理等等
 
-## 1.安装各项运行所需要的程序
-pyhon 相关库    
-Homeassistant MQTT加载项  
-Aida64(读取数据并共享给程序)  
+## 一.安装各项运行所需要的程序
+#### 部分功能用不到可以不安装  
+必选: pyhon 相关库, Homeassistant MQTT加载项      
+监控反馈: Aida64(读取数据并共享给程序)   
+远程命令: Twinkle tray(控制显示器亮度)   
 
-## 2.启动程序
+## 二.启动程序
 
 ### 1.运行Aida64
 并到选项里打开内存共享，并勾选需要共享的数据
@@ -32,14 +33,16 @@ Aida64(读取数据并共享给程序)
 
 Web监控：/screenshot.jpg /video_feed 两个路径对应两个功能，默认端口5000
 
-## 3.米家绑定巴法云账号
-绑定后同步设备，小爱就能控制了
+## 三.同步到巴法云
+目前程序不在内置巴法云订阅，请到Ha中安装集成 https://github.com/larry-wong/bemfa  
+该集成可一键同步实体到米家  
 
-## 4.配置NodeRed节点
-见nodered.txt，请根据实际情况修改内容
+## 四.配置NodeRed节点
+目前程序不再依赖Nodered  
+如果需要联动，见nodered.txt，仅供参考  
 
-## 5.Tips
-推荐软件，openrgb，支持Ha接入控制RGB
+## 五.Tips
+推荐软件，openrgb，支持Ha接入控制RGB灯光
 
 感谢大佬的开源库： https://github.com/gwy15/python_aida64  
 让刚学py的我做出来个小工具（（
