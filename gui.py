@@ -144,9 +144,6 @@ def main(newpage: ft.Page):
     def input_pass(e):
         save_json_data("password", e.control.value)
 
-    def input_id(e):
-        save_json_data("secret_id", e.control.value)
-
     def input_interval(e):
         save_json_data("interval", int(e.control.value))
 
@@ -313,7 +310,7 @@ def main(newpage: ft.Page):
                       value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
             ft.Container(width=10),
             ft.TextField(label="Secret_id", width=200,
-                         on_submit=input_id, value=read_secret_id)
+                         on_submit=input_id, value=1)
 
         ]
 
@@ -381,7 +378,6 @@ if __name__ == "__main__":
         fun4 = json_data.get("fun4")
         read_user = json_data.get("username")
         read_password = "密码已隐藏"
-        read_secret_id = json_data.get("secret_id")
         read_interval = json_data.get("interval")
         read_ha_broker = json_data.get("HA_MQTT")
         read_port = json_data.get("HA_MQTT_port")
