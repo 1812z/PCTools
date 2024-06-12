@@ -144,7 +144,7 @@ def save_json_data(key, data):
 def discovery():
     init_data()
     count = 2
-    info = "成功发现了\n"
+    info = ""
     # 遍历当前目录中的文件
     for filename in os.listdir(current_directory):
         if os.path.isfile(os.path.join(current_directory, filename)):
@@ -157,6 +157,7 @@ def discovery():
     send_discovery("显示器", "screen", "light")
     send_discovery("音量", "volume", "number")
     save_json_data("count",count)
+    info = "发现了"+ str(count) +"个命令\n" + info
     return info
 
 
@@ -174,7 +175,7 @@ def subcribe(client):
 
 def start_mqtt():
     print("MQTT服务启动中...")
-    init_data()
+    discovery()
     mqttc.loop_start()
 
 

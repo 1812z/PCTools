@@ -9,6 +9,4 @@ def generate_short_id(filename: str) -> str:
     short_id = short_id[:16]
     return short_id
 
-filename = "example.txt"
-short_id = generate_short_id(filename)
-print(f"Short ID for '{filename}': {short_id}")
+

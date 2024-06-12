@@ -37,6 +37,7 @@ def show_snackbar(page: ft.Page, message: str):
 
 def start():
     if fun1:
+        discovery()
         start_task()
     if fun2:
         start_mqtt()
@@ -63,8 +64,7 @@ def main(newpage: ft.Page):
     setting = ft.Tab(text="设置")
 
     def button_send_discovery(e):
-        discovery_comm()
-        result = discovery()
+        result = discovery() + discovery_comm()
         print(result)
         dialog = ft.AlertDialog(
             title=ft.Text("信息"),
@@ -309,23 +309,15 @@ def main(newpage: ft.Page):
             ft.Switch(label="自动运行", label_position='left', scale=1.2,
                       value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
             ft.Container(width=10),
-            ft.TextField(label="Secret_id", width=200,
-                         on_submit=input_id, value=1)
-
-        ]
-
-    ), ft.Row(
-        [
-            ft.Container(width=85),
-            ft.TextField(label="监控刷新间隔", width=130,
-                         on_submit=input_interval, value=read_interval),
-            ft.Container(width=4),             
-            ft.TextField(label="设备标识符", width=200,
-                         on_submit=input_device_name, value=read_device_name)             
+            ft.TextField(label="数据发送间隔", width=100,
+                         on_submit=input_interval, value=read_interval),           
+            ft.TextField(label="设备标识符", width=90,
+                         on_submit=input_device_name, value=read_device_name)  
         ]
 
     )
     ]
+
     home.content = ft.Column(controls=home_page)
     setting.content = ft.Column(controls=setting_page)
     tabbar = ft.Tabs()
