@@ -22,10 +22,10 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
         "object_id": "object_id",
         "unique_id": "unique_id",
         "device": {
-            "identifiers": ["aida64"],
+            "identifiers": ["PCTools"],
             "name": "PC",
             "manufacturer": "1812z",
-            "model": "aida64",
+            "model": "PCTools",
             "sw_version": "2024.5.30",
             "configuration_url": "https://1812z.top"
         }

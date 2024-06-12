@@ -1,0 +1,20 @@
+{
+    "PCbutton1": "QQ.lnk",
+    "PCbutton2": "run1.bat",
+    "PCbutton3": "\u7184\u706d\u5c4f\u5e55.bat",
+    "PCbutton4": "command.py",
+    "PCbutton5": "commands.json",
+    "PCbutton6": "command_new.py",
+    "PCbutton7": "config.json",
+    "PCbutton8": "gui.py",
+    "PCbutton9": "MQTT_",
+    "PCbutton10": "nodered.txt",
+    "PCbutton11": "readme.md",
+    "PCbutton12": "setup.py",
+    "PCbutton13": "test.py",
+    "PCbutton14": "timer.py",
+    "PCbutton15": "toast.py",
+    "PCbutton16": "web_task.py",
+    "PCbutton17": "\u6253\u5f00GUI.bat",
+    "count": 3
+}
