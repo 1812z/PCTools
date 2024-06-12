@@ -8,6 +8,7 @@ from web_task import FlaskAppManager
 from timer import start_task, stop_task
 import json
 from command import start_mqtt, stop_mqtt_loop
+from command import discovery as discovery_comm
 import pystray
 
 version = "V2.0"
@@ -62,6 +63,7 @@ def main(newpage: ft.Page):
     setting = ft.Tab(text="设置")
 
     def button_send_discovery(e):
+        discovery_comm()
         result = discovery()
         print(result)
         dialog = ft.AlertDialog(

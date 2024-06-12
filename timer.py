@@ -35,7 +35,10 @@ class PeriodicTask:
             self.scheduler.cancel(self.event)
         self.thread.join()
 
-periodic_task = PeriodicTask(function=send_data)
+def tasks():
+    send_data()
+    
+periodic_task = PeriodicTask(function=tasks)
 
 def start_task():
     print("启动监控服务..")

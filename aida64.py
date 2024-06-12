@@ -2,7 +2,7 @@ import python_aida64
 from pprint import pprint
 import paho.mqtt.client as mqtt
 import json
-
+from volume import get_volume
 
 count = 0
 debug = False
@@ -95,11 +95,17 @@ def init_data():
     if (debug):
         pprint(python_aida64.getData())
 
+# 发送音量信息
+def send_volume():
+    volume = get_volume()
+    state_topic = "homeassistant/number/" + device_name + "volume" + "/state"
+    # print(state_topic,volume)
+    mqttc.publish(state_topic, volume)
 
 # 发送传感器信息
 def send_data():
     init_data()
-    info = "a"
+    send_volume()
     state_topic = "homeassistant/sensor/" + device_name + "/state"
     mqttc.publish(state_topic, json.dumps(aida64_data))
     # print("发送数据：", state_topic)

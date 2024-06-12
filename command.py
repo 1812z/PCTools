@@ -2,7 +2,7 @@ import time
 import paho.mqtt.client as mqtt
 import json
 import os
-
+from volume import set_volume
 
 def send_discovery(name, id, type="button"):
     global device_name
@@ -37,7 +37,11 @@ def send_discovery(name, id, type="button"):
 
         discovery_data["brightness_state_topic"] = "homeassistant/light/"+ device_name + "screen" 
         discovery_data["brightness_command_topic"] = "homeassistant/light/"+ device_name + "screen" + "/set"
-
+    elif type == "number":
+        comm_topic = "homeassistant/" + type + "/" + \
+            device_name + str(id) + "/set"
+        discovery_data["command_topic"] = comm_topic
+        discovery_data["state_topic"] = "homeassistant/number/"+ device_name + "volume/state" 
 
 
     discovery_data["name"] = name
@@ -56,7 +60,7 @@ def on_message(client, userdata, message):
     command = message.payload.decode()
     if(command != "ON"):
             run_command(message.topic,command)
-    print(f"Received `{command}` from `{message.topic}` topic")
+    # print(f"Received `{command}` from `{message.topic}` topic")
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -77,6 +81,8 @@ def run_command(command,data):
             run = 'start /b cmd /c '+r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --Set=' + brightness
             os.system(run)
             print("显示器亮度:", brightness)
+    elif key == device_name + "volume":
+        set_volume(int(data) / 100)
     else: # 运行文件
         run_file = command_data.get(key)
         print("命令:",key,"运行文件:",run_file)
@@ -128,6 +134,7 @@ def save_json_data(key, data):
 
 
 def discovery():
+    init_data()
     count = 0
     # 遍历当前目录中的文件
     for filename in os.listdir(current_directory):
@@ -139,6 +146,7 @@ def discovery():
             send_discovery(os.path.splitext(filename)[
                            0] + os.path.splitext(filename)[1], count)
             send_discovery("显示器亮度", "screen","light")
+            send_discovery("音量", "volume","number")
     save_json_data("count", count)
     return count
 
@@ -149,9 +157,8 @@ def subcribe(client):
                 device_name + "button" + str(i+1) + "/set"
             # print(subcribe_topic)
             client.subscribe(subcribe_topic)
-    subcribe_topic = "homeassistant/light/" + device_name + "screen" + "/set"
-    client.subscribe(subcribe_topic)
-
+    client.subscribe("homeassistant/light/" + device_name + "screen" + "/set")
+    client.subscribe("homeassistant/number/" + device_name + "volume" + "/set")
 def start_mqtt():
     print("MQTT服务启动中...")
     init_data()
@@ -159,11 +166,9 @@ def start_mqtt():
     
 
 def stop_mqtt_loop():
-    mqttc.disconnect()
     mqttc.loop_stop()
 
 if __name__ == '__main__':
-    init_data()
     discovery()
     mqttc.loop_start()
     try:
