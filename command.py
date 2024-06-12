@@ -93,9 +93,8 @@ def run_command(command, data):
     else:  # 运行文件
         run_file = command_data.get(key)
         print("命令:", key, "运行文件:", run_file)
-        run = "start " + current_directory + '\\' + run_file
-        print(run)
-        os.system(run)
+        run =  current_directory + '\\' + run_file  
+        os.system(f'start "" "{run}"')
 
 # 初始化
 

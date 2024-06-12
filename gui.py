@@ -150,7 +150,7 @@ def main(newpage: ft.Page):
     def input_ha_broker(e):
         save_json_data("HA_MQTT", e.control.value)
 
-    def input_port(e): 
+    def input_port(e):
         save_json_data("HA_MQTT_port", int(e.control.value))
 
     def input_device_name(e):
@@ -163,97 +163,97 @@ def main(newpage: ft.Page):
         page.launch_url('https://space.bilibili.com/336130050')
 
     home_page = [
-        
+
         ft.Column(
-        [
+            [
 
-            ft.Container(
-                content=ft.Image(
-                    src="img\\home-assistant-wordmark-with-margins-color-on-light.png",
-                    fit=ft.ImageFit.CONTAIN,
-                    width=500
+                ft.Container(
+                    content=ft.Image(
+                        src="img\\home-assistant-wordmark-with-margins-color-on-light.png",
+                        fit=ft.ImageFit.CONTAIN,
+                        width=500
+                    ),
                 ),
-            ),
-            ft.Container(
-                content=ft.Text(
-                    version+' by 1812z',
-                    size=20,
+                ft.Container(
+                    content=ft.Text(
+                        version+' by 1812z',
+                        size=20,
+                    ),
                 ),
-            ),
-            ft.Container(
-                content=ft.TextButton(
-                    "Github",
-                    animate_size=20,on_click=open_repo
+                ft.Container(
+                    content=ft.TextButton(
+                        "Github",
+                        animate_size=20, on_click=open_repo
+                    ),
                 ),
-            ),
-            ft.Row(
-               []
-            ),
-            ft.ElevatedButton(
-                content=ft.Row(
-                    [
-                        ft.Icon(ft.icons.PLAY_ARROW_ROUNDED),
-                        ft.Text("运行", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ft.Row(
+                    []
                 ),
-                on_click=button_start,
-                width=120,
-                height=40
-            ),
-            ft.ElevatedButton(
-                content=ft.Row(
-                    [
-                        ft.Icon(ft.icons.STOP_ROUNDED),
-                        ft.Text("停止", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.PLAY_ARROW_ROUNDED),
+                            ft.Text("运行", weight=ft.FontWeight.W_600),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    ),
+                    on_click=button_start,
+                    width=120,
+                    height=40
                 ),
-                on_click=button_stop,
-                width=120,
-                height=40
-            ),
-            ft.ElevatedButton(
-                content=ft.Row(
-                    [
-                        ft.Icon(ft.icons.FIND_IN_PAGE),
-                        ft.Text("发现设备", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.STOP_ROUNDED),
+                            ft.Text("停止", weight=ft.FontWeight.W_600),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    ),
+                    on_click=button_stop,
+                    width=120,
+                    height=40
                 ),
-                on_click=button_send_discovery,
-                width=120,
-                height=40
-            ),
-            ft.ElevatedButton(
-                content=ft.Row(
-                    [
-                        ft.Icon(ft.icons.SEND_AND_ARCHIVE),
-                        ft.Text("发送数据", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.FIND_IN_PAGE),
+                            ft.Text("发现设备", weight=ft.FontWeight.W_600),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    ),
+                    on_click=button_send_discovery,
+                    width=120,
+                    height=40
                 ),
-                on_click=button_send_data,
-                width=120,
-                height=40
-            ),
-             ft.ElevatedButton(
-                content=ft.Row(
-                    [
-                        ft.Icon(ft.icons.THUMB_UP_ALT_ROUNDED),
-                        ft.Text("关注我", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.SEND_AND_ARCHIVE),
+                            ft.Text("发送数据", weight=ft.FontWeight.W_600),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    ),
+                    on_click=button_send_data,
+                    width=120,
+                    height=40
                 ),
-                on_click=follow,
-                width=120,
-                height=40
-            ),
-        ],
-        alignment=MainAxisAlignment.CENTER,
-        horizontal_alignment=CrossAxisAlignment.CENTER,
+                ft.ElevatedButton(
+                    content=ft.Row(
+                        [
+                            ft.Icon(ft.icons.THUMB_UP_ALT_ROUNDED),
+                            ft.Text("关注我", weight=ft.FontWeight.W_600),
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    ),
+                    on_click=follow,
+                    width=120,
+                    height=40
+                ),
+            ],
+            alignment=MainAxisAlignment.CENTER,
+            horizontal_alignment=CrossAxisAlignment.CENTER,
 
-    )
+        )
     ]
     setting_page = [ft.Column(
         [
@@ -310,9 +310,9 @@ def main(newpage: ft.Page):
                       value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
             ft.Container(width=10),
             ft.TextField(label="数据发送间隔", width=100,
-                         on_submit=input_interval, value=read_interval),           
+                         on_submit=input_interval, value=read_interval),
             ft.TextField(label="设备标识符", width=90,
-                         on_submit=input_device_name, value=read_device_name)  
+                         on_submit=input_device_name, value=read_device_name)
         ]
 
     )
