@@ -25,9 +25,20 @@ def send_discovery(name, id, type="button"):
 
     discovery_topic = "homeassistant/" + type + \
         "/" + device_name + type + str(id) + "/config"
-    comm_topic = "homeassistant/" + type + "/" + \
-        device_name + type + str(id) + "/set"
-    discovery_data["command_topic"] = comm_topic
+    
+    if type == "button":
+        comm_topic = "homeassistant/" + type + "/" + \
+            device_name + type + str(id) + "/set"
+        discovery_data["command_topic"] = comm_topic
+    elif type == "light":
+        comm_topic = "homeassistant/" + type + "/" + \
+            device_name + str(id) + "/set"
+        discovery_data["command_topic"] = comm_topic
+
+        discovery_data["brightness_state_topic"] = "homeassistant/light/"+ device_name + "screen" 
+        discovery_data["brightness_command_topic"] = "homeassistant/light/"+ device_name + "screen" + "/set"
+
+
 
     discovery_data["name"] = name
     discovery_data["device"]["name"] = device_name
@@ -43,7 +54,8 @@ def send_discovery(name, id, type="button"):
 def on_message(client, userdata, message):
     userdata.append(message.payload)
     command = message.payload.decode()
-    run_command(message.topic)
+    if(command != "ON"):
+            run_command(message.topic,command)
     print(f"Received `{command}` from `{message.topic}` topic")
 
 
@@ -54,13 +66,23 @@ def on_connect(client, userdata, flags, reason_code, properties):
         print("成功连接到:", broker)
         subcribe(client)
 
-def run_command(command):
+def run_command(command,data):
     key = command.split('/')[2]
-    run_file = command_data.get(key)
-    print("命令:",key,"运行文件:",run_file)
-    run =  "start "+ current_directory + '\\' + run_file 
-    print(run)
-    os.system(run)
+    if key == device_name + "screen": # 显示器亮度调节 
+        if data == "OFF":
+            run = r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --VCP=0xD6:0x04 '
+            os.system(run)
+        else:
+            brightness = str(int(data) *100 //255 )
+            run = 'start /b cmd /c '+r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --Set=' + brightness
+            os.system(run)
+            print("显示器亮度:", brightness)
+    else: # 运行文件
+        run_file = command_data.get(key)
+        print("命令:",key,"运行文件:",run_file)
+        run =  "start "+ current_directory + '\\' + run_file 
+        print(run)
+        os.system(run)
 
 # 初始化
 def init_data():
@@ -116,6 +138,7 @@ def discovery():
                            [0] + os.path.splitext(filename)[1])
             send_discovery(os.path.splitext(filename)[
                            0] + os.path.splitext(filename)[1], count)
+            send_discovery("显示器亮度", "screen","light")
     save_json_data("count", count)
     return count
 
@@ -126,6 +149,8 @@ def subcribe(client):
                 device_name + "button" + str(i+1) + "/set"
             # print(subcribe_topic)
             client.subscribe(subcribe_topic)
+    subcribe_topic = "homeassistant/light/" + device_name + "screen" + "/set"
+    client.subscribe(subcribe_topic)
 
 def start_mqtt():
     print("MQTT服务启动中...")
