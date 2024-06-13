@@ -26,7 +26,7 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
             "name": "PC",
             "manufacturer": "1812z",
             "model": "PCTools",
-            "sw_version": "2024.5.30",
+            "sw_version": "2024.6.13",
             "configuration_url": "https://1812z.top"
         }
     }
@@ -94,6 +94,8 @@ def init_data():
         pprint(python_aida64.getData())
 
 # 发送音量信息
+
+
 def send_volume():
     volume = get_volume()
     state_topic = "homeassistant/number/" + device_name + "volume" + "/state"
@@ -101,6 +103,8 @@ def send_volume():
     mqttc.publish(state_topic, volume)
 
 # 发送传感器信息
+
+
 def send_data():
     init_data()
     send_volume()

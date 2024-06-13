@@ -11,8 +11,8 @@ from command import start_mqtt, stop_mqtt_loop
 from command import discovery as discovery_comm
 import pystray
 
-version = "V2.0"
-manager = FlaskAppManager('192.168.44.236', 5000)
+version = "V3.1"
+manager = FlaskAppManager('0.0.0.0', 5000)
 run_flag = False
 page = None
 
@@ -255,69 +255,64 @@ def main(newpage: ft.Page):
 
         )
     ]
-    setting_page = [ft.Column(
-        [
 
-            ft.Container(
+    setting_page = [
+        ft.Column(
+            [
+                ft.Container(
                     content=ft.Image(
                         src="img\\home-assistant-wordmark-with-margins-color-on-light.png",
                         fit=ft.ImageFit.CONTAIN,
                         width=500
                     ),
-                    ),
-        ],
-        alignment=MainAxisAlignment.CENTER,
-        horizontal_alignment=CrossAxisAlignment.CENTER,
-    ), ft.Row(
-        [
-            ft.Container(width=90)
-        ]
-    ), ft.Row(
-        [
-            ft.Container(width=90),
-            ft.Switch(label="监控反馈", label_position='left',
-                      scale=1.2, value=fun1, on_change=switch_fun1),
-            ft.Container(width=10),
-            ft.TextField(label="HA_MQTT_Broker", width=130,
-                         on_submit=input_ha_broker, value=read_ha_broker),
-            ft.TextField(label="PORT", width=60,
-                         on_submit=input_port, value=read_port)
-        ]
-    ), ft.Row(
-        [
-            ft.Container(width=90),
-            ft.Switch(label="远程命令", label_position='left',
-                      scale=1.2, value=fun2, on_change=switch_fun2),
-            ft.Container(width=10),
-            ft.TextField(label="HA_MQTT账户", width=200,
-                         on_submit=input_user, value=read_user)
-        ]
+                ),
+                ft.Row(
+                    [
+                        ft.Container(width=90),
+                        ft.Switch(label="监控反馈", label_position='left',
+                                  scale=1.2, value=fun1, on_change=switch_fun1),
+                        ft.Container(width=10),
+                        ft.TextField(label="HA_MQTT_Broker", width=130,
+                                     on_submit=input_ha_broker, value=read_ha_broker),
+                        ft.TextField(label="PORT", width=60,
+                                     on_submit=input_port, value=read_port)
+                    ]
+                ), ft.Row(
+                    [
+                        ft.Container(width=90),
+                        ft.Switch(label="远程命令", label_position='left',
+                                  scale=1.2, value=fun2, on_change=switch_fun2),
+                        ft.Container(width=10),
+                        ft.TextField(label="HA_MQTT账户", width=200,
+                                     on_submit=input_user, value=read_user)
+                    ]
 
-    ), ft.Row(
-        [
-            ft.Container(width=90),
-            ft.Switch(label="画面传输", label_position='left',
-                      scale=1.2, value=fun3, on_change=switch_fun3),
-            ft.Container(width=10),
-            ft.TextField(label="HA_MQTT密码", width=200,
-                         on_submit=input_pass, value=read_password)
-        ]
+                ), ft.Row(
+                    [
+                        ft.Container(width=90),
+                        ft.Switch(label="画面传输", label_position='left',
+                                  scale=1.2, value=fun3, on_change=switch_fun3),
+                        ft.Container(width=10),
+                        ft.TextField(label="HA_MQTT密码", width=200,
+                                     on_submit=input_pass, value=read_password)
+                    ]
 
-    ), ft.Row(
-        [
-            ft.Container(width=90),
-            ft.Switch(label="自动运行", label_position='left', scale=1.2,
-                      value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
-            ft.Container(width=10),
-            ft.TextField(label="数据发送间隔", width=100,
-                         on_submit=input_interval, value=read_interval),
-            ft.TextField(label="设备标识符", width=90,
-                         on_submit=input_device_name, value=read_device_name)
-        ]
-
-    )
+                ), ft.Row(
+                    [
+                        ft.Container(width=90),
+                        ft.Switch(label="自动运行", label_position='left', scale=1.2,
+                                  value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
+                        ft.Container(width=10),
+                        ft.TextField(label="数据发送间隔", width=100,
+                                     on_submit=input_interval, value=read_interval),
+                        ft.TextField(label="设备标识符", width=90,
+                                     on_submit=input_device_name, value=read_device_name)
+                    ]
+                )
+            ], alignment=MainAxisAlignment.CENTER,
+            horizontal_alignment=CrossAxisAlignment.CENTER,
+        )
     ]
-
     home.content = ft.Column(controls=home_page)
     setting.content = ft.Column(controls=setting_page)
     tabbar = ft.Tabs()
@@ -341,8 +336,6 @@ def on_exit(icon, item):
 def show_menu(icon, item):
     global show_menu_flag
     show_menu_flag = 1
-
-# Run the icon in a separate thread to avoid blocking
 
 
 def icon_task():
