@@ -36,7 +36,9 @@ GUI支持远程执行自定义命令，列如启动程序，设备管理等等
 如果后续需要新增或者删除文件，重新启动程序即可
 
 Web监控：/screenshot.jpg /video_feed 两个路径对应两个功能，默认端口5000
-
+### 3.设置自启动（可选）
+1.GUi里的设置自动运行打开后，运行程序会自动启动服务而不显示主页面  
+2.使用Windows的任务计划程序，添加自启动，启动程序“C:\Users\i\AppData\Local\Microsoft\WindowsApps\pythonw.exe”，参数填写脚本gui.py位置，起始填写脚本目录。
 ## 三.同步到巴法云
 目前程序不在内置巴法云订阅，请到Ha中安装集成 https://github.com/larry-wong/bemfa  
 该集成可一键同步实体到米家  
