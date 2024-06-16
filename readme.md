@@ -8,7 +8,7 @@ Homeassistant远程运行可执行文件
 2.主页面:  
 [![vt5u.md.png](https://img2.moeblog.vip/images/vt5u.md.png)](https://img.moeblog.vip/image/vt5u)  
 ## TODO List
-GUI支持远程执行自定义命令，列如启动程序，设备管理等等
+无，开始摸鱼
 
 ## 一.安装各项运行所需要的程序
 #### 部分功能用不到可以不安装  
