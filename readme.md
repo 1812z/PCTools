@@ -12,6 +12,7 @@ Homeassistant远程运行可执行文件
 
 ## 一.安装各项运行所需要的程序
 #### 部分功能用不到可以不安装  
+- Python环境:3.12.4  
 - 必选: pyhon 相关库, Homeassistant MQTT加载项      
 通过如下命令安装环境  
  `pip install -r .\requirements.txt`  
