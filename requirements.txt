@@ -1,6 +1,6 @@
 Flask==3.0.3
 flet==0.22.1
-opencv-python==4.10.0.82
+opencv-python==4.10.0.84
 paho-mqtt==2.1.0
 pillow==10.3.0
 PyAutoGUI==0.9.54
