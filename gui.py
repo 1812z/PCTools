@@ -10,8 +10,8 @@ import json
 from command import start_mqtt, stop_mqtt_loop
 from command import discovery as discovery_comm
 import pystray
-
-version = "V3.1"
+import startup
+version = "V3.2"
 manager = FlaskAppManager('0.0.0.0', 5000)
 run_flag = False
 page = None
@@ -136,6 +136,12 @@ def main(newpage: ft.Page):
     def switch_fun4(e):
         global fun4
         fun4 = e.control.value
+        if(fun4 == True):
+            startup.add_to_startup()
+            show_snackbar(page, "程序将在开机时后台运行")
+        else:
+            startup.remove_from_startup()
+            show_snackbar(page, "已移除自启动")
         save_json_data("fun4", fun4)
 
     def input_user(e):
@@ -300,8 +306,8 @@ def main(newpage: ft.Page):
                 ), ft.Row(
                     [
                         ft.Container(width=90),
-                        ft.Switch(label="自动运行", label_position='left', scale=1.2,
-                                  value=fun4, on_change=switch_fun4, tooltip="运行gui.py时自动运行勾选的服务"),
+                        ft.Switch(label="开机自启", label_position='left', scale=1.2,
+                                  value=fun4, on_change=switch_fun4, tooltip="添加gui.py为启动项"),
                         ft.Container(width=10),
                         ft.TextField(label="数据发送间隔", width=100,
                                      on_submit=input_interval, value=read_interval),
