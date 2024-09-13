@@ -97,8 +97,6 @@ def run_command(command, data):
         os.system(f'start "" "{run}"')
 
 # 初始化
-
-
 def init_data():
     global current_directory
     current_file_path = os.path.abspath(__file__)

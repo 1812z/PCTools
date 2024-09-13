@@ -2,7 +2,7 @@ import threading
 import time
 from PIL import Image
 import flet as ft
-from aida64 import discovery, send_data
+from MQTT_publish import discovery, send_data
 from flet_core import MainAxisAlignment, CrossAxisAlignment
 from web_task import FlaskAppManager
 from timer import start_task, stop_task
@@ -11,6 +11,8 @@ from command import start_mqtt, stop_mqtt_loop
 from command import discovery as discovery_comm
 import pystray
 import startup
+
+
 version = "V3.2"
 manager = FlaskAppManager('0.0.0.0', 5000)
 run_flag = False
@@ -82,7 +84,7 @@ def main(newpage: ft.Page):
             content=ft.Text(result),
             action="OK",
             action_color=ft.colors.WHITE,
-            on_action=lambda e: snackbar.close(),
+            on_action=None,
             duration=2000
         )
         page.snack_bar = snackbar

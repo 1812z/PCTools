@@ -1,7 +1,7 @@
 import threading
 import sched
 import time
-from aida64 import send_data,discovery
+from MQTT_publish import send_data,discovery
 import json
 
 def read_config():

@@ -70,7 +70,7 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
     return info
 
 
-# 初始化
+# 初始化MQTT
 def init_data():
     # 读取账号密码
     with open('config.json', 'r') as file:
@@ -88,36 +88,52 @@ def init_data():
     mqttc._username = username
     mqttc._password = password
     mqttc.connect(broker, port)
-    global aida64_data
-    aida64_data = python_aida64.getData()
-    if (debug):
-        pprint(python_aida64.getData())
+
+
+
+# 发送自定义消息
+def publish_message(topic,message):
+    init_data()
+    mqttc.publish(topic, message)
+
 
 # 发送音量信息
-
-
 def send_volume():
     volume = get_volume()
     state_topic = "homeassistant/number/" + device_name + "volume" + "/state"
-    # print(state_topic,volume)
     mqttc.publish(state_topic, volume)
 
+
+# 初始化Aida64数据
+def get_aida64_data():
+    global aida64_data
+    aida64_data = python_aida64.getData()
+
+
+# 发送Aida64传感器数据
+def send_aida64():
+    get_aida64_data()
+    state_topic = "homeassistant/sensor/" + device_name + "/state"
+    if (debug):
+        pprint(python_aida64.getData())
+    mqttc.publish(state_topic, json.dumps(aida64_data))
+
+
 # 发送传感器信息
-
-
 def send_data():
     init_data()
     send_volume()
-    state_topic = "homeassistant/sensor/" + device_name + "/state"
-    mqttc.publish(state_topic, json.dumps(aida64_data))
-    # print("发送数据：", state_topic)
+    send_aida64()
+
     mqttc.disconnect()
+    state_topic = "homeassistant/sensor/" + device_name + "/state"
     info = "发送数据：" + state_topic
     return info
 
 
 # 发现设备
 def discovery():
+    get_aida64_data()
     init_data()
     info = ""
     id1 = 0
@@ -156,5 +172,6 @@ def discovery():
 
 
 if __name__ == "__main__":
+    get_aida64_data()
     discovery()
     send_data()
