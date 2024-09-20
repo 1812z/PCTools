@@ -1,3 +1,4 @@
+import os
 import threading
 import time
 from PIL import Image
@@ -358,10 +359,14 @@ def icon_task():
     icon.run()
 
 
+def user_directory():
+    save_json_data("user_directory",os.path.expanduser("~")) 
+
+
 show_menu_flag = False
 icon_flag = True
 if __name__ == "__main__":
-
+    
     threading.Thread(target=icon_task).start()
     with open('config.json', 'r') as file:
         json_data = json.load(file)
@@ -375,7 +380,7 @@ if __name__ == "__main__":
         read_ha_broker = json_data.get("HA_MQTT")
         read_port = json_data.get("HA_MQTT_port")
         read_device_name = json_data.get("device_name")
-
+        user_directory()
     if fun4:
         run_flag = True
         start()

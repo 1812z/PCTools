@@ -77,15 +77,20 @@ def on_connect(client, userdata, flags, reason_code, properties):
         print("成功连接到:", broker)
         subcribe(client)
 
+
+# 运行命令
 def run_command(command, data):
+    path = json_data.get("user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
+    print(path)
     key = command.split('/')[2]
-    if key == device_name + "screen":  # 显示器亮度调节
+    if key == device_name + "screen":  # 显示器控制
         if data == "OFF":
-            run = r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --VCP=0xD6:0x04 '
+            run = 'start /b cmd /c "'+ path + '" --MonitorNum=1 --VCP=0xD6:0x04'
             os.system(run)
         else:
             brightness = str(int(data) * 100 // 255)
-            run = 'start /b cmd /c '+r' "C:\Program Files\WindowsApps\38002AlexanderFrangos.TwinkleTray_1.15.4.0_x64__m7qx9dzpwqaze\app\Twinkle Tray.exe" --MonitorNum=1 --Set=' + brightness
+            run = 'start /b cmd /c "'+ path + '" --MonitorNum=1 --Set=' + brightness
+            print(run)
             os.system(run)
             print("显示器亮度:", brightness)
     elif key == device_name + "volume":
@@ -95,6 +100,7 @@ def run_command(command, data):
         print("命令:", key, "运行文件:", run_file)
         run =  current_directory + '\\' + run_file  
         os.system(f'start "" "{run}"')
+
 
 # 初始化
 def init_data():
@@ -115,12 +121,14 @@ def init_data():
         global device_name
         global device_name
         global broker
+        global user_directory
         json_data = json.load(file)
         username = json_data.get("username")
         password = json_data.get("password")
         broker = json_data.get("HA_MQTT")
         port = json_data.get("HA_MQTT_port")
         device_name = json_data.get("device_name")
+        user_directory = json_data.get("user_directory")
 
     global mqttc
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)

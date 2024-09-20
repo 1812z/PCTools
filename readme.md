@@ -16,8 +16,8 @@ Homeassistant远程运行可执行文件
 - 必选: pyhon 相关库, Homeassistant MQTT加载项      
 通过如下命令安装环境  
  `pip install -r .\requirements.txt`  
-- 监控反馈: Aida64(读取数据并共享给程序)   
-- 远程命令: Twinkle tray(控制显示器亮度)   
+- 电脑信息监控: 依赖Aida64(读取数据并共享给程序)   
+- 显示器亮度调节: 依赖[Twinkle tray](https://github.com/xanderfrangos/twinkle-tray/releases)
 
 ## 二.启动程序
 
