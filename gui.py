@@ -14,7 +14,7 @@ import pystray
 import startup
 
 
-version = "V3.2"
+version = "V3.3"
 manager = FlaskAppManager('0.0.0.0', 5000)
 run_flag = False
 page = None

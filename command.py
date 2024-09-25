@@ -3,7 +3,7 @@ import json
 import os
 from volume import set_volume
 from short_id import generate_short_id
-
+from Toast import show_toast
 
 def send_discovery(name, id, type="button"):
     global device_name
@@ -19,7 +19,7 @@ def send_discovery(name, id, type="button"):
             "name": "PC",
             "manufacturer": "1812z",
             "model": "PCTools",
-            "sw_version": "2024.6.12",
+            "sw_version": "2024.9.25",
             "configuration_url": "https://1812z.top"
         }
     }
@@ -64,8 +64,12 @@ def send_discovery(name, id, type="button"):
 def on_message(client, userdata, message):
     userdata.append(message.payload)
     command = message.payload.decode()
-    if (command != "ON"):
-        run_command(message.topic, command)
+    if(message.topic == device_name + "/messages"):
+        show_toast("HA通知",command)
+    else:
+        if (command != "ON"):
+            run_command(message.topic, command)
+
     print(f"Received `{command}` from `{message.topic}` topic")
 
 
@@ -176,7 +180,7 @@ def subcribe(client):
                 
     client.subscribe("homeassistant/light/" + device_name + "screen" + "/set")
     client.subscribe("homeassistant/number/" + device_name + "volume" + "/set")
-
+    client.subscribe( device_name + "/messages")
 
 def start_mqtt():
     print("MQTT服务启动中...")

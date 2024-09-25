@@ -1,7 +1,8 @@
 ## 功能
-Homeassistant远程运行可执行文件
-调取Aida64数据监控，并通过MQTT反馈到HomeAssistant
-电脑屏幕和摄像头网页查看
+Homeassistant远程运行可执行文件  
+调取Aida64数据监控，并通过MQTT反馈到HomeAssistant  
+电脑屏幕和摄像头网页查看  
+订阅MQTT主题自动复制内容到剪贴板  
 ### HA界面展示:
 1.另类副屏:  
 <img src="https://img2.moeblog.vip/images/vrJD.jpg" alt="图片" width="450" height="200" />  
@@ -40,6 +41,8 @@ Homeassistant远程运行可执行文件
 如果后续需要新增或者删除文件，重新启动程序即可
 
 - Web监控：http://127.0.0.1:5000/screenshot.jpg http://127.0.0.1:5000/video_feed 两个路径对应两个功能，默认端口5000,画面需要手动作为监控接入HA，目前不支持自动添加到HA
+
+- MQTT消息复制: 默认订阅 PC/messages 主题，将监听该主题的消息并以Toast消息显示
 ### 3.设置自启动
 打开程序主界面/设置，打开"开机自启"，程序将在开机时自动运行而不显示主界面，请提前配置好相关设置
 
