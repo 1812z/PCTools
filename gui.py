@@ -16,7 +16,6 @@ import startup
 
 version = "V3.3"
 manager = FlaskAppManager('0.0.0.0', 5000)
-run_flag = False
 page = None
 
 
@@ -93,8 +92,8 @@ def main(newpage: ft.Page):
         page.update()
 
     def button_start(e):
-        start()
         global run_flag
+        start()
         if run_flag:
             show_snackbar(page, "请勿多次启动!")
         elif fun1 == False and fun2 == False and fun3 == False:
@@ -106,7 +105,7 @@ def main(newpage: ft.Page):
     def button_stop(e):
         global run_flag
         if run_flag == True:
-            show_snackbar(page, "停止进程中,请耐心等待..")
+            show_snackbar(page, "停止进程中...")
             if fun1:
                 stop_task()
                 print("停止监控反馈")
@@ -333,13 +332,25 @@ def main(newpage: ft.Page):
 
 def on_exit(icon, item):
     global icon_flag
-    if (run_flag == False):
+    global run_flag
+    if run_flag == False:
         icon_flag = False
         close_windows()
         time.sleep(1)
         icon.stop()
     else:
-        icon.notify("服务正在运行无法关闭托盘")
+        if fun1:
+            stop_task()
+            print("停止监控反馈")
+        if fun2:
+            stop_mqtt_loop()
+            print("停止远程命令")
+        if fun3:
+            manager.stop()
+            print("停止画面传输")
+        icon_flag = False
+        close_windows()
+        icon.stop()
 
 
 def show_menu(icon, item):
@@ -366,7 +377,8 @@ def user_directory():
 show_menu_flag = False
 icon_flag = True
 if __name__ == "__main__":
-    
+    global run_flag
+    run_flag = False
     threading.Thread(target=icon_task).start()
     with open('config.json', 'r') as file:
         json_data = json.load(file)
@@ -386,7 +398,7 @@ if __name__ == "__main__":
         start()
     else:
         ft.app(target=main)
-    while (icon_flag):
+    while icon_flag:
         time.sleep(1)
         if show_menu_flag:
             show_menu_flag = False
