@@ -6,3 +6,5 @@ pillow==10.3.0
 PyAutoGUI==0.9.54
 pycaw==20240210
 pystray==0.19.5
+plyer==2.1.0
+pywin32==307
