@@ -62,14 +62,14 @@ class FlaskAppManager:
             self.process = multiprocessing.Process(
                 target=run_flask_app, args=(self.host, self.port))
             self.process.start()
-            print(f"Server started at http://{self.host}:{self.port}")
+            print(f"Flask进程启动 http://{self.host}:{self.port}")
 
     def stop(self):
         if self.process is not None:
             os.kill(self.process.pid, signal.SIGTERM)
             self.process.join()
             self.process = None
-            print("Server stopped.")
+            print("Flask进程停止")
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ from command import start_mqtt, stop_mqtt_loop
 from command import discovery as discovery_comm
 import pystray
 import startup
-
+import HA_widget_task
 
 version = "V3.4"
 manager = FlaskAppManager('0.0.0.0', 5000)
@@ -45,6 +45,9 @@ def start():
         start_mqtt()
     if fun3:
         manager.start()
+    if fun5:
+        HA_widget_task.start_ha_widget()
+
 
 
 def close_windows():
@@ -96,7 +99,7 @@ def main(newpage: ft.Page):
         start()
         if run_flag:
             show_snackbar(page, "请勿多次启动!")
-        elif fun1 == False and fun2 == False and fun3 == False:
+        elif fun1 == False and fun2 == False and fun3 == False and fun5 == False:
             show_snackbar(page, "未勾选任何服务")
         else:
             run_flag = True
@@ -115,6 +118,9 @@ def main(newpage: ft.Page):
             if fun3:
                 manager.stop()
                 print("停止画面传输")
+            if fun5:
+                HA_widget_task.stop_ha_widget()
+                print("停止小部件")
             run_flag = False
             show_snackbar(page, "已经停止进程")
         else:
@@ -146,6 +152,11 @@ def main(newpage: ft.Page):
             show_snackbar(page, "已移除自启动")
         save_json_data("fun4", fun4)
 
+    def switch_fun5(e):
+        global fun5
+        fun5 = e.control.value
+        save_json_data("fun5", fun5)
+
     def input_user(e):
         save_json_data("username", e.control.value)
 
@@ -163,6 +174,9 @@ def main(newpage: ft.Page):
 
     def input_device_name(e):
         save_json_data("device_name", e.control.value)
+
+    def input_url(e):
+        save_json_data("url", e.control.value)
 
     def open_repo(e):
         page.launch_url('https://github.com/1812z/PCTools')
@@ -308,13 +322,23 @@ def main(newpage: ft.Page):
                 ), ft.Row(
                     [
                         ft.Container(width=90),
+                        ft.Switch(label="网页部件", label_position='left', scale=1.2,
+                                  value=fun4, on_change=switch_fun5),
+                        ft.Container(width=10),
+                        ft.TextField(label="HA网址", width=200,
+                                     on_submit=input_url, value=read_url),
+
+                    ]
+                ),ft.Row(
+                    [
+                        ft.Container(width=90),
                         ft.Switch(label="开机自启", label_position='left', scale=1.2,
                                   value=fun4, on_change=switch_fun4, tooltip="添加gui.py为启动项"),
                         ft.Container(width=10),
                         ft.TextField(label="数据发送间隔", width=100,
                                      on_submit=input_interval, value=read_interval),
                         ft.TextField(label="设备标识符", width=90,
-                                     on_submit=input_device_name, value=read_device_name)
+                                     on_submit=input_device_name, value=read_device_name),
                     ]
                 )
             ], alignment=MainAxisAlignment.CENTER,
@@ -348,6 +372,9 @@ def on_exit(icon, item):
         if fun3:
             manager.stop()
             print("停止画面传输")
+        if fun5:
+            HA_widget_task.stop_ha_widget()
+            print("停止小部件")
         icon_flag = False
         close_windows()
         icon.stop()
@@ -386,12 +413,14 @@ if __name__ == "__main__":
         fun2 = json_data.get("fun2")
         fun3 = json_data.get("fun3")
         fun4 = json_data.get("fun4")
+        fun5 = json_data.get("fun5")
         read_user = json_data.get("username")
         read_password = "密码已隐藏"
         read_interval = json_data.get("interval")
         read_ha_broker = json_data.get("HA_MQTT")
         read_port = json_data.get("HA_MQTT_port")
         read_device_name = json_data.get("device_name")
+        read_url = json_data.get("url")
         user_directory()
     if fun4:
         run_flag = True
