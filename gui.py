@@ -14,7 +14,7 @@ import pystray
 import startup
 import HA_widget_task
 
-version = "V3.4"
+version = "V3.5"
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
 

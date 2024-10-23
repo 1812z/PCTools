@@ -87,7 +87,12 @@ def init_data():
     mqttc.user_data_set([])
     mqttc._username = username
     mqttc._password = password
-    mqttc.connect(broker, port)
+    try:
+        mqttc.connect(broker, port)
+    except:
+        print("MQTT连接失败")
+
+    
 
 
 
@@ -123,7 +128,10 @@ def send_aida64():
 def send_data():
     init_data()
     send_volume()
+
+    discovery()
     send_aida64()
+
 
     mqttc.disconnect()
     state_topic = "homeassistant/sensor/" + device_name + "/state"
