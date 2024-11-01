@@ -1,9 +1,8 @@
 import json
 import webview
 import screeninfo
-
-
 from pynput import keyboard
+
 select_key = keyboard.Key.menu
 
 key_pressed = False

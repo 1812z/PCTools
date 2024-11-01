@@ -175,6 +175,17 @@ def main(newpage: ft.Page):
         fun6 = e.control.value
         save_json_data("fun6", fun6)
 
+    def switch_hotkey_notify(e):
+        global hotkey_notify
+        hotkey_notify = e.control.value
+        save_json_data("hotkey_notify", hotkey_notify)
+
+    def switch_suppress(e):
+        global suppress
+        suppress = e.control.value
+        save_json_data("suppress", suppress)
+
+
     def input_user(e):
         save_json_data("username", e.control.value)
 
@@ -443,9 +454,14 @@ def main(newpage: ft.Page):
                 ),
                 ft.Row(
                     [
-                        ft.Switch(label="快捷键功能", label_position='left',
-                                  scale=1.2, value=fun6, on_change=switch_fun6),
-                        ft.Container(width=30),
+                        ft.Switch(label="快捷键", label_position='left',
+                                  scale=1.2, value=fun6, on_change=switch_fun6,tooltip="开启后随服务启动"),
+                        ft.Container(width=20),
+                        ft.Switch(label="触发通知", label_position='left',
+                                scale=1.2, value=hotkey_notify, on_change=switch_hotkey_notify),
+                        ft.Container(width=20),
+                        ft.Switch(label="阻断按键", label_position='left',
+                                scale=1.2, value=suppress, on_change=switch_suppress,tooltip="阻止快捷键被其它软件响应"),
                     ], alignment=ft.MainAxisAlignment.CENTER
                 ),
                 ft.Row(
@@ -576,6 +592,8 @@ if __name__ == "__main__":
         fun4 = json_data.get("fun4")
         fun5 = json_data.get("fun5")
         fun6 = json_data.get("fun6")
+        suppress = json_data.get("suppress")
+        hotkey_notify = json_data.get("hotkey_notify")
         read_user = json_data.get("username")
         read_password = "密码已隐藏"
         read_interval = json_data.get("interval")

@@ -2,6 +2,7 @@ import keyboard
 import json
 import paho.mqtt.client as mqtt
 import time
+from Toast import show_toast
 
 listening = False
 
@@ -39,8 +40,9 @@ def send_discovery(hotkeys):
             device_name + hotkey.replace("+", "-") + "/config"
         info = info + "发现主题:" + discovery_topic + "\n"
         mqttc.publish(discovery_topic, json.dumps(discovery_data))
-        mqttc.publish("homeassistant/binary_sensor/" +
-                      device_name + hotkey.replace("+", "-") + "/state", "OFF")
+    time.sleep(0.5)
+    for hotkey in hotkeys:
+        mqttc.publish("homeassistant/binary_sensor/" + device_name + hotkey.replace("+", "-") + "/state", "OFF")
     return info
 
 
@@ -52,13 +54,16 @@ def init_data():
         global json_data
         global device_name
         global broker
+        global hotkey_notify
+        global suppress
         json_data = json.load(file)
         username = json_data.get("username")
         password = json_data.get("password")
         broker = json_data.get("HA_MQTT")
         port = json_data.get("HA_MQTT_port")
         device_name = json_data.get("device_name")
-
+        hotkey_notify = json_data.get("hotkey_notify")
+        suppress = json_data.get("suppress")
     global mqttc
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
     mqttc.user_data_set([])
@@ -111,6 +116,8 @@ def load_hotkeys():
 
 def command(h):
     print("触发了快捷键:", h)
+    if hotkey_notify == True:
+        show_toast("PCTools" ,"触发了快捷键:" + h)
     mqttc.publish("homeassistant/binary_sensor/" + device_name +
                   h.replace("+", "-") + "/state", "ON")
     time.sleep(1)
@@ -126,11 +133,11 @@ def listen_hotkeys():
         send_discovery(hotkeys)
         print("开始监听快捷键...", hotkeys)
         for hotkey in hotkeys:
-            keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h))
+            keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h),suppress=suppress,trigger_on_release=True)
         # keyboard.wait('esc')
         return 0
     return 1
-
+2
 
 def stop_listen():
     global listening
