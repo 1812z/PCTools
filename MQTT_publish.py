@@ -26,7 +26,7 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
             "name": "PC",
             "manufacturer": "1812z",
             "model": "PCTools",
-            "sw_version": "2024.6.13",
+            "sw_version": "2024.10.31",
             "configuration_url": "https://1812z.top"
         }
     }
@@ -51,7 +51,6 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
         discovery_data["device_class"] = "speed"
         discovery_data["unit_of_measurement"] = "RPM"
     elif device_class == "sys":
-
         discovery_data.pop('device_class', None)
         discovery_data["unit_of_measurement"] = "%"
         if "Disk" in name:
@@ -64,7 +63,7 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
                 discovery_data["unit_of_measurement"] = "M"
             else:
                 discovery_data["unit_of_measurement"] = "KB/s"
-
+ 
     info = "发现主题:" + discovery_topic
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
     return info
@@ -91,6 +90,7 @@ def init_data():
         mqttc.connect(broker, port)
     except:
         print("MQTT连接失败")
+        return 1
 
     
 
@@ -126,57 +126,58 @@ def send_aida64():
 
 # 发送传感器信息
 def send_data():
-    init_data()
-    send_volume()
+    if init_data() != 1:
+        send_volume()
 
-    discovery()
-    send_aida64()
+        #discovery()
+        send_aida64()
 
 
-    mqttc.disconnect()
-    state_topic = "homeassistant/sensor/" + device_name + "/state"
-    info = "发送数据：" + state_topic
-    return info
+        mqttc.disconnect()
+        state_topic = "homeassistant/sensor/" + device_name + "/state"
+        info = "发送数据：" + state_topic
+        return info
 
 
 # 发现设备
 def discovery():
     get_aida64_data()
-    init_data()
-    info = ""
-    id1 = 0
-    id2 = 0
-    id3 = 0
-    id4 = 0
 
-    print("发送discovery MQTT信息")
-    for category, items in aida64_data.items():
-        if category == "temp":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += send_discovery(category, id1, name, name_id)+"\n"
-                id1 = id1 + 1
-        if category == "pwr":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += send_discovery(category, id2, name, name_id)+"\n"
-                id2 = id2 + 1
-        if category == "fan":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += send_discovery(category, id3, name, name_id)+"\n"
-                id3 = id3 + 1
-        if category == "sys":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += send_discovery(category, id4, name, name_id) + "\n"
-                id4 = id4 + 1
-    info = "发现了" + str(count) + "个实体\n" + info
-    return info
+    if init_data() != 1:
+        info = ""
+        id1 = 0
+        id2 = 0
+        id3 = 0
+        id4 = 0
+
+        print("发送discovery MQTT信息")
+        for category, items in aida64_data.items():
+            if category == "temp":
+                for item in items:
+                    name = item["label"]
+                    name_id = item["id"]
+                    info += send_discovery(category, id1, name, name_id)+"\n"
+                    id1 = id1 + 1
+            if category == "pwr":
+                for item in items:
+                    name = item["label"]
+                    name_id = item["id"]
+                    info += send_discovery(category, id2, name, name_id)+"\n"
+                    id2 = id2 + 1
+            if category == "fan":
+                for item in items:
+                    name = item["label"]
+                    name_id = item["id"]
+                    info += send_discovery(category, id3, name, name_id)+"\n"
+                    id3 = id3 + 1
+            if category == "sys":
+                for item in items:
+                    name = item["label"]
+                    name_id = item["id"]
+                    info += send_discovery(category, id4, name, name_id) + "\n"
+                    id4 = id4 + 1
+        info = "发现了" + str(count) + "个实体\n" + info
+        return info
 
 
 if __name__ == "__main__":

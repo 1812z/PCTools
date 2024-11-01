@@ -19,7 +19,7 @@ def send_discovery(name, id, type="button"):
             "name": "PC",
             "manufacturer": "1812z",
             "model": "PCTools",
-            "sw_version": "2024.9.25",
+            "sw_version": "2024.10.31",
             "configuration_url": "https://1812z.top"
         }
     }
@@ -85,7 +85,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
 # 运行命令
 def run_command(command, data):
     path = json_data.get("user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
-    print(path)
+    print("快捷命令目录: ",path)
     key = command.split('/')[2]
     if key == device_name + "screen":  # 显示器控制
         if data == "OFF":
@@ -122,7 +122,6 @@ def init_data():
     # 读取账号密码
     with open('config.json', 'r') as file:
         global json_data
-        global device_name
         global device_name
         global broker
         global user_directory
@@ -183,9 +182,12 @@ def subcribe(client):
     client.subscribe( device_name + "/messages")
 
 def start_mqtt():
-    print("MQTT服务启动中...")
-    discovery()
-    mqttc.loop_start()
+    try:
+        discovery()
+        mqttc.loop_start()
+        print("MQTT订阅服务运行中")
+    except:
+        print("MQTT订阅服务启动失败")
 
 
 def stop_mqtt_loop():
@@ -193,5 +195,4 @@ def stop_mqtt_loop():
 
 
 if __name__ == '__main__':
-    discovery()
-    mqttc.loop_forever()
+    start_mqtt()

@@ -13,8 +13,9 @@ from command import discovery as discovery_comm
 import pystray
 import startup
 import HA_widget_task
+from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
 
-version = "V3.5"
+version = "V4.0"
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
 
@@ -47,7 +48,14 @@ def start():
         manager.start()
     if fun5:
         HA_widget_task.start_ha_widget()
+    if fun6:
+        listen_hotkeys()
 
+
+def save_hotkeys_to_file():
+    with open('hotkeys.txt', 'w') as file:
+        for hotkey in hotkeys:
+            file.write(hotkey + '\n')
 
 
 def close_windows():
@@ -67,9 +75,10 @@ def main(newpage: ft.Page):
     page.window_resizable = True
     home = ft.Tab(text="主页")
     setting = ft.Tab(text="设置")
+    tab_hotkey = ft.Tab(text="快捷键")
 
     def button_send_discovery(e):
-        result = discovery() + discovery_comm()
+        result = discovery() + discovery_comm() + send_discovery(hotkeys)
         print(result)
         dialog = ft.AlertDialog(
             title=ft.Text("信息"),
@@ -121,6 +130,10 @@ def main(newpage: ft.Page):
             if fun5:
                 HA_widget_task.stop_ha_widget()
                 print("停止小部件")
+            if fun6:
+                stop_listen()
+                print("停止按键捕获")
+
             run_flag = False
             show_snackbar(page, "已经停止进程")
         else:
@@ -144,7 +157,7 @@ def main(newpage: ft.Page):
     def switch_fun4(e):
         global fun4
         fun4 = e.control.value
-        if(fun4 == True):
+        if (fun4 == True):
             startup.add_to_startup()
             show_snackbar(page, "程序将在开机时后台运行")
         else:
@@ -156,6 +169,11 @@ def main(newpage: ft.Page):
         global fun5
         fun5 = e.control.value
         save_json_data("fun5", fun5)
+
+    def switch_fun6(e):
+        global fun6
+        fun6 = e.control.value
+        save_json_data("fun6", fun6)
 
     def input_user(e):
         save_json_data("username", e.control.value)
@@ -183,6 +201,73 @@ def main(newpage: ft.Page):
 
     def follow(e):
         page.launch_url('https://space.bilibili.com/336130050')
+
+    def button_add_hotkey(e):
+        if run_flag == False:
+            show_snackbar(page, "将记录按下的所有按键,按ESC停止并保存")
+            new_hotkey = capture_hotkeys()
+            show_snackbar(page, "已添加新快捷键" + new_hotkey)
+            hotkeys.append(new_hotkey)
+            update_hotkey_list()
+        else:
+            show_snackbar(page, "请先停止服务")
+
+    def button_listen_hotkeys(e):
+        if listen_hotkeys() == 0:
+            show_snackbar(page, "开始测试快捷键监听")
+        else:
+            show_snackbar(page, "已经启动快捷键监听")
+
+    def button_stop_listen(e):
+        if stop_listen() == 0:
+            show_snackbar(page, "停止快捷键监听")
+        else:
+            show_snackbar(page, "请先启动快捷键监听")
+
+    def delete_hotkey(hotkey):
+        # 从列表中删除快捷键并更新视图
+        hotkeys.remove(hotkey)
+        save_hotkeys_to_file()
+        update_hotkey_list()
+
+    def update_hotkey_list():
+        # 更新列表视图
+        hotkey_view.controls.clear()
+        if hotkeys:
+            for hotkey in hotkeys:
+                hotkey_view.controls.append(
+                    ft.Row(
+                        [
+                            ft.Container(width=85),
+                            ft.ElevatedButton(
+                                content=ft.Row(
+                                    [
+                                        ft.Text(
+                                            hotkey, weight=ft.FontWeight.W_600, size=17),
+                                    ],
+                                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                                ),
+                                width=120,
+                                height=40
+                            ),
+                            ft.Container(width=40),
+                            ft.IconButton(
+                                ft.icons.DELETE, on_click=lambda e, h=hotkey: delete_hotkey(h)),
+                        ],
+
+                    )
+                )
+        else:
+            hotkey_view.controls.append(ft.Row(
+                [
+                    ft.Container(width=150),
+                    ft.Text("TAT..啥都木有", size=15)
+                ])
+            )
+        hotkey_view.update()
+
+    # 创建快捷键页面
+    hotkey_view = ft.ListView(height=320, width=600, spacing=10)
 
     home_page = [
 
@@ -323,13 +408,13 @@ def main(newpage: ft.Page):
                     [
                         ft.Container(width=90),
                         ft.Switch(label="网页部件", label_position='left', scale=1.2,
-                                  value=fun4, on_change=switch_fun5),
+                                  value=fun5, on_change=switch_fun5),
                         ft.Container(width=10),
                         ft.TextField(label="HA网址", width=200,
                                      on_submit=input_url, value=read_url),
 
                     ]
-                ),ft.Row(
+                ), ft.Row(
                     [
                         ft.Container(width=90),
                         ft.Switch(label="开机自启", label_position='left', scale=1.2,
@@ -345,13 +430,85 @@ def main(newpage: ft.Page):
             horizontal_alignment=CrossAxisAlignment.CENTER,
         )
     ]
+
+    hotkey_page = [
+        ft.Column(
+            [
+                ft.Container(
+                    content=ft.Image(
+                        src="img\\home-assistant-wordmark-with-margins-color-on-light.png",
+                        fit=ft.ImageFit.CONTAIN,
+                        width=500
+                    ),
+                ),
+                ft.Row(
+                    [
+                        ft.Switch(label="快捷键功能", label_position='left',
+                                  scale=1.2, value=fun6, on_change=switch_fun6),
+                        ft.Container(width=30),
+                    ], alignment=ft.MainAxisAlignment.CENTER
+                ),
+                ft.Row(
+                    [
+                        ft.ElevatedButton(
+                            content=ft.Row(
+                                [
+                                    # ft.Icon(ft.icons.PLUS_ONE_ROUNDED),
+                                    ft.Text(
+                                        "新增按键", weight=ft.FontWeight.W_600, size=17),
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                            ),
+                            on_click=button_add_hotkey,
+                            width=120,
+                            height=40
+                        ),
+
+                        ft.ElevatedButton(
+                            content=ft.Row(
+                                [
+                                    # ft.Icon(ft.icons.PLUS_ONE_ROUNDED),
+                                    ft.Text(
+                                        "开始监听", weight=ft.FontWeight.W_600, size=17),
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                            ),
+                            on_click=button_listen_hotkeys,
+                            width=120,
+                            height=40
+                        ),
+
+                        ft.ElevatedButton(
+                            content=ft.Row(
+                                [
+                                    # ft.Icon(ft.icons.PLUS_ONE_ROUNDED),
+                                    ft.Text(
+                                        "停止监听", weight=ft.FontWeight.W_600, size=17),
+                                ],
+                                alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                            ),
+                            on_click=button_stop_listen,
+                            width=120,
+                            height=40
+                        )
+                    ], alignment=ft.MainAxisAlignment.CENTER
+                ),
+                hotkey_view
+
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+    ]
     home.content = ft.Column(controls=home_page)
     setting.content = ft.Column(controls=setting_page)
+    tab_hotkey.content = ft.Column(controls=hotkey_page)
     tabbar = ft.Tabs()
-    tabbar.tabs = [home, setting]
+    tabbar.tabs = [home, setting, tab_hotkey]
     page.add(tabbar)
 
     page.update()
+    update_hotkey_list()
 
 
 def on_exit(icon, item):
@@ -375,6 +532,8 @@ def on_exit(icon, item):
         if fun5:
             HA_widget_task.stop_ha_widget()
             print("停止小部件")
+        if fun6:
+            print("停止快捷键捕获")
         icon_flag = False
         close_windows()
         icon.stop()
@@ -398,15 +557,17 @@ def icon_task():
 
 
 def user_directory():
-    save_json_data("user_directory",os.path.expanduser("~")) 
+    save_json_data("user_directory", os.path.expanduser("~"))
 
 
 show_menu_flag = False
 icon_flag = True
 if __name__ == "__main__":
     global run_flag
+    global hotkeys
     run_flag = False
     threading.Thread(target=icon_task).start()
+    hotkeys = load_hotkeys()
     with open('config.json', 'r') as file:
         json_data = json.load(file)
         fun1 = json_data.get("fun1")
@@ -414,6 +575,7 @@ if __name__ == "__main__":
         fun3 = json_data.get("fun3")
         fun4 = json_data.get("fun4")
         fun5 = json_data.get("fun5")
+        fun6 = json_data.get("fun6")
         read_user = json_data.get("username")
         read_password = "密码已隐藏"
         read_interval = json_data.get("interval")
