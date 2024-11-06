@@ -4,6 +4,8 @@ import os
 from volume import set_volume
 from short_id import generate_short_id
 from Toast import show_toast
+import importlib
+import sys
 
 def send_discovery(name, id, type="button"):
     global device_name
@@ -83,6 +85,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 
 # 运行命令
+python_file = {}
 def run_command(command, data):
     path = json_data.get("user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
     print("快捷命令目录: ",path)
@@ -101,9 +104,25 @@ def run_command(command, data):
         set_volume(int(data) / 100)
     else:  # 运行文件
         run_file = command_data.get(key)
-        print("命令:", key, "运行文件:", run_file)
-        run =  current_directory + '\\' + run_file  
-        os.system(f'start "" "{run}"')
+        if run_file.split('.')[1] == "py" :
+            print("命令:", key, "执行PY文件:", run_file)
+
+            file_path = os.path.join(os.path.dirname(__file__), 'commands', f'{run_file}')
+
+            # 动态加载文件
+            spec = importlib.util.spec_from_file_location(run_file, file_path)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[run_file] = module  
+            spec.loader.exec_module(module)  
+
+            if hasattr(module, 'fun'):
+                module.fun()
+            else:
+                print(f"模块 {run_file} 中没有名为 'fun' 的函数")
+        else:
+            print("命令:", key, "运行文件:", run_file)
+            run =  current_directory + '\\' + run_file  
+            os.system(f'start "" "{run}"')
 
 
 # 初始化
