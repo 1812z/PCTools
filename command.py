@@ -1,3 +1,4 @@
+import subprocess
 import paho.mqtt.client as mqtt
 import json
 import os
@@ -104,7 +105,8 @@ def run_command(command, data):
         set_volume(int(data) / 100)
     else:  # 运行文件
         run_file = command_data.get(key)
-        if run_file.split('.')[1] == "py" :
+        file_type = run_file.split('.')[1]
+        if file_type == "py" :
             print("命令:", key, "执行PY文件:", run_file)
 
             file_path = os.path.join(os.path.dirname(__file__), 'commands', f'{run_file}')
@@ -119,11 +121,17 @@ def run_command(command, data):
                 module.fun()
             else:
                 print(f"模块 {run_file} 中没有名为 'fun' 的函数")
+        elif file_type == "lnk":
+            print("命令:", key, "打开快捷方式:", run_file)
+            run =  current_directory + '\\' + run_file 
+            #os.system(f'start "" "{run}"')
+            subprocess.Popen(['explorer', run])
+        elif file_type == "bat":
+            bat_file =  current_directory + '\\' + run_file 
+            subprocess.Popen(bat_file, creationflags=subprocess.CREATE_NO_WINDOW)
         else:
-            print("命令:", key, "运行文件:", run_file)
-            run =  current_directory + '\\' + run_file  
+            run =  current_directory + '\\' + run_file 
             os.system(f'start "" "{run}"')
-
 
 # 初始化
 def init_data():
@@ -214,4 +222,5 @@ def stop_mqtt_loop():
 
 
 if __name__ == '__main__':
-    start_mqtt()
+    discovery()
+    mqttc.loop_forever()
