@@ -8,3 +8,4 @@ pycaw==20240210
 pystray==0.19.5
 plyer==2.1.0
 pywin32==307
+keyboard==0.13.5
