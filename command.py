@@ -8,6 +8,7 @@ from Toast import show_toast
 import importlib
 import sys
 
+
 def send_discovery(name, id, type="button"):
     global device_name
     global comm_topic
@@ -60,15 +61,15 @@ def send_discovery(name, id, type="button"):
 
     info = "发现主题:" + discovery_topic
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
-    print(info)
+    # print(info)
     return info
 
 
 def on_message(client, userdata, message):
     userdata.append(message.payload)
     command = message.payload.decode()
-    if(message.topic == device_name + "/messages"):
-        show_toast("HA通知",command)
+    if (message.topic == device_name + "/messages"):
+        show_toast("HA通知", command)
     else:
         if (command != "ON"):
             run_command(message.topic, command)
@@ -87,53 +88,60 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 # 运行命令
 python_file = {}
+
+
 def run_command(command, data):
-    path = json_data.get("user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
-    print("快捷命令目录: ",path)
     key = command.split('/')[2]
+    run_file = command_data.get(key)
+
     if key == device_name + "screen":  # 显示器控制
+        path = json_data.get(
+            "user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
         if data == "OFF":
-            run = 'start /b cmd /c "'+ path + '" --MonitorNum=1 --VCP=0xD6:0x04'
-            os.system(run)
+            #显示器关机
+            run = [path, "--MonitorNum=1", "--VCP=0xD6:0x04"]
+            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
         else:
             brightness = str(int(data) * 100 // 255)
-            run = 'start /b cmd /c "'+ path + '" --MonitorNum=1 --Set=' + brightness
-            print(run)
-            os.system(run)
+            run = [path, "--MonitorNum=1", "--Set=" + brightness]
+            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
             print("显示器亮度:", brightness)
-    elif key == device_name + "volume":
+    elif key == device_name + "volume":  # 音量控制
         set_volume(int(data) / 100)
-    else:  # 运行文件
-        run_file = command_data.get(key)
+    else:                              # 运行程序
         file_type = run_file.split('.')[1]
-        if file_type == "py" :
+        if file_type == "py":  # python程序
             print("命令:", key, "执行PY文件:", run_file)
 
-            file_path = os.path.join(os.path.dirname(__file__), 'commands', f'{run_file}')
+            file_path = os.path.join(os.path.dirname(
+                __file__), 'commands', f'{run_file}')
 
             # 动态加载文件
             spec = importlib.util.spec_from_file_location(run_file, file_path)
             module = importlib.util.module_from_spec(spec)
-            sys.modules[run_file] = module  
-            spec.loader.exec_module(module)  
+            sys.modules[run_file] = module
+            spec.loader.exec_module(module)
 
             if hasattr(module, 'fun'):
                 module.fun()
             else:
                 print(f"模块 {run_file} 中没有名为 'fun' 的函数")
-        elif file_type == "lnk":
+        elif file_type == "lnk":  # 快捷方式
             print("命令:", key, "打开快捷方式:", run_file)
-            run =  current_directory + '\\' + run_file 
-            #os.system(f'start "" "{run}"')
+            run = current_directory + '\\' + run_file
+            # os.system(f'start "" "{run}"')
             subprocess.Popen(['explorer', run])
-        elif file_type == "bat":
-            bat_file =  current_directory + '\\' + run_file 
-            subprocess.Popen(bat_file, creationflags=subprocess.CREATE_NO_WINDOW)
-        else:
-            run =  current_directory + '\\' + run_file 
+        elif file_type == "bat":  # 批处理文件
+            bat_file = current_directory + '\\' + run_file
+            subprocess.Popen(
+                bat_file, creationflags=subprocess.CREATE_NO_WINDOW)
+        else:  # 其它文件
+            run = current_directory + '\\' + run_file
             os.system(f'start "" "{run}"')
 
 # 初始化
+
+
 def init_data():
     global current_directory
     current_file_path = os.path.abspath(__file__)
@@ -185,14 +193,14 @@ def discovery():
         if os.path.isfile(os.path.join(current_directory, filename)):
             id = generate_short_id(filename)
             save_json_data(device_name + id, filename)
-            info += filename +"\n"
+            info += filename + "\n"
             count += 1
             # 发现
             send_discovery(filename, id, "button")
     send_discovery("显示器", "screen", "light")
     send_discovery("音量", "volume", "number")
-    save_json_data("count",count)
-    info = "发现了"+ str(count) +"个命令\n" + info
+    save_json_data("count", count)
+    info = "发现了" + str(count) + "个命令\n" + info
     return info
 
 
@@ -203,10 +211,11 @@ def subcribe(client):
                 subcribe_topic = "homeassistant/button/" + \
                     device_name + generate_short_id(filename) + "/set"
                 client.subscribe(subcribe_topic)
-                
+
     client.subscribe("homeassistant/light/" + device_name + "screen" + "/set")
     client.subscribe("homeassistant/number/" + device_name + "volume" + "/set")
-    client.subscribe( device_name + "/messages")
+    client.subscribe(device_name + "/messages")
+
 
 def start_mqtt():
     try:
