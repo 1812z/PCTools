@@ -4,7 +4,7 @@ HA中查看电脑硬件温度占用等
 电脑屏幕和摄像头网页查看  
 ~~订阅MQTT主题自动复制内容到剪贴板~~(没啥用)  
 快捷键打开HA侧边栏(默认右ctrl)    
-快捷键接入HA智能联动
+快捷键接入HA智能联动  
 <img src=".github\images\gui.png" alt="GUI Image" width="600"/>
 
 
