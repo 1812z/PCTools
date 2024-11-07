@@ -10,7 +10,10 @@
     "device_name": "PC",
     "HA_MQTT_port": 1883,
     "user_directory": "C:\\Users\\i",
-    "select_key": "ctrl_r",
+    "select_key": "menu",
     "url": "https://example.com:8124/lovelace",
-    "fun5": true
+    "fun5": true,
+    "fun6": true,
+    "hotkey_notify": false,
+    "suppress": true
 }

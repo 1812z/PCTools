@@ -137,7 +137,7 @@ def listen_hotkeys():
         # keyboard.wait('esc')
         return 0
     return 1
-2
+
 
 def stop_listen():
     global listening

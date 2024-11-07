@@ -1,46 +1,17 @@
 import json
 import webview
 import screeninfo
-from pynput import keyboard
+import keyboard
 
-select_key = keyboard.Key.menu
-
-key_pressed = False
 window_show = False
-
-
-def on_press(key):
-    global key_pressed
-    if key == select_key:
-        key_pressed = True
-
-
-def on_release(key):
-    global key_pressed
-    global window_show
-    # print(select_key)
-    # print(key)
-    if key == select_key:
-        key_pressed = False
-        if window_show == True:
-            window.hide()
-            window_show = False
-        else:
-            window.on_top = True
-            window_show = True
-            window.show()
-
-
-listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 
 
 class Api:
     def close_window(self):
-        global key_pressed
         global window_show
         window.hide()
         window_show = False
-        key_pressed = False
+
 
 
 def inject_js(window):
@@ -103,12 +74,26 @@ def inject_js(window):
         print(f"注入 JavaScript 失败: {e}")
 
 
+def command(h):
+    print("触发了快捷键:", h)
+    global window_show
+    if window_show == True:
+        window.hide()
+        window_show = False
+    else:
+        window.on_top = True
+        window_show = True
+        window.show()
+
 def main():
     global select_key
     with open('config.json', 'r') as file:
         json_data = json.load(file)
-        key_enmu = json_data.get("select_key")
-        select_key = getattr(keyboard.Key, key_enmu, None)
+        select_key = json_data.get("select_key")
+        if not(select_key):
+           select_key = 'menu'
+        keyboard.add_hotkey(select_key, lambda h=select_key: command(h),suppress=True)
+        
         url = json_data.get("url")
 
     api = Api()
@@ -132,7 +117,6 @@ def main():
 
     window.events.loaded += lambda: inject_js(window)
 
-    listener.start()
     window.hidden=True
     window.easy_drag=False
     webview.start(private_mode=False)
