@@ -5,19 +5,26 @@ HA中查看电脑硬件温度占用等
 ~~订阅MQTT主题自动复制内容到剪贴板~~(没啥用)  
 快捷键打开HA侧边栏(默认右ctrl)    
 快捷键接入HA智能联动
+![alt text](.github\images\gui.png)
+
 ### HA界面展示:
 1.另类副屏:  
 <img src="https://img2.moeblog.vip/images/vrJD.jpg" alt="图片" width="450" height="200" />  
 2.主页面:  
-[![vt5u.md.png](https://img2.moeblog.vip/images/vt5u.md.png)](https://img.moeblog.vip/image/vt5u)  
+<img src=".github\images\image.png" alt="手机视图" height="500"/>
+
 ## TODO List
 键盘快捷键联动控制智能家具
+## TODO List
+- [X] 键盘快捷键联动控制智能家具
+- [ ] 优化代码(下次一定)
+
 
 ## 一.安装各项运行所需要的程序
-#### 部分功能用不到可以不安装  
+
 - Python环境:3.12.7  
-- 必选: pyhon 相关库, Homeassistant MQTT加载项      
-通过如下命令安装环境  
+-  一个接入HA的MQTT服务器      
+- 运行库，通过如下命令安装环境  
  `pip install -r .\requirements.txt`  
 - 电脑信息监控: 依赖Aida64(读取数据并共享给程序)   
 - 显示器亮度调节: 依赖[Twinkle tray](https://github.com/xanderfrangos/twinkle-tray/releases)
