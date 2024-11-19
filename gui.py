@@ -14,6 +14,8 @@ import pystray
 import startup
 import HA_widget_task
 from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
+import socket
+from Toast import show_toast
 
 version = "V4.0"
 manager = FlaskAppManager('0.0.0.0', 5000)
@@ -38,18 +40,38 @@ def show_snackbar(page: ft.Page, message: str):
     page.update()
 
 
+
+def is_connected():
+    try:
+        # 尝试连接到Google的公共DNS服务器
+        socket.create_connection(("223.5.5.5", 53), timeout=3)
+        return True
+    except OSError:
+        return False
+
+
+
 def start():
-    if fun1:
-        discovery()
-        start_task()
-    if fun2:
-        start_mqtt()
-    if fun3:
-        manager.start()
-    if fun5:
-        HA_widget_task.start_ha_widget()
-    if fun6:
-        listen_hotkeys()
+    if is_connected():
+        if fun1:
+            if discovery() !=1:
+                start_task()
+            else:
+                show_toast("[ERROR]PCTools","MQTT连接失败")
+        if fun2:
+            start_mqtt()
+        if fun3:
+            manager.start()
+        if fun5:
+            HA_widget_task.start_ha_widget()
+        if fun6:
+            listen_hotkeys()
+    else:
+        global run_flag
+        run_flag = False
+        print("网络连接失败")
+        show_toast("[ERROR]PCTools","网络连接失败")
+        
 
 
 def save_hotkeys_to_file():

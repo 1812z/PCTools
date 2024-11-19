@@ -115,6 +115,7 @@ def load_hotkeys():
 
 
 def command(h):
+    keyboard.release(h)
     print("触发了快捷键:", h)
     if hotkey_notify == True:
         show_toast("PCTools" ,"触发了快捷键:" + h)

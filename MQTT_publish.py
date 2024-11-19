@@ -178,6 +178,7 @@ def discovery():
                     id4 = id4 + 1
         info = "发现了" + str(count) + "个实体\n" + info
         return info
+    return 1
 
 
 if __name__ == "__main__":
