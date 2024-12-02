@@ -48,7 +48,6 @@ def send_discovery(hotkeys):
 
 # 初始化
 def init_data():
-    load_hotkeys()
     # 读取账号密码
     with open('config.json', 'r') as file:
         global json_data

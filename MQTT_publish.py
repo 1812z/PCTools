@@ -27,7 +27,7 @@ def send_discovery(device_class, topic_id, name, name_id, type="sensor"):
             "name": "PC",
             "manufacturer": "1812z",
             "model": "PCTools",
-            "sw_version": "2024.10.31",
+            "sw_version": "2024.12.2",
             "configuration_url": "https://1812z.top"
         }
     }
