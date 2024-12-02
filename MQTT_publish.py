@@ -1,3 +1,4 @@
+import ctypes
 import python_aida64
 from pprint import pprint
 import paho.mqtt.client as mqtt
@@ -127,8 +128,10 @@ def send_aida64():
 # 发送传感器信息
 def send_data():
     if init_data() != 1:
-        send_volume()
-
+        try:
+            send_volume()
+        except ctypes.COMError:
+            print("找不到扬声器")
         #discovery()
         send_aida64()
 

@@ -57,3 +57,7 @@ def start_task():
 
 def stop_task():
     periodic_task.stop()
+
+if __name__ == "__main__":
+    tasks()
+

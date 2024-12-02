@@ -1,8 +1,10 @@
 import os
 import sys
 import win32com.client
+import pythoncom
 
 def add_to_startup(script_name='gui.py'):
+    pythoncom.CoInitialize()  # 初始化 COM 库
     # 获取当文件夹路径
     startup_folder = os.path.join(os.getenv('APPDATA'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
     pythonw_executable = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')

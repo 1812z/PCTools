@@ -22,7 +22,7 @@ def send_discovery(hotkeys):
                     "name": "PC",
                     "manufacturer": "1812z",
                     "model": "PCTools",
-                    "sw_version": "2024.10.31",
+                    "sw_version": "2024.12.2",
                     "configuration_url": "https://1812z.top"
             }
         }
@@ -105,6 +105,7 @@ def capture_hotkeys():
 
 
 def load_hotkeys():
+    init_data()
     try:
         with open('hotkeys.txt', 'r') as file:
             global hotkeys
@@ -115,7 +116,10 @@ def load_hotkeys():
 
 
 def command(h):
-    keyboard.release(h)
+    key_list = h.split('+')
+    for item in key_list:
+        keyboard.release(item)
+        print(item)
     print("触发了快捷键:", h)
     if hotkey_notify == True:
         show_toast("PCTools" ,"触发了快捷键:" + h)
@@ -134,7 +138,7 @@ def listen_hotkeys():
         send_discovery(hotkeys)
         print("开始监听快捷键...", hotkeys)
         for hotkey in hotkeys:
-            keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h),suppress=suppress,trigger_on_release=True)
+            keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h),suppress=suppress,trigger_on_release=False)
         # keyboard.wait('esc')
         return 0
     return 1
@@ -163,6 +167,7 @@ def menu():
         if choice == '1':
             capture_hotkeys()
         elif choice == '2':
+            load_hotkeys()
             listen_hotkeys()
         elif choice == '3':
             init_data()

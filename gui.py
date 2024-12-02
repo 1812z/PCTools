@@ -17,7 +17,7 @@ from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_l
 import socket
 from Toast import show_toast
 
-version = "V4.0"
+version = "V4.1"
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
 
@@ -41,36 +41,23 @@ def show_snackbar(page: ft.Page, message: str):
 
 
 
-def is_connected():
-    try:
-        # 尝试连接到Google的公共DNS服务器
-        socket.create_connection(("223.5.5.5", 53), timeout=3)
-        return True
-    except OSError:
-        return False
-
 
 
 def start():
-    if is_connected():
-        if fun1:
-            if discovery() !=1:
-                start_task()
-            else:
-                show_toast("[ERROR]PCTools","MQTT连接失败")
-        if fun2:
-            start_mqtt()
-        if fun3:
-            manager.start()
-        if fun5:
-            HA_widget_task.start_ha_widget()
-        if fun6:
-            listen_hotkeys()
-    else:
-        global run_flag
-        run_flag = False
-        print("网络连接失败")
-        show_toast("[ERROR]PCTools","网络连接失败")
+    if fun1:
+        if discovery() !=1:
+            start_task()
+        else:
+            show_toast("[ERROR]PCTools","MQTT连接失败")
+    if fun2:
+        start_mqtt()
+    if fun3:
+        manager.start()
+    if fun5:
+        HA_widget_task.start_ha_widget()
+    if fun6:
+        listen_hotkeys()
+
         
 
 
@@ -112,18 +99,29 @@ def main(newpage: ft.Page):
         page.update()
 
     def button_send_data(e):
-        result = send_data()
-        print(result)
-        snackbar = ft.SnackBar(
+        try: 
+            result = send_data()    
+        except NameError:
+            dialog = ft.AlertDialog(
+            title=ft.Text("错误"),
+            content=ft.Text(value="1"),
+            scrollable=True
+            )
+            page.dialog = dialog
+            dialog.open = True
+            page.update()
+        else:
+            print(result)
+            snackbar = ft.SnackBar(
             content=ft.Text(result),
             action="OK",
             action_color=ft.colors.WHITE,
             on_action=None,
             duration=2000
-        )
-        page.snack_bar = snackbar
-        page.snack_bar.open = True
-        page.update()
+            )
+            page.snack_bar = snackbar
+            page.snack_bar.open = True
+            page.update()
 
     def button_start(e):
         global run_flag
