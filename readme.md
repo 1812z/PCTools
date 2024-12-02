@@ -14,8 +14,7 @@ HA中查看电脑硬件温度占用等
 2.主页面:  
 <img src=".github\images\image.png" alt="手机视图" height="500"/>
 
-## TODO List
-键盘快捷键联动控制智能家具
+
 ## TODO List
 - [X] 键盘快捷键联动控制智能家具
 - [ ] 优化代码(下次一定)
