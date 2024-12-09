@@ -2,19 +2,59 @@ import time
 import paho.mqtt.client as mqtt
 import json
 from Execute_Command import MQTT_Command
+
 global mqttc,initialized
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 initialized = False
 
+def on_connect(client, userdata, flags, reason_code, properties):
+    if reason_code.is_failure:
+        print(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")
+    else:
+        print("成功连接到:", broker)
+
+def on_message(client, userdata, data):
+    userdata.append(data.payload)
+    message = data.payload.decode()
+    MQTT_Command(data.topic,message)
+    print(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
+
+
+# 初始化MQTT
+def init_data():
+    global json_data,device_name,initialized,broker
+    initialized = True
+    # 读取账号密码
+    with open('config.json', 'r') as file:
+        json_data = json.load(file)
+        username = json_data.get("username")
+        password = json_data.get("password")
+        broker = json_data.get("HA_MQTT")
+        port = json_data.get("HA_MQTT_port")
+        device_name = json_data.get("device_name")
+
+    mqttc.user_data_set([])
+    mqttc._username = username
+    mqttc._password = password
+    mqttc.on_connect = on_connect
+    mqttc.on_message = on_message
+    try:
+        mqttc.connect(broker, port)
+    except:
+        print("MQTT连接失败")
+        initialized = False
+        return 1
+
+init_data()
 # device_class HA设备类型
 # topic_id 数据编号，默认空
 # name 实体名称
 # name_id 实体唯一标识符
 # type 实体类型 默认sensor
-def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='1', type="sensor"):
+def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False):
     global device_name,initialized
     if not initialized:
-        if init_data() != 1:
+        if init_data() == 1:
             return "timeout"
 
     # 发现示例
@@ -45,9 +85,12 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         discovery_data["value_template"] = "{{ float(value_json." + \
             device_class + "[" + str(topic_id) + "].value) }}"
     # 主类型处理
-    if type == 'sensor':
-        state_topic = "homeassistant/" + type + "/" + device_name + "/state"
+    if type == 'sensor' and is_aida64:
+        state_topic = "homeassistant/" + type + "/" + device_name  + "/state"
         discovery_data["state_topic"] = state_topic
+    elif type == 'sensor' and not is_aida64:
+        state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
+        discovery_data["state_topic"] = state_topic        
     elif type == "button"  or type == "number" :
         command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
         discovery_data["command_topic"] = command_topic
@@ -82,44 +125,9 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         discovery_data["unit_of_measurement"] = "°C"
     # 发送信息
     info = "发现主题:" + discovery_topic
-    print(info)
+    # print(info)
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
     return info
-
-# 初始化MQTT
-def init_data():
-    global json_data,device_name,initialized,broker
-    initialized = True
-    # 读取账号密码
-    with open('config.json', 'r') as file:
-        json_data = json.load(file)
-        username = json_data.get("username")
-        password = json_data.get("password")
-        broker = json_data.get("HA_MQTT")
-        port = json_data.get("HA_MQTT_port")
-        device_name = json_data.get("device_name")
-
-    mqttc.user_data_set([])
-    mqttc._username = username
-    mqttc._password = password
-    mqttc.on_connect = on_connect
-    mqttc.on_message = on_message
-    try:
-        mqttc.connect(broker, port)
-        timer = 0
-        while(timer<=5):
-            time.sleep(1)
-            timer+=1
-            if mqttc.is_connected():
-                return 0
-            elif timer == 10:
-                initialized = False
-                print("MQTT连接超时")
-                return 1
-    except:
-        print("MQTT连接失败")
-        initialized = False
-        return 1
 
 
 # 发送自定义消息
@@ -136,6 +144,7 @@ def Update_State_data(data,topic,type):
     elif type == "sensor":
         state_topic = "homeassistant/sensor/" + device_name + topic + "/state"
         Publish_MQTT_Message(state_topic,data)
+        # print(state_topic,data)
     
 
 def MQTT_Subcribe(topic):
@@ -144,23 +153,19 @@ def MQTT_Subcribe(topic):
     else:
         print("MQTT订阅服务未连接!")
 
-
-def on_connect(client, userdata, flags, reason_code, properties):
-    if reason_code.is_failure:
-        print(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")
-    else:
-        print("成功连接到:", broker)
-
-def on_message(client, userdata, data):
-    userdata.append(data.payload)
-    message = data.payload.decode()
-    MQTT_Command(data.topic,message)
-    print(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
-
 # MQTT 进程管理
 def start_mqtt():
     try:
         mqttc.loop_start()
+        timer = 0
+        while(timer<=5):
+            time.sleep(1)
+            timer+=1
+            if mqttc.is_connected():
+                return 0
+            elif timer == 10:
+                print("MQTT连接超时")
+                return 1
         print("MQTT订阅服务运行中")
     except:
         print("MQTT订阅服务启动失败")

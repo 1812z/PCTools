@@ -26,6 +26,7 @@ def add_to_startup(script_name='gui.py'):
     shortcut.Save()
 
     print(f"{script_name} 已成功加入开机启动项")
+    return f"{script_name} 已成功加入开机启动项"
 
 
 def remove_from_startup(script_name='gui.py'):
@@ -37,9 +38,10 @@ def remove_from_startup(script_name='gui.py'):
     if os.path.exists(shortcut_path):
         os.remove(shortcut_path)
         print(f"{script_name} 已成功从开机启动项移除")
+        return f"{script_name} 已成功从开机启动项移除"
     else:
         print(f"未找到 {script_name} 的启动项")
-
+        return f"未找到 {script_name} 的启动项"
 
 if __name__ == "__main__":
     add_to_startup()

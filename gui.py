@@ -15,7 +15,7 @@ import startup
 import HA_widget_task
 from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
 from Toast import show_toast
-
+from WIndows_Listener import start_window_listener
 version = "V4.1"
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
@@ -38,7 +38,7 @@ def show_snackbar(page: ft.Page, message: str):
     page.snack_bar.open = True
     page.update()
 
-
+fun7_flag = False
 def start():
     if fun1:
         if discovery() !=1:
@@ -46,16 +46,20 @@ def start():
         else:
             show_toast("[ERROR]PCTools","MQTT连接失败")
     if fun2:
-        start_mqtt()
-        subcribe()
+        discovery_comm()
+        if start_mqtt() != 1:
+            subcribe()
     if fun3:
         manager.start()
     if fun5:
         HA_widget_task.start_ha_widget()
     if fun6:
         listen_hotkeys()
-
-        
+    if fun7:
+        global fun7_flag
+        if not fun7_flag:
+            start_window_listener()
+            fun7_flag = True
 
 
 def save_hotkeys_to_file():
@@ -97,6 +101,7 @@ def main(newpage: ft.Page):
 
     def button_send_data(e):
         try: 
+            discovery()
             result = send_data()    
         except NameError:
             dialog = ft.AlertDialog(
@@ -150,6 +155,9 @@ def main(newpage: ft.Page):
             if fun6:
                 stop_listen()
                 print("停止按键捕获")
+            if fun7:
+                print("请重新启动来停止前台应用反馈")
+                show_snackbar(page,"停止前台应用反馈需要重启")
 
             run_flag = False
             show_snackbar(page, "已经停止进程")
@@ -171,16 +179,6 @@ def main(newpage: ft.Page):
         fun3 = e.control.value
         save_json_data("fun3", fun3)
 
-    def switch_fun4(e):
-        global fun4
-        fun4 = e.control.value
-        if (fun4 == True):
-            startup.add_to_startup()
-            show_snackbar(page, "程序将在开机时后台运行")
-        else:
-            startup.remove_from_startup()
-            show_snackbar(page, "已移除自启动")
-        save_json_data("fun4", fun4)
 
     def switch_fun5(e):
         global fun5
@@ -191,6 +189,35 @@ def main(newpage: ft.Page):
         global fun6
         fun6 = e.control.value
         save_json_data("fun6", fun6)
+
+    def switch_fun4(e,button):
+        global fun4
+        fun4 = not fun4
+        if fun4:
+            button.content=ft.Row(
+            [
+                ft.Icon(ft.icons.AUTO_AWESOME),
+                ft.Text("自启动OFF", weight=ft.FontWeight.W_600),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+            )
+            show_snackbar(page, startup.remove_from_startup())
+        else:
+            button.content=ft.Row(
+            [
+                ft.Icon(ft.icons.AUTO_AWESOME),
+                ft.Text("自启动ON", weight=ft.FontWeight.W_600),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+            )
+            show_snackbar(page, startup.add_to_startup())
+        save_json_data("fun4", fun4)
+        page.update()
+
+    def switch_fun7(e):
+        global fun7
+        fun7 = e.control.value
+        save_json_data("fun7", fun7)
 
     def switch_hotkey_notify(e):
         global hotkey_notify
@@ -297,6 +324,19 @@ def main(newpage: ft.Page):
     # 创建快捷键页面
     hotkey_view = ft.ListView(height=320, width=600, spacing=10)
 
+    fun4_button = ft.ElevatedButton(
+        content=ft.Row(
+            [
+                ft.Icon(ft.icons.AUTO_AWESOME),
+                ft.Text("自启动", weight=ft.FontWeight.W_600),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+        ),
+        on_click=lambda e: switch_fun4(e,fun4_button),
+        width=130,
+        height=40
+    )
+    
     home_page = [
 
         ft.Column(
@@ -333,7 +373,7 @@ def main(newpage: ft.Page):
                         alignment=ft.MainAxisAlignment.SPACE_AROUND,
                     ),
                     on_click=button_start,
-                    width=120,
+                    width=130,
                     height=40
                 ),
                 ft.ElevatedButton(
@@ -345,19 +385,7 @@ def main(newpage: ft.Page):
                         alignment=ft.MainAxisAlignment.SPACE_AROUND,
                     ),
                     on_click=button_stop,
-                    width=120,
-                    height=40
-                ),
-                ft.ElevatedButton(
-                    content=ft.Row(
-                        [
-                            ft.Icon(ft.icons.FIND_IN_PAGE),
-                            ft.Text("发现设备", weight=ft.FontWeight.W_600),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                    ),
-                    on_click=button_send_discovery,
-                    width=120,
+                    width=130,
                     height=40
                 ),
                 ft.ElevatedButton(
@@ -369,9 +397,10 @@ def main(newpage: ft.Page):
                         alignment=ft.MainAxisAlignment.SPACE_AROUND,
                     ),
                     on_click=button_send_data,
-                    width=120,
+                    width=130,
                     height=40
                 ),
+                fun4_button,
                 ft.ElevatedButton(
                     content=ft.Row(
                         [
@@ -381,7 +410,7 @@ def main(newpage: ft.Page):
                         alignment=ft.MainAxisAlignment.SPACE_AROUND,
                     ),
                     on_click=follow,
-                    width=120,
+                    width=130,
                     height=40
                 ),
             ],
@@ -438,15 +467,15 @@ def main(newpage: ft.Page):
                         ft.Switch(label="网页部件", label_position='left', scale=1.2,
                                   value=fun5, on_change=switch_fun5),
                         ft.Container(width=10),
-                        ft.TextField(label="HA网址", width=200,
+                        ft.TextField(label="侧边栏网址(https://)", width=200,
                                      on_submit=input_url, value=read_url),
 
                     ]
                 ), ft.Row(
                     [
                         ft.Container(width=90),
-                        ft.Switch(label="开机自启", label_position='left', scale=1.2,
-                                  value=fun4, on_change=switch_fun4, tooltip="添加gui.py为启动项"),
+                        ft.Switch(label="前台监听", label_position='left', scale=1.2,
+                                  value=fun7, on_change=switch_fun7,tooltip="实时反馈前台应用名称"),
                         ft.Container(width=10),
                         ft.TextField(label="数据发送间隔", width=100,
                                      on_submit=input_interval, value=read_interval),
@@ -567,6 +596,9 @@ def on_exit(icon, item):
             print("停止小部件")
         if fun6:
             print("停止快捷键捕获")
+        if fun7:
+            print("请重新启动来停止前台应用反馈")
+            show_snackbar(page,"停止前台应用反馈需要重启")
         icon_flag = False
         close_windows()
         icon.stop()
@@ -609,6 +641,7 @@ if __name__ == "__main__":
         fun4 = json_data.get("fun4")
         fun5 = json_data.get("fun5")
         fun6 = json_data.get("fun6")
+        fun7 = json_data.get("fun7")
         suppress = json_data.get("suppress")
         hotkey_notify = json_data.get("hotkey_notify")
         read_user = json_data.get("username")
