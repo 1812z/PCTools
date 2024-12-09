@@ -1,7 +1,7 @@
 import threading
 import sched
 import time
-from MQTT_publish import send_data, discovery
+from Update_State_Data import send_data
 import json
 
 def read_config():

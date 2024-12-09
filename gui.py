@@ -3,18 +3,17 @@ import threading
 import time
 from PIL import Image
 import flet as ft
-from MQTT_publish import discovery, send_data
+from Update_State_Data import discovery, send_data
 from flet_core import MainAxisAlignment, CrossAxisAlignment
 from web_task import FlaskAppManager
 from timer import start_task, stop_task
 import json
-from command import start_mqtt, stop_mqtt_loop
-from command import discovery as discovery_comm
+from MQTT import start_mqtt, stop_mqtt_loop
+from Command import discovery as discovery_comm,subcribe
 import pystray
 import startup
 import HA_widget_task
 from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
-import socket
 from Toast import show_toast
 
 version = "V4.1"
@@ -40,9 +39,6 @@ def show_snackbar(page: ft.Page, message: str):
     page.update()
 
 
-
-
-
 def start():
     if fun1:
         if discovery() !=1:
@@ -51,6 +47,7 @@ def start():
             show_toast("[ERROR]PCTools","MQTT连接失败")
     if fun2:
         start_mqtt()
+        subcribe()
     if fun3:
         manager.start()
     if fun5:
