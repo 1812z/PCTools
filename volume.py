@@ -10,14 +10,14 @@ def init():
     interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
     volume = interface.QueryInterface(IAudioEndpointVolume)
 
+init()
 def get_volume():
-    init()
+
     current_volume = volume.GetMasterVolumeLevelScalar()
     comtypes.CoUninitialize()
     return current_volume * 100 //1
 
 def set_volume(level):
-    init()
     if(level == 0):
         volume.SetMute(1, None)
     else:
