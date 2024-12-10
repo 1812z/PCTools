@@ -192,7 +192,6 @@ def main(newpage: ft.Page):
 
     def switch_fun4(e,button):
         global fun4
-        fun4 = not fun4
         if fun4:
             button.content=ft.Row(
             [
@@ -211,6 +210,7 @@ def main(newpage: ft.Page):
             alignment=ft.MainAxisAlignment.SPACE_AROUND,
             )
             show_snackbar(page, startup.add_to_startup())
+        fun4 = not fun4
         save_json_data("fun4", fun4)
         page.update()
 
