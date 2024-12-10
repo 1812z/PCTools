@@ -19,7 +19,6 @@ def on_message(client, userdata, data):
     MQTT_Command(data.topic,message)
     print(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
 
-
 # 初始化MQTT
 def init_data():
     global json_data,device_name,initialized,broker
