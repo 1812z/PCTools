@@ -66,9 +66,12 @@ def MQTT_Command(command, data):
             bat_file = current_directory + '\\' + run_file
             subprocess.Popen(
                 bat_file, creationflags=subprocess.CREATE_NO_WINDOW)
+        elif file_type == "py":
+            Python_File(current_directory + '\\' + run_file)
         else:  # 其它文件
             run = current_directory + '\\' + run_file
             os.system(f'start "" "{run}"')
+        
 
 def Python_File(run_file):
     print("执行PY文件:", run_file)
