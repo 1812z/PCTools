@@ -72,7 +72,7 @@ def MQTT_Command(command, data):
             run = current_directory + '\\' + run_file
             os.system(f'start "" "{run}"')
         
-
+        
 def Python_File(run_file):
     print("执行PY文件:", run_file)
 

@@ -42,7 +42,9 @@ def win_event_proc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread,
         class_name = class_buffer.value
 
         print(f"前台窗口变化到 HWND={current_hwnd}, 标题='{window_title}', 类名='{class_name}'")
-        Update_State_data(str(window_title),"ForegroundWindow","sensor")
+        title = str(window_title)
+        if(title != ''):
+            Update_State_data(title,"ForegroundWindow","sensor")
 
 # 将 Python 函数转换为 C 回调函数
 WinEventProc = WinEventProcType(win_event_proc)
