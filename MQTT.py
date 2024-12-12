@@ -98,7 +98,13 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         discovery_data["command_topic"] = command_topic
         discovery_data["brightness_state_topic"] = "homeassistant/light/" + device_name + "screen"
         discovery_data["brightness_command_topic"] = "homeassistant/light/" + device_name + "screen" + "/set"
-
+    elif type == "binary_sensor":
+        state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
+        discovery_data["state_topic"] = state_topic  
+        discovery_data["payload_on"] = "ON"
+        discovery_data["payload_off"] = "OFF"
+    
+    
     # 子类型处理
     if device_class == "pwr":
         discovery_data["device_class"] = "power"

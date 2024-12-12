@@ -3,73 +3,37 @@ import json
 import paho.mqtt.client as mqtt
 import time
 from Toast import show_toast
-
+from MQTT import Send_MQTT_Discovery,Publish_MQTT_Message
 listening = False
 
 
 def send_discovery(hotkeys):
     info = "快捷键发现: \n"
     for hotkey in hotkeys:
-        discovery_data = {
-            "name": "hotkey",
-            "state_topic": "homeassistant/binary_sensor/ctrl1/state",
-            "payload_on": "ON",
-            "payload_off": "OFF",
-            "object_id": "ctrl1",
-            "unique_id": "ctrl1",
-            "device": {
-                    "identifiers": ["PCTools"],
-                    "name": "PC",
-                    "manufacturer": "1812z",
-                    "model": "PCTools",
-                    "sw_version": "2024.12.2",
-                    "configuration_url": "https://1812z.top"
-            }
-        }
-        discovery_data["name"] = hotkey
-        discovery_data["object_id"] = discovery_data["unique_id"] = hotkey
-        discovery_data["state_topic"] = "homeassistant/binary_sensor/" + \
-            device_name + hotkey.replace("+", "-") + "/state"
-
-        discovery_data["device"]["identifiers"] = [device_name]
-        discovery_data["device"]["name"] = device_name
-        discovery_data["object_id"] = device_name + "hotkey-" + hotkey
-        discovery_data["unique_id"] = device_name + "hotkey-" + hotkey
-        # 发现并初始化为关
-        discovery_topic = "homeassistant/binary_sensor/" + \
-            device_name + hotkey.replace("+", "-") + "/config"
-        info = info + "发现主题:" + discovery_topic + "\n"
-        mqttc.publish(discovery_topic, json.dumps(discovery_data))
-    time.sleep(0.5)
-    for hotkey in hotkeys:
-        mqttc.publish("homeassistant/binary_sensor/" + device_name + hotkey.replace("+", "-") + "/state", "OFF")
+        name_id = "hotkey" + hotkey.replace("+", "-")
+        Send_MQTT_Discovery(name=hotkey,name_id=name_id,type="binary_sensor")
+        info = info + hotkey
+    
+    init_binary_sensor(hotkeys)
     return info
 
+def init_binary_sensor(hotkeys):
+    for hotkey in hotkeys:
+        topic = "homeassistant/binary_sensor/" + device_name + hotkey.replace("+", "-") + "/state"
+        Publish_MQTT_Message(topic,"OFF")
 
 # 初始化
 def init_data():
-    # 读取账号密码
     with open('config.json', 'r') as file:
         global json_data
-        global device_name
-        global broker
         global hotkey_notify
         global suppress
+        global device_name
         json_data = json.load(file)
-        username = json_data.get("username")
-        password = json_data.get("password")
-        broker = json_data.get("HA_MQTT")
-        port = json_data.get("HA_MQTT_port")
-        device_name = json_data.get("device_name")
         hotkey_notify = json_data.get("hotkey_notify")
         suppress = json_data.get("suppress")
-    global mqttc
-    mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-    mqttc.user_data_set([])
-    mqttc._username = username
-    mqttc._password = password
-    mqttc.connect(broker, port)
-
+        device_name = json_data.get("device_name")
+    load_hotkeys()
 
 def save_hotkey(hotkey):
     existing_hotkeys = load_hotkeys()
@@ -104,7 +68,6 @@ def capture_hotkeys():
 
 
 def load_hotkeys():
-    init_data()
     try:
         with open('hotkeys.txt', 'r') as file:
             global hotkeys
@@ -122,11 +85,10 @@ def command(h):
     print("触发了快捷键:", h)
     if hotkey_notify == True:
         show_toast("PCTools" ,"触发了快捷键:" + h)
-    mqttc.publish("homeassistant/binary_sensor/" + device_name +
-                  h.replace("+", "-") + "/state", "ON")
+    topic = "homeassistant/binary_sensor/" + device_name + h.replace("+", "-") + "/state"
+    Publish_MQTT_Message(topic,"ON")
     time.sleep(1)
-    mqttc.publish("homeassistant/binary_sensor/" + device_name +
-                  h.replace("+", "-") + "/state", "OFF")
+    Publish_MQTT_Message(topic,"OFF")
 
 
 def listen_hotkeys():
