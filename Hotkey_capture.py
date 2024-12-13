@@ -1,6 +1,5 @@
-import keyboard
 import json
-import paho.mqtt.client as mqtt
+import keyboard
 import time
 from Toast import show_toast
 from MQTT import Send_MQTT_Discovery,Publish_MQTT_Message

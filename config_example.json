@@ -15,5 +15,6 @@
     "fun5": true,
     "fun6": true,
     "hotkey_notify": false,
-    "suppress": true
+    "suppress": false,
+    "fun7": true
 }
