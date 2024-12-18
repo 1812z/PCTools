@@ -50,7 +50,7 @@ init_data()
 # name 实体名称
 # name_id 实体唯一标识符
 # type 实体类型 默认sensor
-def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False):
+def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False,timeout=0):
     global device_name,initialized
     if not initialized:
         if init_data() == 1:
@@ -70,6 +70,13 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
             "configuration_url": "https://1812z.top"
         }
     }
+    # 状态主题
+    # discovery_data["availability_topic"] = "homeassistant/PCTools" + device_name + "/availability"
+
+    # 超时离线
+    if(timeout != 0):
+        discovery_data["expire_after"] = timeout
+
     # 发现主题
     discovery_topic = "homeassistant/" + type + "/" + device_name + name_id + "/config"
     

@@ -12,15 +12,16 @@ def send_discovery(hotkeys):
         name_id = "hotkey" + hotkey.replace("+", "-")
         Send_MQTT_Discovery(name=hotkey,name_id=name_id,type="binary_sensor")
         info = info + hotkey
-    
+    time.sleep(0.5)
     init_binary_sensor(hotkeys)
     return info
 
 def init_binary_sensor(hotkeys):
     for hotkey in hotkeys:
-        topic = "homeassistant/binary_sensor/" + device_name + hotkey.replace("+", "-") + "/state"
+        topic = "homeassistant/binary_sensor/" + device_name + "hotkey" + hotkey.replace("+", "-") + "/state"
         Publish_MQTT_Message(topic,"OFF")
-
+        
+22
 # 初始化
 def init_data():
     with open('config.json', 'r') as file:
@@ -84,7 +85,7 @@ def command(h):
     print("触发了快捷键:", h)
     if hotkey_notify == True:
         show_toast("PCTools" ,"触发了快捷键:" + h)
-    topic = "homeassistant/binary_sensor/" + device_name + h.replace("+", "-") + "/state"
+    topic = "homeassistant/binary_sensor/" + device_name + "hotkey" + h.replace("+", "-") + "/state"
     Publish_MQTT_Message(topic,"ON")
     time.sleep(1)
     Publish_MQTT_Message(topic,"OFF")

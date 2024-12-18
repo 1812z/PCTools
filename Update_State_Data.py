@@ -61,25 +61,25 @@ def discovery():
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id1, name, name_id,is_aida64=True)+"\n"
+                info += Send_MQTT_Discovery(category, id1, name, name_id,is_aida64=True,timeout=30)+"\n"
                 id1 = id1 + 1
         if category == "pwr":
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id2, name, name_id,is_aida64=True)+"\n"
+                info += Send_MQTT_Discovery(category, id2, name, name_id,is_aida64=True,timeout=30)+"\n"
                 id2 = id2 + 1
         if category == "fan":
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id3, name, name_id,is_aida64=True)+"\n"
+                info += Send_MQTT_Discovery(category, id3, name, name_id,is_aida64=True,timeout=30)+"\n"
                 id3 = id3 + 1
         if category == "sys":
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id4, name, name_id,is_aida64=True) + "\n"
+                info += Send_MQTT_Discovery(category, id4, name, name_id,is_aida64=True,timeout=30) + "\n"
                 id4 = id4 + 1
     
     info = "发现了" + str(id1 + id2 + id3 + id4) + "个实体\n" + info
