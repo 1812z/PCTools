@@ -1,3 +1,5 @@
+#### HASS.Agent 分支恢复更新，建议去用HASS.Agent，此项目跑路了
+
 #### Here’s a simple Python program to help Windows integrate with Home Assistant for hardware monitoring, remote control, and other functions.
 ***
 ## 功能
