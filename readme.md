@@ -21,7 +21,7 @@
 
 ### HA界面展示:
 1.另类副屏:  
-<img src="https://img2.moeblog.vip/images/vrJD.jpg" alt="图片" width="450" height="200" />  
+<img src=".github\images\Panel.jpg" alt="图片" width="450" height="200" />  
 2.主页面:  
 <img src=".github\images\image.png" alt="手机视图" height="500"/>
 
@@ -29,7 +29,7 @@
 ## TODO List
 - [X] 键盘快捷键联动控制智能家具
 - [ ] 优化代码(下次一定)
-- [ ] 心跳包
+
 ***
 ## 一.安装各项运行所需要的程序
 
@@ -55,7 +55,7 @@
 (2)开启开关来启用需要的功能  
 (3)点击启动后,程序会自动发送Discovery信息,此时回到HA中查看有无新设备  
 - **监控数据项** 定时更新Aida64选定的信息  
-<img src="https://img2.moeblog.vip/images/vZ5X.png" alt="图片" width="350" height="490" />  
+<img src="img\QQ20250301-223512.png" alt="图片" width="200" height="600" />  
 
 - **远程命令** 把需要运行的 程序/文件放入commands文件夹，重新运行程序，新的命令会自动同步文件到Ha  
 py文件会自动导入，执行其中的fun函数，lnk快捷方式则直接打开  
