@@ -21,7 +21,7 @@
 
 ### HA界面展示:
 1.另类副屏:  
-<img src="img\Panel.jpg" alt="图片" width="450" height="200" />  
+<img src="img\Panel.jpg" alt="图片" width="400" height="250" />  
 2.主页面:  
 <img src=".github\images\image.png" alt="手机视图" height="500"/>
 
