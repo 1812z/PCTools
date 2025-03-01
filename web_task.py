@@ -12,6 +12,14 @@ app = Flask(__name__)
 
 @app.route('/screenshot.jpg')
 def get_screenshot():
+    screenshot = pyautogui.screenshot()
+    img_byte_array = io.BytesIO()
+    screenshot.save(img_byte_array, format='JPEG', quality=50)
+    img_byte_array.seek(0)
+    return Response(img_byte_array.read(), mimetype='image/jpeg')
+
+@app.route('/screen')
+def get_screen():
     return Response(generate_screenshots(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
@@ -30,6 +38,7 @@ def generate_screenshots():
                b'Content-Type: image/jpeg\r\n\r\n' + img_byte_array.read() + b'\r\n')
         time.sleep(0.3)
 
+str
 
 def generate_frames():
     camera = cv2.VideoCapture(2)

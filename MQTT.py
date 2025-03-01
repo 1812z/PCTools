@@ -6,12 +6,16 @@ from Execute_Command import MQTT_Command
 global mqttc,initialized
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 initialized = False
+RECONNECT_DELAY = 30 # 重新连接延迟
+subscribed_topics = []
 
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code.is_failure:
         print(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")
     else:
         print("成功连接到:", broker)
+        if subscribed_topics:
+            re_subscribe()
 
 def on_message(client, userdata, data):
     userdata.append(data.payload)
@@ -22,27 +26,28 @@ def on_message(client, userdata, data):
 # 初始化MQTT
 def init_data():
     global json_data,device_name,initialized,broker
-    initialized = True
-    # 读取账号密码
-    with open('config.json', 'r') as file:
-        json_data = json.load(file)
-        username = json_data.get("username")
-        password = json_data.get("password")
-        broker = json_data.get("HA_MQTT")
-        port = json_data.get("HA_MQTT_port")
-        device_name = json_data.get("device_name")
+    if initialized == False:
+        initialized = True
+        # 读取账号密码
+        with open('config.json', 'r') as file:
+            json_data = json.load(file)
+            username = json_data.get("username")
+            password = json_data.get("password")
+            broker = json_data.get("HA_MQTT")
+            port = json_data.get("HA_MQTT_port")
+            device_name = json_data.get("device_name")
 
-    mqttc.user_data_set([])
-    mqttc._username = username
-    mqttc._password = password
-    mqttc.on_connect = on_connect
-    mqttc.on_message = on_message
-    try:
-        mqttc.connect(broker, port)
-    except:
-        print("MQTT连接失败")
-        initialized = False
-        return 1
+        mqttc.user_data_set([])
+        mqttc._username = username
+        mqttc._password = password
+        mqttc.on_connect = on_connect
+        mqttc.on_message = on_message
+        try:
+            mqttc.connect(broker, port)
+        except:
+            print("MQTT连接失败")
+
+
 
 init_data()
 # device_class HA设备类型
@@ -51,10 +56,8 @@ init_data()
 # name_id 实体唯一标识符
 # type 实体类型 默认sensor
 def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False,timeout=0):
-    global device_name,initialized
-    if not initialized:
-        if init_data() == 1:
-            return "timeout"
+    global device_name
+    init_data()
 
     # 发现示例
     discovery_data = {
@@ -144,8 +147,7 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
 
 # 发送自定义消息
 def Publish_MQTT_Message(topic,message):
-    if not initialized:
-        init_data()
+    init_data()
     mqttc.publish(topic, message)
 
 # 更新状态数据
@@ -160,10 +162,14 @@ def Update_State_data(data,topic,type):
     
 
 def MQTT_Subcribe(topic):
-    if mqttc.is_connected():
+    mqttc.subscribe(topic)
+    subscribed_topics.append(topic) 
+
+def re_subscribe():
+    print("MQTT重新订阅")
+    for topic in subscribed_topics:
         mqttc.subscribe(topic)
-    else:
-        print("MQTT订阅服务未连接!")
+        
 
 # MQTT 进程管理
 def start_mqtt():
@@ -175,12 +181,10 @@ def start_mqtt():
             timer+=1
             if mqttc.is_connected():
                 return 0
-            elif timer == 10:
-                print("MQTT连接超时")
+            elif timer == 5:
                 return 1
-        print("MQTT订阅服务运行中")
     except:
-        print("MQTT订阅服务启动失败")
+        return 1
 
 def stop_mqtt_loop():
     mqttc.loop_stop()
@@ -188,7 +192,7 @@ def stop_mqtt_loop():
 
 if __name__ == '__main__':
     init_data()
-    mqttc.loop_start()
+    start_mqtt()
     input("TEST:\n")
 
 

@@ -44,11 +44,13 @@ def start():
         if discovery() !=1:
             start_task()
         else:
-            show_toast("[ERROR]PCTools","MQTT连接失败")
+            show_toast("[ERROR]PCTools","MQTT发现失败")
     if fun2:
         discovery_comm()
-        if start_mqtt() != 1:
+        if start_mqtt() == 0:
             subcribe()
+        else:
+            show_toast("[ERROR]PCTools","MQTT订阅失败")
     if fun3:
         manager.start()
     if fun5:
@@ -57,9 +59,11 @@ def start():
         listen_hotkeys()
     if fun7:
         global fun7_flag
+        global window_listener
         if not fun7_flag:
-            start_window_listener()
+            window_listener = start_window_listener()
             fun7_flag = True
+
 
 
 def save_hotkeys_to_file():
@@ -86,7 +90,7 @@ def main(newpage: ft.Page):
     home = ft.Tab(text="主页")
     setting = ft.Tab(text="设置")
     tab_hotkey = ft.Tab(text="快捷键")
-
+    
     def button_send_discovery(e):
         result = discovery() + discovery_comm() + send_discovery(hotkeys)
         print(result)
@@ -127,7 +131,6 @@ def main(newpage: ft.Page):
 
     def button_start(e):
         global run_flag
-        start()
         if run_flag:
             show_snackbar(page, "请勿多次启动!")
         elif fun1 == False and fun2 == False and fun3 == False and fun5 == False:
@@ -135,6 +138,8 @@ def main(newpage: ft.Page):
         else:
             run_flag = True
             show_snackbar(page, "启动进程...")
+            start()
+            show_snackbar(page, "服务启动成功")
 
     def button_stop(e):
         global run_flag
@@ -156,8 +161,8 @@ def main(newpage: ft.Page):
                 stop_listen()
                 print("停止按键捕获")
             if fun7:
-                print("请重新启动来停止前台应用反馈")
-                show_snackbar(page,"停止前台应用反馈需要重启")
+                print("停止前台应用反馈")
+                window_listener.set()
 
             run_flag = False
             show_snackbar(page, "已经停止进程")
@@ -597,8 +602,8 @@ def on_exit(icon, item):
         if fun6:
             print("停止快捷键捕获")
         if fun7:
-            print("请重新启动来停止前台应用反馈")
-            show_snackbar(page,"停止前台应用反馈需要重启")
+            print("停止前台应用反馈")
+            window_listener.set()
         icon_flag = False
         close_windows()
         icon.stop()
