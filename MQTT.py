@@ -100,9 +100,14 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
     elif type == 'sensor' and not is_aida64:
         state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
         discovery_data["state_topic"] = state_topic        
-    elif type == "button"  or type == "number" :
+    elif type == "button" :
         command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
         discovery_data["command_topic"] = command_topic
+    elif type == "number" :
+        command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
+        state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
+        discovery_data["command_topic"] = command_topic
+        discovery_data["state_topic"] = state_topic
     elif type == "light":
         command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
         discovery_data["command_topic"] = command_topic
@@ -159,6 +164,10 @@ def Update_State_data(data,topic,type):
         state_topic = "homeassistant/sensor/" + device_name + topic + "/state"
         Publish_MQTT_Message(state_topic,data)
         # print(state_topic,data)
+    elif type == "light":
+        state_topic = "homeassistant/light/" + device_name + topic + "/state"
+        Publish_MQTT_Message(state_topic,data)
+
     
 
 def MQTT_Subcribe(topic):

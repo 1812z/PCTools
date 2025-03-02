@@ -27,7 +27,7 @@ WinEventProcType = ctypes.WINFUNCTYPE(
 
 def discovery():
     info = Send_MQTT_Discovery(None,None,"前台应用","ForegroundWindow","sensor")
-    print(info)
+    # print(info)
 
 
 # 定义回调函数

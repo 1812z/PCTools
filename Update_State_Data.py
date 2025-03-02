@@ -1,5 +1,5 @@
-import ctypes
 import time
+from Twinkle_Tray import get_monitors_state
 import python_aida64
 from pprint import pprint
 import json
@@ -29,18 +29,28 @@ def send_aida64():
     get_aida64_data()
     Update_State_data(json.dumps(aida64_data),"","sensor")
 
-
+# 发送显示器数据
+def send_monitor_state():
+    monitors = get_monitors_state()
+    for monitor_num, info in monitors.items():
+        # print(f"显示器 {monitor_num}:")
+        # print("  MonitorID:", info.get("MonitorID"))
+        # print("  Name:", info.get("Name"))
+        # print("  Brightness:", info.get("Brightness"))
+        #Update_State_data(info.get("Brightness"),"monitor" + str(monitor_num),"light")
+        Update_State_data(info.get("Brightness"),"screen","light")
 # 发送传感器信息
-def send_data():
+def send_data(aida64=True,volume=True,monitor=False):
     info = "发送数据成功"
     # 音量数据
-    try:
+    if volume:
         send_volume()
-    except:
-        print("找不到扬声器")
-        info = "扬声器获取错误"
     # Aida64数据
-    send_aida64()
+    if aida64:
+        send_aida64()
+    # 显示器亮度数据
+    if monitor:
+        send_monitor_state()
     return info
 
 
@@ -89,7 +99,8 @@ def discovery():
 
 if __name__ == "__main__":
     get_aida64_data()
-    pprint(aida64_data)
     discovery()
+    pprint(aida64_data)
+    print("音量:",get_volume())
     time.sleep(1)
     send_data()
