@@ -33,6 +33,7 @@ init_data()
 def MQTT_Command(command, data):
     if command == device_name + "/messages":
         show_toast("HA通知", data)
+        return
     key = command.split('/')[2]
     run_file = command_data.get(key)
 
