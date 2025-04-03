@@ -33,14 +33,16 @@ def get_aida64_data():
 # 发送Aida64传感器数据
 def send_aida64():
     get_aida64_data()
-    Update_State_data(json.dumps(aida64_data), "", "sensor")
-
+    data = json.dumps(aida64_data)
+    Update_State_data(data, "", "sensor")
+    return data
     
 # 发送显示器数据
 def send_monitor_state():
     monitors = get_monitors_state()
     for monitor_num, monitor_info in monitors.items():
         Update_State_data(monitor_info.get("Brightness")*255/100, "monitor" + str(monitor_num), "light")
+    return monitor_info
 
 # 发送传感器信息
 def send_data(aida64=True, volume=True, monitor=True):

@@ -1,6 +1,7 @@
 import ctypes
 from ctypes import wintypes
 import threading
+import time
 from MQTT import Send_MQTT_Discovery, Update_State_data
 
 # 定义常量
@@ -16,89 +17,113 @@ kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
 # 定义回调函数类型
 WinEventProcType = ctypes.WINFUNCTYPE(
     None,
-    ctypes.c_void_p,  # hWinEventHook
-    ctypes.c_uint,    # event
-    ctypes.c_void_p,  # hwnd
-    ctypes.c_long,    # idObject
-    ctypes.c_long,    # idChild
-    ctypes.c_uint,    # dwEventThread
-    ctypes.c_uint     # dwmsEventTime
+    ctypes.c_void_p,
+    ctypes.c_uint,
+    ctypes.c_void_p,
+    ctypes.c_long,
+    ctypes.c_long,
+    ctypes.c_uint,
+    ctypes.c_uint
 )
 
 def discovery():
-    info = Send_MQTT_Discovery(None,None,"前台应用","ForegroundWindow","sensor")
-    # print(info)
+    info = Send_MQTT_Discovery(None, None, "前台应用", "ForegroundWindow", "sensor")
+    print(info)
 
-
-# 定义回调函数
 def win_event_proc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
-    # 使用 GetForegroundWindow 获取当前前台窗口
     current_hwnd = user32.GetForegroundWindow()
     if current_hwnd:
-        # 获取窗口标题
         length = user32.GetWindowTextLengthW(current_hwnd)
         buffer = ctypes.create_unicode_buffer(length + 1)
         user32.GetWindowTextW(current_hwnd, buffer, length + 1)
         window_title = buffer.value
 
-        # 获取窗口类名
         class_buffer = ctypes.create_unicode_buffer(256)
         user32.GetClassNameW(current_hwnd, class_buffer, 256)
         class_name = class_buffer.value
 
-        print(f"前台窗口变化到 HWND={current_hwnd}, 标题='{window_title}', 类名='{class_name}'")
-        title = str(window_title)
-        if(title != ''):
-            Update_State_data(title, "ForegroundWindow", "sensor")
+        print(f"HWND={current_hwnd}, Title='{window_title}', Class='{class_name}'")
+        if window_title:
+            Update_State_data(str(window_title), "ForegroundWindow", "sensor")
 
-# 将 Python 函数转换为 C 回调函数
-WinEventProc = WinEventProcType(win_event_proc)
+class WindowListener:
+    def __init__(self):
+        self.hook = None
+        self.stop_event = threading.Event()
+        self.thread = None
+        self.win_event_proc = WinEventProcType(win_event_proc)
 
-# 设置事件钩子
-def window_listener(stop_event):
-    discovery()
-    global hook
-    hook = user32.SetWinEventHook(
-        EVENT_SYSTEM_FOREGROUND,  # eventMin
-        EVENT_SYSTEM_FOREGROUND,  # eventMax
-        0,                        # hmodWinEventProc, HMODULE.NULL
-        WinEventProc,             # pfnWinEventProc
-        0,                        # idProcess, 0 表示所有进程
-        0,                        # idThread, 0 表示所有线程
-        WINEVENT_FLAGS            # dwFlags
-    )
+    def start(self):
+        if self.thread and self.thread.is_alive():
+            print("监听已在运行")
+            return
 
-    if not hook:
-        raise ctypes.WinError(ctypes.get_last_error())
+        self.stop_event.clear()
+        self.thread = threading.Thread(target=self._run_listener, daemon=True)
+        self.thread.start()
+        print("窗口监听已启动")
 
-    print("正在监听前台窗口变化")
-    # 消息循环
-    msg = wintypes.MSG()
+    def stop(self):
+        if not self.thread or not self.thread.is_alive():
+            print("监听未运行")
+            return
 
-    while not stop_event.is_set():  # 监听直到 stop_event 被设置
-        bRet = user32.GetMessageW(ctypes.byref(msg), 0, 0, 0)
-        if bRet == 0:
-            pass
-        elif bRet == -1:
+        self.stop_event.set()
+        if self.hook:
+            user32.UnhookWinEvent(self.hook)
+            self.hook = None
+        self.thread.join(timeout=1)
+        print("窗口监听已停止")
+
+    def _run_listener(self):
+        discovery()
+        
+        self.hook = user32.SetWinEventHook(
+            EVENT_SYSTEM_FOREGROUND,
+            EVENT_SYSTEM_FOREGROUND,
+            0,
+            self.win_event_proc,
+            0,
+            0,
+            WINEVENT_FLAGS
+        )
+        
+        if not self.hook:
             raise ctypes.WinError(ctypes.get_last_error())
-        else:
-            user32.TranslateMessage(ctypes.byref(msg))
-            user32.DispatchMessageW(ctypes.byref(msg))
+
+        try:
+            msg = wintypes.MSG()
+            while not self.stop_event.is_set():
+                if user32.PeekMessageW(ctypes.byref(msg), 0, 0, 0, 0x0001):
+                    if msg.message == 0x0012:
+                        break
+                    user32.TranslateMessage(ctypes.byref(msg))
+                    user32.DispatchMessageW(ctypes.byref(msg))
+                else:
+                    time.sleep(0.05)
+        finally:
+            if self.hook:
+                user32.UnhookWinEvent(self.hook)
+                self.hook = None
+# 创建监听器实例
+listener = WindowListener()
 
 def start_window_listener():
-    stop_event = threading.Event()  # 创建一个事件来控制停止
-    listener_thread = threading.Thread(target=window_listener, args=(stop_event,))
-    listener_thread.daemon = True  # 设置为守护线程，程序退出时会自动结束
-    listener_thread.start()
-    return stop_event
+    print("启动窗口变化监听")
+    listener.start()
+
+def stop_window_listener():
+    print("停止窗口变化监听")
+    listener.stop()
 
 if __name__ == "__main__":
-    stop_event = start_window_listener()
-
-    # 运行一段时间后，你可以通过 stop_event 来停止监听
-    # 比如，在其他地方调用 stop_event.set() 来停止监听
-    # 假设我们等待 10 秒后停止监听
-    import time
-    time.sleep(10)
-    stop_event.set()
-    print("停止监听前台窗口变化")
+    start_window_listener()
+    
+    try:
+        while True:
+            time.sleep(3)
+            stop_window_listener()
+            time.sleep(3)
+            start_window_listener()
+    except KeyboardInterrupt:
+        stop_window_listener()

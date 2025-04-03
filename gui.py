@@ -15,7 +15,7 @@ import startup
 import HA_widget_task
 from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
 from Toast import show_toast
-from WIndows_Listener import start_window_listener
+from WIndows_Listener import listener as window_listener
 version = "V4.4"
 
 manager = FlaskAppManager('0.0.0.0', 5000)
@@ -39,7 +39,6 @@ def show_snackbar(page: ft.Page, message: str):
     page.snack_bar.open = True
     page.update()
 
-fun7_flag = False
 def start():
     if fun1:
         if discovery() !=1:
@@ -59,11 +58,8 @@ def start():
     if fun6:
         listen_hotkeys()
     if fun7:
-        global fun7_flag
-        global window_listener
-        if not fun7_flag:
-            window_listener = start_window_listener()
-            fun7_flag = True
+        window_listener.start()
+
 
 
 
@@ -160,7 +156,7 @@ def main(newpage: ft.Page):
                 print("停止按键捕获")
             if fun7:
                 print("停止前台应用反馈")
-                window_listener.set()
+                window_listener.stop()
 
             run_flag = False
             show_snackbar(page, "已经停止进程")
@@ -601,7 +597,7 @@ def on_exit(icon, item):
             print("停止快捷键捕获")
         if fun7:
             print("停止前台应用反馈")
-            window_listener.set()
+            window_listener.stop()
         icon_flag = False
         close_windows()
         icon.stop()

@@ -84,7 +84,7 @@ def command(h: str):
     key_list = h.split('+')
     for item in key_list:
         keyboard.release(item)
-        print(item)
+        # print(item)
     print("触发了快捷键:", h)
     if hotkey_notify == True:
         show_toast("PCTools", "触发了快捷键:" + h)
