@@ -16,5 +16,6 @@
     "fun6": true,
     "hotkey_notify": false,
     "suppress": false,
-    "fun7": true
+    "fun7": true,
+    "monitor_supported": true
 }

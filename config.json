@@ -1,5 +1,5 @@
 {
-    "username": "user",
+    "username": "1812z", 
     "password": "password",
     "interval": 10,
     "fun1": true,
@@ -9,12 +9,13 @@
     "HA_MQTT": "192.168.43.10",
     "device_name": "PC",
     "HA_MQTT_port": 1883,
-    "user_directory": "C:\\Users\\administrator",
+    "user_directory": "C:\\Users\\i",
     "select_key": "menu",
-    "url": "https://cn.bing.com",
+    "url": "https://example.com:8124/lovelace",
     "fun5": true,
     "fun6": true,
     "hotkey_notify": false,
     "suppress": false,
-    "fun7": true
+    "fun7": true,
+    "monitor_supported": true
 }

@@ -5,8 +5,8 @@ import subprocess
 import sys
 from Toast import show_toast
 from volume import set_volume
-
-
+from Twinkle_Tray import get_monitors_state
+from Update_State_Data import send_data
 # 初始化
 def init_data():
     global current_directory
@@ -37,7 +37,7 @@ def MQTT_Command(command, data):
     key = command.split('/')[2]
     run_file = command_data.get(key)
 
-    if key == device_name + "screen":  # 显示器控制
+    if  device_name + "monitor" in key:  # 显示器控制
         path = json_data.get(
             "user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
         if data == "OFF":
@@ -48,14 +48,18 @@ def MQTT_Command(command, data):
             # 方案二,仅熄灭显示器
             Python_File("turn_off_screen.py")
         elif data == "ON":
-            Python_File("wake_up_screen.py")
+            Python_File("wake_up_screen.py") # 模拟输入唤醒显示器
         else:
-            brightness = str(int(data) * 100 // 255)
-            run = [path, "--MonitorNum=1", "--Set=" + brightness]
-            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-            print("显示器亮度:", brightness)
+            monitors = get_monitors_state()
+            for monitor_num, info in monitors.items():
+                brightness = str(int(data) * 100 // 255)
+                run = [path, "--MonitorNum=" + str(monitor_num+1), "--Set=" + brightness]
+                subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+                print(info.get("Name") + "亮度:", brightness)
+        send_data(False,False,True)
     elif key == device_name + "volume":  # 音量控制
         set_volume(int(data) / 100)
+        send_data(False,True,False)
     else:                              # 运行程序
         file_type = run_file.split('.')[1]
         if file_type == "lnk":  # 快捷方式
@@ -72,8 +76,7 @@ def MQTT_Command(command, data):
         else:  # 其它文件
             run = current_directory + '\\' + run_file
             os.system(f'start "" "{run}"')
-        
-        
+
 def Python_File(run_file):
     print("执行PY文件:", run_file)
 

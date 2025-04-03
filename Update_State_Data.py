@@ -15,7 +15,6 @@ def send_volume():
     Update_State_data(volume,"volume","number")
 
 
-
 # 初始化Aida64数据
 def get_aida64_data():
     global aida64_data
@@ -32,15 +31,11 @@ def send_aida64():
 # 发送显示器数据
 def send_monitor_state():
     monitors = get_monitors_state()
-    for monitor_num, info in monitors.items():
-        # print(f"显示器 {monitor_num}:")
-        # print("  MonitorID:", info.get("MonitorID"))
-        # print("  Name:", info.get("Name"))
-        # print("  Brightness:", info.get("Brightness"))
-        #Update_State_data(info.get("Brightness"),"monitor" + str(monitor_num),"light")
-        Update_State_data(info.get("Brightness"),"screen","light")
+    for monitor_num, monitor_info in monitors.items():
+        Update_State_data(monitor_info.get("Brightness")*255/100,"monitor" + str(monitor_num) ,"light")
+
 # 发送传感器信息
-def send_data(aida64=True,volume=True,monitor=False):
+def send_data(aida64=True,volume=True,monitor=True):
     info = "发送数据成功"
     # 音量数据
     if volume:

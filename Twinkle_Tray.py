@@ -55,6 +55,7 @@ def extract_monitors_info(info_str):
             "Brightness": int(brightness_match.group(1)) if brightness_match else None
         }
     return monitors
+
 def get_monitors_state():
     output = run_twinkle_tray_list()
     monitors_info = extract_monitors_info(output)
@@ -67,7 +68,7 @@ if __name__ == "__main__":
         print("获取到的监视器信息:")
         print(output)
         monitors = get_monitors_state()
-        
+        print(monitors.items())
         for monitor_num, info in monitors.items():
             print(f"显示器 {monitor_num}:")
             print("  MonitorID:", info.get("MonitorID"))

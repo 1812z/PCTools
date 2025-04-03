@@ -1,7 +1,6 @@
 import time
 import paho.mqtt.client as mqtt
 import json
-from Execute_Command import MQTT_Command
 
 global mqttc,initialized
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -18,14 +17,16 @@ def on_connect(client, userdata, flags, reason_code, properties):
             re_subscribe()
 
 def on_message(client, userdata, data):
+    from Execute_Command import MQTT_Command
     userdata.append(data.payload)
     message = data.payload.decode()
-    MQTT_Command(data.topic,message)
+    if fun2:
+        MQTT_Command(data.topic,message)
     print(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
 
 # 初始化MQTT
 def init_data():
-    global json_data,device_name,initialized,broker
+    global json_data,device_name,initialized,broker,fun2
     if initialized == False:
         initialized = True
         # 读取账号密码
@@ -36,7 +37,7 @@ def init_data():
             broker = json_data.get("HA_MQTT")
             port = json_data.get("HA_MQTT_port")
             device_name = json_data.get("device_name")
-
+            fun2 = json_data.get("fun2")
         mqttc.user_data_set([])
         mqttc._username = username
         mqttc._password = password
@@ -69,7 +70,7 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
             "name": "PC",
             "manufacturer": "1812z",
             "model": "PCTools",
-            "sw_version": "2024.12.9",
+            "sw_version": "2025.4.3",
             "configuration_url": "https://1812z.top"
         }
     }
@@ -111,8 +112,8 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
     elif type == "light":
         command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
         discovery_data["command_topic"] = command_topic
-        discovery_data["brightness_state_topic"] = "homeassistant/light/" + device_name + "screen"
-        discovery_data["brightness_command_topic"] = "homeassistant/light/" + device_name + "screen" + "/set"
+        discovery_data["brightness_state_topic"] = "homeassistant/light/" + device_name + name_id + "/state"
+        discovery_data["brightness_command_topic"] = "homeassistant/light/" + device_name + name_id + "/set"
     elif type == "binary_sensor":
         state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
         discovery_data["state_topic"] = state_topic  
