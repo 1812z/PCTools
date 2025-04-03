@@ -17,7 +17,7 @@ def init_data():
     current_directory = current_directory + '\\' + "commands"
     # print(current_directory)
     # 命令映射表
-    with open('commands.json', 'r') as file:
+    with open('commands.json', 'r', encoding='utf-8') as file:
         global command_data
         global count_entities
         command_data = json.load(file)

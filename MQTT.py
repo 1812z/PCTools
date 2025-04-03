@@ -63,7 +63,6 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         "name": "Sensor1",
         "object_id": "object_id",
         "unique_id": "unique_id",
-        "expire_after": "30", # 超时自动不可用
         "device": {
             "identifiers": ["PCTools"],
             "name": "PC",
@@ -74,6 +73,8 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         }
     }
 
+    #超时时间
+    timeout = 30
     # 在线主题
     discovery_data["availability_topic"] = f"homeassistant/{device_name}/availability"
 
@@ -95,7 +96,8 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
     match (type, is_aida64):
         case ('sensor', True):
             discovery_data["state_topic"] = f"{base_topic}/state"
-        
+            discovery_data["expire_after"]= timeout
+            
         case ('sensor', False):
             discovery_data["state_topic"] = f"{base_topic}{name_id}/state"
         
