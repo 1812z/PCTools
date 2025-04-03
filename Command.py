@@ -62,7 +62,7 @@ def discovery():
             count += 1
             Send_MQTT_Discovery(None,name=filename, name_id=id, type="button")
     Send_Monitor_MQTT_Discovery()
-    Send_MQTT_Discovery(None,name="音量", name_id="volume", type="number",timeout=1)
+    Send_MQTT_Discovery(None,name="音量", name_id="volume", type="number")
 
     save_json_data("count", count)
     info = "发现了" + str(count) + "个命令\n" + info

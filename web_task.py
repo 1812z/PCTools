@@ -38,7 +38,7 @@ def generate_screenshots():
                b'Content-Type: image/jpeg\r\n\r\n' + img_byte_array.read() + b'\r\n')
         time.sleep(0.3)
 
-str
+
 
 def generate_frames():
     camera = cv2.VideoCapture(2)

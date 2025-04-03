@@ -2,10 +2,8 @@ import time
 import paho.mqtt.client as mqtt
 import json
 
-global mqttc,initialized
+global mqttc
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-initialized = False
-RECONNECT_DELAY = 30 # 重新连接延迟
 subscribed_topics = []
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -26,18 +24,16 @@ def on_message(client, userdata, data):
 
 # 初始化MQTT
 def init_data():
-    global json_data,device_name,initialized,broker,fun2
-    if initialized == False:
-        initialized = True
-        # 读取账号密码
-        with open('config.json', 'r') as file:
-            json_data = json.load(file)
-            username = json_data.get("username")
-            password = json_data.get("password")
-            broker = json_data.get("HA_MQTT")
-            port = json_data.get("HA_MQTT_port")
-            device_name = json_data.get("device_name")
-            fun2 = json_data.get("fun2")
+    global json_data,device_name,broker,fun2
+    # 读取账号密码
+    with open('config.json', 'r') as file:
+        json_data = json.load(file)
+        username = json_data.get("username")
+        password = json_data.get("password")
+        broker = json_data.get("HA_MQTT")
+        port = json_data.get("HA_MQTT_port")
+        device_name = json_data.get("device_name")
+        fun2 = json_data.get("fun2")
         mqttc.user_data_set([])
         mqttc._username = username
         mqttc._password = password
@@ -48,23 +44,21 @@ def init_data():
         except:
             print("MQTT连接失败")
 
-
-
 init_data()
 # device_class HA设备类型
 # topic_id 数据编号，默认空
 # name 实体名称
 # name_id 实体唯一标识符
 # type 实体类型 默认sensor
-def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False,timeout=0):
+def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False):
     global device_name
-    init_data()
 
     # 发现示例
     discovery_data = {
         "name": "Sensor1",
         "object_id": "object_id",
         "unique_id": "unique_id",
+        "expire_after": "30", # 超时自动不可用
         "device": {
             "identifiers": ["PCTools"],
             "name": "PC",
@@ -74,12 +68,8 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
             "configuration_url": "https://1812z.top"
         }
     }
-    # 状态主题
-    # discovery_data["availability_topic"] = "homeassistant/PCTools" + device_name + "/availability"
-
-    # 超时离线
-    if(timeout != 0):
-        discovery_data["expire_after"] = timeout
+    # 在线主题
+    discovery_data["availability_topic"] = f"homeassistant/{device_name}/availability"
 
     # 发现主题
     discovery_topic = "homeassistant/" + type + "/" + device_name + name_id + "/config"
@@ -90,83 +80,97 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
     discovery_data["device"]["identifiers"] = [device_name]
     discovery_data["object_id"] = device_name + name_id
     discovery_data["unique_id"] = device_name + name_id
-    # 数据编号处理
+
+    # 数据编号模板处理
     if topic_id is not None:
-        discovery_data["value_template"] = "{{ float(value_json." + \
-            device_class + "[" + str(topic_id) + "].value) }}"
-    # 主类型处理
-    if type == 'sensor' and is_aida64:
-        state_topic = "homeassistant/" + type + "/" + device_name  + "/state"
-        discovery_data["state_topic"] = state_topic
-    elif type == 'sensor' and not is_aida64:
-        state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
-        discovery_data["state_topic"] = state_topic        
-    elif type == "button" :
-        command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
-        discovery_data["command_topic"] = command_topic
-    elif type == "number" :
-        command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
-        state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
-        discovery_data["command_topic"] = command_topic
-        discovery_data["state_topic"] = state_topic
-    elif type == "light":
-        command_topic = "homeassistant/" + type + "/" + device_name + name_id + "/set"
-        discovery_data["command_topic"] = command_topic
-        discovery_data["brightness_state_topic"] = "homeassistant/light/" + device_name + name_id + "/state"
-        discovery_data["brightness_command_topic"] = "homeassistant/light/" + device_name + name_id + "/set"
-    elif type == "binary_sensor":
-        state_topic = "homeassistant/" + type + "/" + device_name + name_id + "/state"
-        discovery_data["state_topic"] = state_topic  
-        discovery_data["payload_on"] = "ON"
-        discovery_data["payload_off"] = "OFF"
+        discovery_data["value_template"] = f"{{{{ float(value_json.{device_class}[{topic_id}].value) }}}}"
+
+    base_topic = f"homeassistant/{type}/{device_name}"
+    match (type, is_aida64):
+        case ('sensor', True):
+            discovery_data["state_topic"] = f"{base_topic}/state"
+        
+        case ('sensor', False):
+            discovery_data["state_topic"] = f"{base_topic}{name_id}/state"
+        
+        case ('button', _):
+            discovery_data["command_topic"] = f"{base_topic}{name_id}/set"
+        
+        case ('number', _):
+            discovery_data.update({
+                "command_topic": f"{base_topic}{name_id}/set",
+                "state_topic": f"{base_topic}{name_id}/state"
+            })
+        
+        case ('light', _):
+            discovery_data.update({
+                "command_topic": f"{base_topic}{name_id}/set",
+                "brightness_state_topic": f"{base_topic}{name_id}/state",
+                "brightness_command_topic": f"{base_topic}{name_id}/set"
+            })
+        
+        case ('binary_sensor', _):
+            discovery_data.update({
+                "state_topic": f"{base_topic}{name_id}/state",
+                "payload_on": "ON",
+                "payload_off": "OFF"
+            })
+
     
-    
-    # 子类型处理
-    if device_class == "pwr":
-        discovery_data["device_class"] = "power"
-        discovery_data["unit_of_measurement"] = "W"
-    elif device_class == "fan":
-        discovery_data["device_class"] = "speed"
-        discovery_data["unit_of_measurement"] = "RPM"
-    elif device_class == "sys":
-        discovery_data.pop('device_class', None)
-        discovery_data["unit_of_measurement"] = "%"
-        if "Disk" in name:
-            if "Activity" in name:
-                discovery_data["unit_of_measurement"] = "%"
-            else:
-                discovery_data["unit_of_measurement"] = "KB/s"
-        if "NIC" in name:
-            if "Total" in name:
-                discovery_data["unit_of_measurement"] = "M"
-            else:
-                discovery_data["unit_of_measurement"] = "KB/s"
-    elif device_class == "temp":
-        discovery_data["device_class"] = "temperature"
-        discovery_data["unit_of_measurement"] = "°C"
+   # 子类型处理
+    match device_class:
+        case "pwr":
+            discovery_data.update({
+                "device_class": "power",
+                "unit_of_measurement": "W"
+            })
+        
+        case "fan":
+            discovery_data.update({
+                "device_class": "speed",
+                "unit_of_measurement": "RPM"
+            })
+        
+        case "sys":
+            discovery_data.pop('device_class', None)
+            discovery_data["unit_of_measurement"] = "%"
+            if "Disk" in name:
+                if "Activity" in name:
+                    discovery_data["unit_of_measurement"] = "%"
+                else:
+                    discovery_data["unit_of_measurement"] = "KB/s"
+            if "NIC" in name:
+                if "Total" in name:
+                    discovery_data["unit_of_measurement"] = "M"
+                else:
+                    discovery_data["unit_of_measurement"] = "KB/s"
+        
+        case "temp":
+            discovery_data.update({
+                "device_class": "temperature",
+                "unit_of_measurement": "°C"
+            })
+
     # 发送信息
-    info = "发现主题:" + discovery_topic
-    # print(info)
+    info = f"发现主题: {discovery_topic}"
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
     return info
 
 
 # 发送自定义消息
-def Publish_MQTT_Message(topic,message):
-    init_data()
-    mqttc.publish(topic, message)
+def Publish_MQTT_Message(topic,message,qos=0):
+    mqttc.publish(topic, message,qos)
 
 # 更新状态数据
 def Update_State_data(data,topic,type):
     if type == "number":
-        state_topic = "homeassistant/number/" + device_name + topic + "/state"
+        state_topic = f"homeassistant/number/{device_name}{topic}/state"
         Publish_MQTT_Message(state_topic,str(data))
     elif type == "sensor":
-        state_topic = "homeassistant/sensor/" + device_name + topic + "/state"
+        state_topic = f"homeassistant/sensor/{device_name}{topic}/state"
         Publish_MQTT_Message(state_topic,data)
-        # print(state_topic,data)
     elif type == "light":
-        state_topic = "homeassistant/light/" + device_name + topic + "/state"
+        state_topic = f"homeassistant/light/{device_name}{topic}/state"
         Publish_MQTT_Message(state_topic,data)
 
     
@@ -201,7 +205,6 @@ def stop_mqtt_loop():
 
 
 if __name__ == '__main__':
-    init_data()
     start_mqtt()
     input("TEST:\n")
 
