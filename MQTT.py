@@ -4,7 +4,9 @@ import json
 
 global mqttc
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
 subscribed_topics = []
+
 
 def on_connect(client, userdata, flags, reason_code, properties):
     if reason_code.is_failure:
@@ -14,17 +16,20 @@ def on_connect(client, userdata, flags, reason_code, properties):
         if subscribed_topics:
             re_subscribe()
 
+
 def on_message(client, userdata, data):
     from Execute_Command import MQTT_Command
     userdata.append(data.payload)
     message = data.payload.decode()
     if fun2:
-        MQTT_Command(data.topic,message)
+        MQTT_Command(data.topic, message)
     print(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
 
 # 初始化MQTT
+
+
 def init_data():
-    global json_data,device_name,broker,fun2
+    global json_data, device_name, broker, fun2
     # 读取账号密码
     with open('config.json', 'r') as file:
         json_data = json.load(file)
@@ -44,6 +49,7 @@ def init_data():
         except:
             print("MQTT连接失败")
 
+
 init_data()
 # device_class HA设备类型
 # topic_id 数据编号，默认空
@@ -52,7 +58,6 @@ init_data()
 # type 实体类型 默认sensor
 def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False):
     global device_name
-
     # 发现示例
     discovery_data = {
         "name": "Sensor1",
@@ -68,12 +73,13 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
             "configuration_url": "https://1812z.top"
         }
     }
+
     # 在线主题
     discovery_data["availability_topic"] = f"homeassistant/{device_name}/availability"
 
     # 发现主题
-    discovery_topic = "homeassistant/" + type + "/" + device_name + name_id + "/config"
-    
+    discovery_topic = f"homeassistant/{type}/{device_name}{name_id}/config"
+
     # 实体信息标记
     discovery_data["name"] = name
     discovery_data["device"]["name"] = device_name
@@ -144,61 +150,62 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
                     discovery_data["unit_of_measurement"] = "M"
                 else:
                     discovery_data["unit_of_measurement"] = "KB/s"
-        
+                    
         case "temp":
             discovery_data.update({
                 "device_class": "temperature",
                 "unit_of_measurement": "°C"
             })
-
+ 
     # 发送信息
     info = f"发现主题: {discovery_topic}"
     mqttc.publish(discovery_topic, json.dumps(discovery_data))
     return info
 
-
+  
 # 发送自定义消息
-def Publish_MQTT_Message(topic,message,qos=0):
+def Publish_MQTT_Message(topic, message, qos=0):
     mqttc.publish(topic, message,qos)
 
 # 更新状态数据
 def Update_State_data(data,topic,type):
     if type == "number":
         state_topic = f"homeassistant/number/{device_name}{topic}/state"
-        Publish_MQTT_Message(state_topic,str(data))
+        Publish_MQTT_Message(state_topic, str(data))
     elif type == "sensor":
         state_topic = f"homeassistant/sensor/{device_name}{topic}/state"
-        Publish_MQTT_Message(state_topic,data)
+        Publish_MQTT_Message(state_topic, data)
     elif type == "light":
         state_topic = f"homeassistant/light/{device_name}{topic}/state"
-        Publish_MQTT_Message(state_topic,data)
+        Publish_MQTT_Message(state_topic, data)
 
-    
 
 def MQTT_Subcribe(topic):
     mqttc.subscribe(topic)
-    subscribed_topics.append(topic) 
+    subscribed_topics.append(topic)
+
 
 def re_subscribe():
     print("MQTT重新订阅")
     for topic in subscribed_topics:
         mqttc.subscribe(topic)
-        
+
 
 # MQTT 进程管理
 def start_mqtt():
     try:
         mqttc.loop_start()
         timer = 0
-        while(timer<=5):
+        while (timer <= 5):
             time.sleep(1)
-            timer+=1
+            timer += 1
             if mqttc.is_connected():
                 return 0
             elif timer == 5:
                 return 1
     except:
         return 1
+
 
 def stop_mqtt_loop():
     mqttc.loop_stop()
@@ -207,6 +214,3 @@ def stop_mqtt_loop():
 if __name__ == '__main__':
     start_mqtt()
     input("TEST:\n")
-
-
-    

@@ -2,7 +2,9 @@ from plyer import notification
 
 
 def show_toast(title, message):
-  
+    '''
+    显示 toast 消息
+    '''
     notification.notify(
         title=title,
         message=message,

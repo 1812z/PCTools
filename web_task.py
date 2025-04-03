@@ -18,6 +18,7 @@ def get_screenshot():
     img_byte_array.seek(0)
     return Response(img_byte_array.read(), mimetype='image/jpeg')
 
+
 @app.route('/screen')
 def get_screen():
     return Response(generate_screenshots(), mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -37,7 +38,6 @@ def generate_screenshots():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + img_byte_array.read() + b'\r\n')
         time.sleep(0.3)
-
 
 
 def generate_frames():
