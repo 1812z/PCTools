@@ -2,7 +2,7 @@ import json
 import keyboard
 import time
 from Toast import show_toast
-from MQTT import Send_MQTT_Discovery,Publish_MQTT_Message
+from MQTT import Send_MQTT_Discovery, Publish_MQTT_Message
 listening = False
 
 
@@ -10,20 +10,22 @@ def send_discovery(hotkeys):
     info = "快捷键发现: \n"
     for hotkey in hotkeys:
         name_id = "hotkey" + hotkey.replace("+", "-")
-        Send_MQTT_Discovery(name=hotkey,name_id=name_id,type="binary_sensor")
+        Send_MQTT_Discovery(name=hotkey, name_id=name_id, type="binary_sensor")
         info = info + hotkey
     time.sleep(0.5)
     init_binary_sensor(hotkeys)
     return info
 
+
 def init_binary_sensor(hotkeys):
     for hotkey in hotkeys:
-        topic = "homeassistant/binary_sensor/" + device_name + "hotkey" + hotkey.replace("+", "-") + "/state"
-        Publish_MQTT_Message(topic,"OFF")
-        
-22
-# 初始化
+        hotkey: str
+        topic = f"homeassistant/binary_sensor/{device_name}hotkey{hotkey.replace("+", "-")}/state"
+        Publish_MQTT_Message(topic, "OFF")
+
+
 def init_data():
+    # 初始化
     with open('config.json', 'r') as file:
         global json_data
         global hotkey_notify
@@ -34,6 +36,7 @@ def init_data():
         suppress = json_data.get("suppress")
         device_name = json_data.get("device_name")
     load_hotkeys()
+
 
 def save_hotkey(hotkey):
     existing_hotkeys = load_hotkeys()
@@ -77,18 +80,18 @@ def load_hotkeys():
         return []
 
 
-def command(h):
+def command(h: str):
     key_list = h.split('+')
     for item in key_list:
         keyboard.release(item)
         print(item)
     print("触发了快捷键:", h)
     if hotkey_notify == True:
-        show_toast("PCTools" ,"触发了快捷键:" + h)
-    topic = "homeassistant/binary_sensor/" + device_name + "hotkey" + h.replace("+", "-") + "/state"
-    Publish_MQTT_Message(topic,"ON")
+        show_toast("PCTools", "触发了快捷键:" + h)
+    topic = f"homeassistant/binary_sensor/{device_name}hotkey{h.replace("+", "-")}/state"
+    Publish_MQTT_Message(topic, "ON")
     time.sleep(1)
-    Publish_MQTT_Message(topic,"OFF")
+    Publish_MQTT_Message(topic, "OFF")
 
 
 def listen_hotkeys():
@@ -99,7 +102,7 @@ def listen_hotkeys():
         send_discovery(hotkeys)
         print("开始监听快捷键...", hotkeys)
         for hotkey in hotkeys:
-            keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h),suppress=suppress,trigger_on_release=False)
+            keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h), suppress=suppress, trigger_on_release=False)
         # keyboard.wait('esc')
         return 0
     return 1
@@ -125,18 +128,19 @@ def menu():
         print("4. 退出")
         choice = input("请输入选项: ")
 
-        if choice == '1':
-            capture_hotkeys()
-        elif choice == '2':
-            load_hotkeys()
-            listen_hotkeys()
-        elif choice == '3':
-            init_data()
-            print(send_discovery(hotkeys))
-        elif choice == '4':
-            break
-        else:
-            print("无效选项，请重试。")
+        match choice:
+            case '1':
+                capture_hotkeys()
+            case '2':
+                load_hotkeys()
+                listen_hotkeys()
+            case '3':
+                init_data()
+                print(send_discovery(hotkeys))
+            case '4':
+                break
+            case _:
+                print("无效选项，请重试。")
 
 
 if __name__ == '__main__':

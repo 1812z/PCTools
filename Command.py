@@ -1,7 +1,7 @@
 import json
 import os
 from short_id import generate_short_id
-from MQTT import Send_MQTT_Discovery,MQTT_Subcribe
+from MQTT import Send_MQTT_Discovery, MQTT_Subcribe
 from Twinkle_Tray import get_monitors_state
 
 # 运行命令
@@ -36,18 +36,19 @@ def init_data():
         monitors = get_monitors_state()
 
 
-    
-
 def save_json_data(key, data):
     command_data[key] = data
     with open('commands.json', 'w', encoding='utf-8') as file:
-        json.dump(command_data, file, indent=4)
+        json.dump(command_data, file, indent=4, ensure_ascii=False)
+
 
 init_data()
 
+
 def Send_Monitor_MQTT_Discovery():
     for monitor_num, monitor_info in monitors.items():
-        Send_MQTT_Discovery(None,name=monitor_info.get("Name"),name_id="monitor" + str(monitor_num), type="light")
+        Send_MQTT_Discovery(None, name=monitor_info.get("Name"), name_id=f"monitor{monitor_num}", type="light")
+
 
 def discovery():
     count = 2
@@ -60,27 +61,27 @@ def discovery():
             save_json_data(device_name + id, filename)
             info += filename + "\n"
             count += 1
-            Send_MQTT_Discovery(None,name=filename, name_id=id, type="button")
+            Send_MQTT_Discovery(None, name=filename, name_id=id, type="button")
     Send_Monitor_MQTT_Discovery()
-    Send_MQTT_Discovery(None,name="音量", name_id="volume", type="number",timeout=1)
+    Send_MQTT_Discovery(None, name="音量", name_id="volume", type="number", timeout=1)
 
     save_json_data("count", count)
-    info = "发现了" + str(count) + "个命令\n" + info
+    info = f"发现了{count}个命令\n" + info
     return info
+
 
 def subcribe():
     # 订阅发现的命令
-    if (count_entities != 0):
+    if count_entities != 0:
         for filename in os.listdir(current_directory):
             if os.path.isfile(os.path.join(current_directory, filename)):
-                subcribe_topic = "homeassistant/button/" + \
-                    device_name + generate_short_id(filename) + "/set"
+                subcribe_topic = f"homeassistant/button/{device_name}{generate_short_id(filename)}/set"
                 MQTT_Subcribe(subcribe_topic)
     if monitor_supported:
         for monitor_num, monitor_info in monitors.items():
-            MQTT_Subcribe("homeassistant/light/" + device_name + "monitor" + str(monitor_num) + "/set")
-    MQTT_Subcribe("homeassistant/number/" + device_name + "volume" + "/set")
-    MQTT_Subcribe(device_name + "/messages")
+            MQTT_Subcribe(f"homeassistant/light/{device_name}monitor{monitor_num}/set")
+    MQTT_Subcribe(f"homeassistant/number/{device_name}volume/set")
+    MQTT_Subcribe(f"{device_name}/messages")
 
 
 if __name__ == '__main__':

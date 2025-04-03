@@ -24,7 +24,7 @@ page = None
 def save_json_data(key, data):
     json_data[key] = data
     with open('config.json', 'w', encoding='utf-8') as file:
-        json.dump(json_data, file, indent=4)
+        json.dump(json_data, file, indent=4, ensure_ascii=False)
 
 
 def show_snackbar(page: ft.Page, message: str):

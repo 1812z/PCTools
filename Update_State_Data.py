@@ -4,7 +4,7 @@ import python_aida64
 from pprint import pprint
 import json
 from volume import get_volume
-from MQTT import Send_MQTT_Discovery,Update_State_data
+from MQTT import Send_MQTT_Discovery, Update_State_data
 
 debug = False
 
@@ -12,7 +12,7 @@ debug = False
 # 发送音量信息
 def send_volume():
     volume = get_volume()
-    Update_State_data(volume,"volume","number")
+    Update_State_data(volume, "volume", "number")
 
 
 # 初始化Aida64数据
@@ -26,16 +26,20 @@ def get_aida64_data():
 # 发送Aida64传感器数据
 def send_aida64():
     get_aida64_data()
-    Update_State_data(json.dumps(aida64_data),"","sensor")
+    Update_State_data(json.dumps(aida64_data), "", "sensor")
 
 # 发送显示器数据
+
+
 def send_monitor_state():
     monitors = get_monitors_state()
     for monitor_num, monitor_info in monitors.items():
-        Update_State_data(monitor_info.get("Brightness")*255/100,"monitor" + str(monitor_num) ,"light")
+        Update_State_data(monitor_info.get("Brightness")*255/100, "monitor" + str(monitor_num), "light")
 
 # 发送传感器信息
-def send_data(aida64=True,volume=True,monitor=True):
+
+
+def send_data(aida64=True, volume=True, monitor=True):
     info = "发送数据成功"
     # 音量数据
     if volume:
@@ -47,7 +51,6 @@ def send_data(aida64=True,volume=True,monitor=True):
     if monitor:
         send_monitor_state()
     return info
-
 
 
 # 发现设备
@@ -66,36 +69,35 @@ def discovery():
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id1, name, name_id,is_aida64=True,timeout=30)+"\n"
+                info += Send_MQTT_Discovery(category, id1, name, name_id, is_aida64=True, timeout=30)+"\n"
                 id1 = id1 + 1
         if category == "pwr":
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id2, name, name_id,is_aida64=True,timeout=30)+"\n"
+                info += Send_MQTT_Discovery(category, id2, name, name_id, is_aida64=True, timeout=30)+"\n"
                 id2 = id2 + 1
         if category == "fan":
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id3, name, name_id,is_aida64=True,timeout=30)+"\n"
+                info += Send_MQTT_Discovery(category, id3, name, name_id, is_aida64=True, timeout=30)+"\n"
                 id3 = id3 + 1
         if category == "sys":
             for item in items:
                 name = item["label"]
                 name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id4, name, name_id,is_aida64=True,timeout=30) + "\n"
+                info += Send_MQTT_Discovery(category, id4, name, name_id, is_aida64=True, timeout=30) + "\n"
                 id4 = id4 + 1
-    
-    info = "发现了" + str(id1 + id2 + id3 + id4) + "个实体\n" + info
-    return info
 
+    info = f"发现了 {id1} (temp) + {id2} (pwr) + {id3} (fan) + {id4} (sys) = {id1+id2+id3+id4} 个实体\n{info}"
+    return info
 
 
 if __name__ == "__main__":
     get_aida64_data()
     discovery()
     pprint(aida64_data)
-    print("音量:",get_volume())
+    print("音量:", get_volume())
     time.sleep(1)
     send_data()
