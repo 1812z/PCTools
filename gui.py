@@ -17,6 +17,7 @@ from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_l
 from Toast import show_toast
 from WIndows_Listener import start_window_listener
 version = "V4.4"
+
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
 
@@ -107,26 +108,23 @@ def main(newpage: ft.Page):
         try: 
             discovery()
             result = send_data()    
-        except NameError:
+        except :
             dialog = ft.AlertDialog(
             title=ft.Text("错误"),
-            content=ft.Text(value="1"),
+            content=ft.Text(value="数据更新失败"),
             scrollable=True
             )
             page.dialog = dialog
             dialog.open = True
             page.update()
         else:
-            print(result)
-            snackbar = ft.SnackBar(
-            content=ft.Text(result),
-            action="OK",
-            action_color=ft.colors.WHITE,
-            on_action=None,
-            duration=2000
+            dialog = ft.AlertDialog(
+            title=ft.Text("数据更新成功"),
+            content=ft.Text(value=result),
+            scrollable=True
             )
-            page.snack_bar = snackbar
-            page.snack_bar.open = True
+            page.dialog = dialog
+            dialog.open = True
             page.update()
 
     def button_start(e):
