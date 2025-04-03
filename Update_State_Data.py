@@ -64,42 +64,42 @@ def send_data(aida64=True, volume=True, monitor=True):
 # 发现设备
 def discovery():
     get_aida64_data()
-
-    info = ""
-    id1 = 0
-    id2 = 0
-    id3 = 0
-    id4 = 0
-
+    
+    # 使用字典管理各类别的计数器
+    category_counters = {
+        'temp': 0,
+        'pwr': 0,
+        'fan': 0,
+        'sys': 0,
+        'volt': 0
+    }
+    
+    info_lines = []
     print("发送Discovery MQTT信息")
-    for category, items in aida64_data.items():
-        if category == "temp":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id1, name, name_id, is_aida64=True)+"\n"
-                id1 = id1 + 1
-        if category == "pwr":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id2, name, name_id, is_aida64=True)+"\n"
-                id2 = id2 + 1
-        if category == "fan":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id3, name, name_id, is_aida64=True)+"\n"
-                id3 = id3 + 1
-        if category == "sys":
-            for item in items:
-                name = item["label"]
-                name_id = item["id"]
-                info += Send_MQTT_Discovery(category, id4, name, name_id, is_aida64=True) + "\n"
-                id4 = id4 + 1
 
-    info = "发现了" + str(id1 + id2 + id3 + id4) + "个实体\n" + info
-    return info
+    for category, items in aida64_data.items():
+        if category not in category_counters:
+            continue
+            
+        for item in items:
+            name = item["label"]
+            name_id = item["id"]
+            
+            # 发送MQTT发现信息并记录结果
+            discovery_msg = Send_MQTT_Discovery(
+                device_class=category,
+                topic_id=category_counters[category],
+                name=name,
+                name_id=name_id,
+                is_aida64=True
+            )
+            info_lines.append(discovery_msg)
+            category_counters[category] += 1
+
+    total_entities = sum(category_counters.values())
+    summary = f"发现了{total_entities}个实体"
+ 
+    return f"{summary}\n" + "\n".join(info_lines)
 
 init()
 

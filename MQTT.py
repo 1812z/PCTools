@@ -90,14 +90,14 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
 
     # 数据编号模板处理
     if topic_id is not None:
-        discovery_data["value_template"] = f"{{{{ float(value_json.{device_class}[{topic_id}].value) }}}}"
+        discovery_data["value_template"] = f"{{{{value_json.{device_class}[{topic_id}].value}}}}"
 
     base_topic = f"homeassistant/{type}/{device_name}"
     match (type, is_aida64):
         case ('sensor', True):
             discovery_data["state_topic"] = f"{base_topic}/state"
             discovery_data["expire_after"]= timeout
-            
+
         case ('sensor', False):
             discovery_data["state_topic"] = f"{base_topic}{name_id}/state"
         
@@ -141,23 +141,46 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         
         case "sys":
             discovery_data.pop('device_class', None)
-            discovery_data["unit_of_measurement"] = "%"
             if "Disk" in name:
+                discovery_data["icon"] = "mdi:harddisk"
                 if "Activity" in name:
                     discovery_data["unit_of_measurement"] = "%"
                 else:
                     discovery_data["unit_of_measurement"] = "KB/s"
-            if "NIC" in name:
+            elif "NIC" in name:
+                discovery_data["icon"] = "mdi:"
                 if "Total" in name:
                     discovery_data["unit_of_measurement"] = "M"
+                    discovery_data["icon"] = "mdi:check-network"
                 else:
                     discovery_data["unit_of_measurement"] = "KB/s"
-                    
+                    if "Download" in name:
+                        discovery_data["icon"] = "mdi:download-network"
+                    elif "Upload" in name:
+                        discovery_data["icon"] = "mdi:upload-network"
+            elif "time" in name.lower():
+                discovery_data["icon"] = "mdi:clock-outline"
+            elif "clock" in name.lower():
+                discovery_data["unit_of_measurement"] = "MHz"
+            else:
+                discovery_data["unit_of_measurement"] = "%"
+                if "gpu" in name.lower():
+                    discovery_data["icon"] = "mdi:expansion-card"
+                elif "memory" in name.lower():
+                    discovery_data["icon"] = "mdi:memory"
+                elif "cpu" in name.lower():
+                    discovery_data["icon"] = "mdi:cpu-64-bit"
+                                        
         case "temp":
             discovery_data.update({
                 "device_class": "temperature",
                 "unit_of_measurement": "°C"
             })
+        
+        case "volt":
+            discovery_data['device_class'] = "voltage"
+            discovery_data["unit_of_measurement"] = "V"
+
  
     # 发送信息
     info = f"发现主题: {discovery_topic}"

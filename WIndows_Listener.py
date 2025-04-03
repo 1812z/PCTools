@@ -28,7 +28,7 @@ WinEventProcType = ctypes.WINFUNCTYPE(
 
 def discovery():
     info = Send_MQTT_Discovery(None, None, "前台应用", "ForegroundWindow", "sensor")
-    print(info)
+    # print(info)
 
 def win_event_proc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
     current_hwnd = user32.GetForegroundWindow()
