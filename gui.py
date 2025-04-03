@@ -16,7 +16,7 @@ import HA_widget_task
 from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
 from Toast import show_toast
 from WIndows_Listener import start_window_listener
-version = "V4.3"
+version = "V4.4"
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
 
