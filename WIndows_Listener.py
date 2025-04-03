@@ -108,22 +108,10 @@ class WindowListener:
 # 创建监听器实例
 listener = WindowListener()
 
-def start_window_listener():
-    print("启动窗口变化监听")
-    listener.start()
-
-def stop_window_listener():
-    print("停止窗口变化监听")
-    listener.stop()
 
 if __name__ == "__main__":
-    start_window_listener()
-    
     try:
         while True:
-            time.sleep(3)
-            stop_window_listener()
-            time.sleep(3)
-            start_window_listener()
+            listener.start()
     except KeyboardInterrupt:
-        stop_window_listener()
+        listener.stop()
