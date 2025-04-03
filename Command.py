@@ -16,7 +16,7 @@ def init_data():
     current_directory = current_directory + '\\' + "commands"
     # print(current_directory)
     # 命令映射表
-    with open('commands.json', 'r') as file:
+    with open('commands.json', 'r', encoding='utf-8') as file:
         global command_data
         global count_entities
         command_data = json.load(file)
@@ -46,8 +46,9 @@ init_data()
 
 
 def Send_Monitor_MQTT_Discovery():
-    for monitor_num, monitor_info in monitors.items():
-        Send_MQTT_Discovery(None, name=monitor_info.get("Name"), name_id=f"monitor{monitor_num}", type="light")
+    if monitor_supported:
+        for monitor_num, monitor_info in monitors.items():
+            Send_MQTT_Discovery(None, name=monitor_info.get("Name"), name_id=f"monitor{monitor_num}", type="light")
 
 
 def discovery():
