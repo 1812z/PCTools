@@ -1,5 +1,5 @@
 1.HA版本不宜过旧
-2.插件: mini-graph-card,Bubble Card,mushroo,clock-weather-card
+2.插件: mini-graph-card,Bubble Card,mushroom,clock-weather-card,kiosk-mode
 3.主题: ios-dark-theme
 
 开机使用wol唤醒，ping为nored-red内ping局域网主机，流如下
