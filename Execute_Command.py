@@ -45,6 +45,11 @@ def MQTT_Command(command, data):
     if device_name + "monitor" in key:  # 显示器控制
         path = json_data.get(
             "user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
+        if "ddcci" in key:
+            run = [path] + data.split(' ')
+            print(run)
+            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+            return
         if data == "OFF":
             # 显示器关机方案
             # 方案一,关闭电源:
@@ -81,7 +86,7 @@ def MQTT_Command(command, data):
         else:  # 其它文件
             run = current_directory + '\\' + run_file
             os.system(f'start "" "{run}"')
-
+    
 
 def Python_File(run_file):
     print("执行PY文件:", run_file)

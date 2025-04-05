@@ -123,6 +123,10 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
                 "payload_on": "ON",
                 "payload_off": "OFF"
             })
+        
+        case ('text', _):
+                discovery_data["command_topic"] = f"{base_topic}{name_id}/set"
+       
 
     
    # 子类型处理

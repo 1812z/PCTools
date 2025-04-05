@@ -55,7 +55,10 @@ def send_data(aida64=True, volume=True, monitor=True):
         info += f"Aida64:{send_aida64()}\n"
     # 显示器亮度数据
     if monitor:
-        info += f"显示器:{send_monitor_state()}\n"
+        try:
+            info += f"显示器:{send_monitor_state()}\n"
+        except:
+            print("显示器数据读取失败")
     # 心跳包
     Publish_MQTT_Message(f"homeassistant/{device_name}/availability","online")
     return info

@@ -1,0 +1,798 @@
+1.HA版本不宜过旧
+2.插件: mini-graph-card,Bubble Card,mushroo,clock-weather-card
+3.主题: ios-dark-theme
+
+开机使用wol唤醒，ping为nored-red内ping局域网主机，流如下
+[{"id":"268082cd33a5cd34","type":"ping","z":"9ae60f26c3bbbae3","protocol":"IPv4","mode":"timed","name":"","host":"192.168.44.236","timer":"15","inputs":0,"x":180,"y":560,"wires":[["68e68ace5b000520"]]},{"id":"68e68ace5b000520","type":"switch","z":"9ae60f26c3bbbae3","name":"","property":"payload","propertyType":"msg","rules":[{"t":"eq","v":"0","vt":"num"},{"t":"neq","v":"0","vt":"num"}],"checkall":"true","repair":false,"outputs":2,"x":410,"y":560,"wires":[["e93936a5cfad5608","fff17b425af2c52a"],["8f21f8b874fc93b8","005594cc6b0e8eae"]]},{"id":"8f21f8b874fc93b8","type":"function","z":"9ae60f26c3bbbae3","name":"转换","func":"var a =msg.payload\nmsg.payload = {\n    data: {\n        value: Math.ceil(a)\n    }\n}\nreturn msg;","outputs":1,"timeout":"","noerr":0,"initialize":"","finalize":"","libs":[],"x":650,"y":620,"wires":[["d5e2f7b99e651a90"]]},{"id":"d5e2f7b99e651a90","type":"api-call-service","z":"9ae60f26c3bbbae3","name":"延迟设置","server":"e242470a.23fca8","version":7,"debugenabled":false,"action":"input_number.set_value","floorId":[],"areaId":[],"deviceId":[],"entityId":["input_number.qin_shi_dian_nao_yan_chi"],"labelId":[],"data":"","dataType":"json","mergeContext":"","mustacheAltTags":false,"outputProperties":[],"queue":"none","blockInputOverrides":false,"domain":"input_number","service":"set_value","x":800,"y":620,"wires":[[]]},{"id":"e93936a5cfad5608","type":"api-current-state","z":"9ae60f26c3bbbae3","name":"延迟状态","server":"e242470a.23fca8","version":3,"outputs":2,"halt_if":"0","halt_if_type":"num","halt_if_compare":"is_not","entity_id":"input_number.qin_shi_dian_nao_yan_chi","state_type":"num","blockInputOverrides":false,"outputProperties":[{"property":"payload","propertyType":"msg","value":"off","valueType":"str"}],"for":"0","forType":"num","forUnits":"minutes","override_topic":false,"state_location":"payload","override_payload":"msg","entity_location":"data","override_data":"msg","x":640,"y":520,"wires":[["ad7aba78a630aadd","a60c0ea426529e08"],[]]},{"id":"ad7aba78a630aadd","type":"mqtt out","z":"9ae60f26c3bbbae3","name":"off","topic":"qspc","qos":"2","retain":"","respTopic":"","contentType":"","userProps":"","correl":"","expiry":"","broker":"640feb3d6d01d2ee","x":830,"y":580,"wires":[]},{"id":"12d3334eba700819","type":"api-call-service","z":"9ae60f26c3bbbae3","name":"延迟设置","server":"e242470a.23fca8","version":7,"debugenabled":false,"action":"input_number.set_value","floorId":[],"areaId":[],"deviceId":[],"entityId":["input_number.qin_shi_dian_nao_yan_chi"],"labelId":[],"data":"","dataType":"json","mergeContext":"","mustacheAltTags":false,"outputProperties":[],"queue":"none","blockInputOverrides":false,"domain":"input_number","service":"set_value","x":1000,"y":500,"wires":[[]]},{"id":"a60c0ea426529e08","type":"function","z":"9ae60f26c3bbbae3","name":"function 11","func":"\nmsg.payload = {\n    data: {\n        value: 0\n    }\n}\nreturn msg;","outputs":1,"timeout":"","noerr":0,"initialize":"","finalize":"","libs":[],"x":850,"y":500,"wires":[["12d3334eba700819"]]},{"id":"e10ef0b33ff6924f","type":"mqtt out","z":"9ae60f26c3bbbae3","name":"on","topic":"qspc","qos":"0","retain":"","respTopic":"","contentType":"","userProps":"","correl":"","expiry":"","broker":"8facc376b85fc99b","x":970,"y":620,"wires":[]},{"id":"005594cc6b0e8eae","type":"api-current-state","z":"9ae60f26c3bbbae3","name":"副屏开关","server":"e242470a.23fca8","version":3,"outputs":2,"halt_if":"true","halt_if_type":"bool","halt_if_compare":"is","entity_id":"input_boolean.fu_ping","state_type":"habool","blockInputOverrides":false,"outputProperties":[{"property":"payload","propertyType":"msg","value":"on","valueType":"str"}],"for":"0","forType":"num","forUnits":"minutes","override_topic":false,"state_location":"payload","override_payload":"msg","entity_location":"data","override_data":"msg","x":640,"y":680,"wires":[["12425e23860d2d6a"],[]]},{"id":"12425e23860d2d6a","type":"api-current-state","z":"9ae60f26c3bbbae3","name":"是否启动","server":"e242470a.23fca8","version":3,"outputs":2,"halt_if":"false","halt_if_type":"bool","halt_if_compare":"is","entity_id":"input_boolean.fu_ping_qi_dong","state_type":"habool","blockInputOverrides":false,"outputProperties":[{"property":"payload","propertyType":"msg","value":"on","valueType":"str"}],"for":"0","forType":"num","forUnits":"minutes","override_topic":false,"state_location":"payload","override_payload":"msg","entity_location":"data","override_data":"msg","x":800,"y":700,"wires":[["e10ef0b33ff6924f","49f947ed3fbfc441","8f7f8028d2929096","c312915dd6603066"],[]]},{"id":"49f947ed3fbfc441","type":"api-call-service","z":"9ae60f26c3bbbae3","name":"标记启动","server":"e242470a.23fca8","version":7,"debugenabled":false,"action":"input_boolean.turn_on","floorId":[],"areaId":[],"deviceId":[],"entityId":["input_boolean.fu_ping_qi_dong"],"labelId":[],"data":"","dataType":"jsonata","mergeContext":"","mustacheAltTags":false,"outputProperties":[],"queue":"none","blockInputOverrides":false,"domain":"input_boolean","service":"turn_on","x":980,"y":740,"wires":[[]]},{"id":"4cb0b6cee5201b55","type":"api-call-service","z":"9ae60f26c3bbbae3","name":"标记关闭","server":"e242470a.23fca8","version":7,"debugenabled":false,"action":"input_boolean.turn_off","floorId":[],"areaId":[],"deviceId":[],"entityId":["input_boolean.fu_ping_qi_dong"],"labelId":[],"data":"","dataType":"jsonata","mergeContext":"","mustacheAltTags":false,"outputProperties":[],"queue":"none","blockInputOverrides":false,"domain":"input_boolean","service":"turn_off","x":840,"y":440,"wires":[[]]},{"id":"027b0bc708d588fd","type":"comment","z":"9ae60f26c3bbbae3","name":"延迟统计","info":"","x":160,"y":520,"wires":[]},{"id":"8f7f8028d2929096","type":"function","z":"9ae60f26c3bbbae3","name":"副屏","func":"msg.payload = 'on' \nreturn msg;","outputs":1,"timeout":"","noerr":0,"initialize":"","finalize":"","libs":[],"x":970,"y":660,"wires":[["9a72b849b02552dd"]]},{"id":"d013cb01f0a634b4","type":"mqtt out","z":"9ae60f26c3bbbae3","name":"off","topic":"panelscreen","qos":"0","retain":"","respTopic":"","contentType":"","userProps":"","correl":"","expiry":"","broker":"640feb3d6d01d2ee","x":1010,"y":540,"wires":[]},{"id":"4b6da27f30b0dff1","type":"function","z":"9ae60f26c3bbbae3","name":"副屏","func":"msg.payload = 'off' \nreturn msg;","outputs":1,"timeout":"","noerr":0,"initialize":"","finalize":"","libs":[],"x":850,"y":540,"wires":[["d013cb01f0a634b4"]]},{"id":"9a72b849b02552dd","type":"mqtt out","z":"9ae60f26c3bbbae3","name":"screen","topic":"panelscreen","qos":"0","retain":"","respTopic":"","contentType":"","userProps":"","correl":"","expiry":"","broker":"640feb3d6d01d2ee","x":1130,"y":660,"wires":[]},{"id":"c312915dd6603066","type":"function","z":"9ae60f26c3bbbae3","name":"副屏","func":"msg.payload = 'clock' \nreturn msg;","outputs":1,"timeout":"","noerr":0,"initialize":"","finalize":"","libs":[],"x":970,"y":700,"wires":[[]]},{"id":"fff17b425af2c52a","type":"api-current-state","z":"9ae60f26c3bbbae3","name":"延迟状态","server":"e242470a.23fca8","version":3,"outputs":2,"halt_if":"0","halt_if_type":"num","halt_if_compare":"is","entity_id":"input_number.qin_shi_dian_nao_yan_chi","state_type":"num","blockInputOverrides":false,"outputProperties":[{"property":"payload","propertyType":"msg","value":"off","valueType":"str"}],"for":"40","forType":"num","forUnits":"seconds","override_topic":false,"state_location":"payload","override_payload":"msg","entity_location":"data","override_data":"msg","x":640,"y":460,"wires":[["4cb0b6cee5201b55"],[]]},{"id":"e242470a.23fca8","type":"server","name":"Home Assistant","version":5,"addon":true,"rejectUnauthorizedCerts":true,"ha_boolean":"y|yes|true|on|home|open","connectionDelay":true,"cacheJson":true,"heartbeat":false,"heartbeatInterval":"30","areaSelector":"friendlyName","deviceSelector":"friendlyName","entitySelector":"friendlyName","statusSeparator":"at: ","statusYear":"hidden","statusMonth":"short","statusDay":"numeric","statusHourCycle":"h23","statusTimeFormat":"h:m","enableGlobalContextStore":true},{"id":"640feb3d6d01d2ee","type":"mqtt-broker","name":"local","broker":"192.168.43.10","port":"1883","clientid":"","autoConnect":true,"usetls":false,"protocolVersion":"4","keepalive":"60","cleansession":true,"autoUnsubscribe":true,"birthTopic":"","birthQos":"0","birthPayload":"","birthMsg":{},"closeTopic":"","closeQos":"0","closePayload":"","closeMsg":{},"willTopic":"","willQos":"0","willPayload":"","willMsg":{},"userProps":"","sessionExpiry":""},{"id":"8facc376b85fc99b","type":"mqtt-broker","name":"bemfa.com","broker":"bemfa.com","port":"9503","tls":"2cdfac6a874b9fd6","clientid":"924d21b830d94f278ca8d58189432941","autoConnect":true,"usetls":true,"protocolVersion":"4","keepalive":"55","cleansession":true,"autoUnsubscribe":true,"birthTopic":"","birthQos":"0","birthPayload":"","birthMsg":{},"closeTopic":"","closeQos":"0","closePayload":"","closeMsg":{},"willTopic":"","willQos":"0","willPayload":"","willMsg":{},"userProps":"","sessionExpiry":""},{"id":"2cdfac6a874b9fd6","type":"tls-config","name":"","cert":"","key":"","ca":"","certname":"","keyname":"","caname":"","servername":"","verifyservercert":true,"alpnprotocol":""}]
+
+控制面板原始yaml如下，新建新页面右上角，原始配置编辑器，仅供参考，需要自行修改实体
+
+kiosk_mode:
+  hide_header: true
+views:
+  - type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: custom:clock-weather-card
+            entity: weather.forecast_zhu_quan
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'off'
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 开机
+                entity: button.pc
+                icon: mdi:play
+                show_state: false
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                icon: ''
+                name: 顶灯
+                entity: light.mijia_cn_group_1854449317898240000_group3_s_2
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                entity: switch.chuangmi_cn_433742394_212a01_on_p_2_1
+                name: 饮水机
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                entity: input_boolean.fu_ping_qi_dong
+                show_state: false
+                icon: ''
+                name: Ping
+            layout_options:
+              grid_columns: 4
+              grid_rows: 1.5
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'off'
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 休眠
+                entity: button.pc2kya_iu90ylvliex
+                icon: mdi:power-sleep
+                show_state: false
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 关机
+                entity: button.pcvx_zazcn4ynpqnbu
+                icon: mdi:power
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 重启
+                entity: button.pciibznctdhfeywdtm
+                icon: mdi:restart
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                entity: input_boolean.fu_ping_qi_dong
+                show_state: false
+                icon: ''
+                name: Ping
+            layout_options:
+              grid_columns: 4
+              grid_rows: 1.5
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'on'
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - features:
+                          - type: light-brightness
+                        type: tile
+                        entity: light.pcmonitor0
+                        hide_state: false
+                        tap_action:
+                          action: call-service
+                          service: button.press
+                          target:
+                            entity_id: button.pcbutton_cvjiskp5_cmlfbb
+                        show_entity_picture: false
+                        vertical: false
+                        state_content: brightness
+                        name: 显示器亮度
+                        features_position: bottom
+                      - features:
+                          - style: slider
+                            type: numeric-input
+                        type: tile
+                        hide_state: false
+                        vertical: false
+                        show_entity_picture: false
+                        entity: number.pcvolume
+                        icon: mdi:volume-high
+                        state_content: state
+                        name: 音量
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    icon: mdi:qqchat
+                    entity: button.pcv07hkdyyye_7v2hi
+                    name: QQ
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pclc_fxv4sicu6fcd
+                    name: 微信
+                    icon: mdi:wechat
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pchaj02_u8dokycssz
+                    name: 文件
+                    icon: mdi:laptop
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pcvvl1lb4a9dl_rfol
+                    name: Steam
+                    icon: mdi:steam
+                    icon_height: 40px
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    icon: mdi:music-note-eighth
+                    name: 网易云
+                    entity: button.pcw6wx4fn4x_csldrm
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pcsecvpkfoj1gzmad5
+                    name: Clash
+                    icon: mdi:key
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    name: Chrome
+                    icon: mdi:google-chrome
+                    entity: button.pcx8dqxeod_ebq_iwd
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: navigate
+                      navigation_path: '#pop_more'
+                    icon: mdi:dots-vertical
+                    name: 更多
+                    icon_height: 40px
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'on'
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcscpuuti
+                        line_color: '#99dff7'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: CPU
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcsmemuti
+                        line_color: '#b8ceea'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: MEM 32GB
+                        animate: true
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcsnic4dlrate
+                        line_color: blue
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: 下载
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcsnic4ulrate
+                        line_color: '#e74c3c'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: 上传
+                        animate: true
+            visibility:
+              - condition: numeric_state
+                entity: input_number.page
+                above: 0
+                below: 2
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pctcpu
+                        line_color: '#99dff7'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: CPU温度
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pctgpu1
+                        line_color: '#b8ceea'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: GPU温度
+                        animate: true
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcthdd1
+                        line_color: blue
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: 硬盘1温度
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcthdd2
+                        line_color: '#e74c3c'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: 硬盘2温度
+                        animate: true
+            visibility:
+              - condition: numeric_state
+                entity: input_number.page
+                above: 1
+                below: 3
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.cuco_cn_833197945_v3_electric_power_p_11_2
+                        line_color: '#99dff7'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: 主机
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcpcpupkg
+                        line_color: '#b8ceea'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: CPU功率
+                        animate: true
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcpgpu1
+                        line_color: blue
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: GPU功率
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcvgpu1
+                        line_color: '#e74c3c'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: GPU电压
+                        animate: true
+            visibility:
+              - condition: numeric_state
+                entity: input_number.page
+                above: 2
+                below: 4
+          - type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: perform-action
+                      perform_action: input_number.decrement
+                      target:
+                        entity_id:
+                          - input_number.page
+                    icon: mdi:arrow-left-bold
+                    name: 上一页
+                    icon_height: 45px
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'on'
+            grid_options:
+              columns: 3
+              rows: auto
+          - type: horizontal-stack
+            cards:
+              - show_name: false
+                show_icon: true
+                type: button
+                icon: mdi:desktop-classic
+                entity: sensor.cuco_cn_833197945_v3_electric_power_p_11_2
+                show_state: true
+                icon_height: 45px
+                name: CPU功率
+              - show_name: false
+                show_icon: true
+                type: button
+                icon: mdi:expansion-card-variant
+                entity: sensor.pcpgpu1
+                show_state: true
+                icon_height: 45px
+                name: GPU功率
+            grid_options:
+              columns: 6
+              rows: auto
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: perform-action
+                  perform_action: input_number.increment
+                  target:
+                    entity_id: input_number.page
+                icon: mdi:arrow-right-bold
+                name: 下一页
+            grid_options:
+              columns: 3
+              rows: auto
+        visibility:
+          - condition: state
+            entity: input_boolean.fu_ping_qi_dong
+            state: 'on'
+      - type: grid
+        cards:
+          - type: tile
+            entity: light.lemesh_cn_1123295711_wy0a20_s_2
+            features:
+              - type: light-brightness
+          - type: tile
+            entity: light.dorm
+            features:
+              - type: light-brightness
+          - type: horizontal-stack
+            cards:
+              - type: entities
+                entities:
+                  - entity: >-
+                      sensor.miaomiaoc_cn_blt_3_1auoc6bmoe801_t2_temperature_p_2_1
+                    name: 温度
+                header:
+                  type: graph
+                  entity: sensor.miaomiaoc_cn_blt_3_1auoc6bmoe801_t2_temperature_p_2_1
+                  detail: 2
+              - type: entities
+                entities:
+                  - entity: >-
+                      sensor.miaomiaoc_cn_blt_3_1auoc6bmoe801_t2_relative_humidity_p_2_2
+                    name: 湿度
+                header:
+                  type: graph
+                  entity: >-
+                    sensor.miaomiaoc_cn_blt_3_1auoc6bmoe801_t2_relative_humidity_p_2_2
+                  detail: 2
+          - type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mini-graph-card
+                    entities:
+                      - >-
+                        sensor.miaomiaoc_cn_blt_3_1hfbp06ok4c02_t1_temperature_p_2_1
+                    points_per_hour: 1
+                    name: 室内
+                    animate: true
+                  - type: custom:mini-graph-card
+                    entities:
+                      - >-
+                        sensor.miaomiaoc_cn_blt_3_1hfbp06ok4c02_t1_relative_humidity_p_2_2
+                    points_per_hour: 1
+                    name: 室内
+                    animate: true
+        visibility:
+          - condition: state
+            entity: input_boolean.fu_ping_qi_dong
+            state: 'off'
+      - type: grid
+        cards:
+          - type: vertical-stack
+            cards:
+              - type: custom:bubble-card
+                card_type: pop-up
+                hash: '#pop_more'
+                button_type: slider
+                sub_button:
+                  - name: '10'
+                    show_name: false
+                card_layout: large
+                hide_backdrop: false
+                bg_opacity: '78'
+                bg_color: '#725050'
+                scrolling_effect: true
+                show_attribute: false
+                show_last_changed: false
+                force_icon: false
+                trigger_close: false
+                bg_blur: '50'
+                shadow_opacity: '55'
+                name: ''
+                icon: ''
+                entity: person.1812z
+                modules:
+                  - default
+              - type: horizontal-stack
+                cards:
+                  - type: custom:mushroom-light-card
+                    entity: light.dorm
+                    show_brightness_control: true
+                    show_color_temp_control: false
+                    collapsible_controls: false
+                    use_light_color: true
+                    show_color_control: true
+                    fill_container: false
+                  - type: custom:mushroom-light-card
+                    entity: light.lemesh_cn_1123295711_wy0a20_s_2
+                    name: 灯带
+                    show_brightness_control: true
+                    use_light_color: true
+                    show_color_temp_control: true
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    icon: mdi:minecraft
+                    name: Lunar
+                    entity: button.pc7edk4supiedf70x4
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pcg_gphfmaaqjhllfl
+                    icon: mdi:key
+                    name: 雷神加速器
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: navigate
+                      navigation_path: /config
+                    name: 设置
+                    icon: mdi:cog
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: url
+                      url_path: >-
+                        https://ha.1812z.top:8124/dashboard-panel/0?disable_km=&edit=1
+                    icon: mdi:home-edit
+                    name: 编辑
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pcsgpu1uti
+                        line_color: '#99dff7'
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: GPU占用
+                        animate: true
+                      - type: custom:mini-graph-card
+                        entities:
+                          - sensor.pctgpu1
+                        line_color: red
+                        line_width: 8
+                        font_size: 75
+                        hours_to_show: 0.1
+                        points_per_hour: 720
+                        name: GPU温度
+                        animate: true
+    max_columns: 2
+    cards: []
+    visible:
+      - user: 4fd79b3ac58f4dd593d01e7c3007e0ed
+      - user: 707a6978a68c4cc790151ebb0544c7e4
+    title: 副屏
+    icon: mdi:cellphone-screenshot
+    background:
+      opacity: 82
+      alignment: center
+      size: cover
+      repeat: no-repeat
+      attachment: scroll
+      image: /api/image/serve/2d70565a31f434f7d05eede067e7cf0b/original
+    theme: ios-dark-mode
+    dense_section_placement: false
+    header:
+      layout: start
+      badges_position: top
+    top_margin: false
+  - type: sections
+    max_columns: 2
+    path: pc
+    title: PC
+    sections:
+      - type: grid
+        cards:
+          - type: horizontal-stack
+            cards:
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 开机
+                entity: button.pc
+                icon: mdi:play
+                show_state: false
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 关机
+                entity: button.pcvx_zazcn4ynpqnbu
+                icon: mdi:power
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                name: 重启
+                entity: button.pciibznctdhfeywdtm
+                icon: mdi:restart
+              - show_name: true
+                show_icon: true
+                type: button
+                tap_action:
+                  action: toggle
+                entity: input_boolean.fu_ping_qi_dong
+                show_state: false
+                icon: ''
+                name: Ping
+            layout_options:
+              grid_columns: 4
+              grid_rows: 1.5
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'on'
+          - type: vertical-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    cards:
+                      - features:
+                          - type: light-brightness
+                        type: tile
+                        entity: light.pcmonitor0
+                        hide_state: false
+                        tap_action:
+                          action: call-service
+                          service: button.press
+                          target:
+                            entity_id: button.pcbutton_cvjiskp5_cmlfbb
+                        show_entity_picture: false
+                        vertical: false
+                        state_content: brightness
+                        name: 显示器亮度
+                        features_position: bottom
+                      - features:
+                          - style: slider
+                            type: numeric-input
+                        type: tile
+                        hide_state: false
+                        vertical: false
+                        show_entity_picture: false
+                        entity: number.pcvolume
+                        icon: mdi:volume-high
+                        state_content: state
+                        name: 音量
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    icon: mdi:qqchat
+                    entity: button.pcv07hkdyyye_7v2hi
+                    name: QQ
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pclc_fxv4sicu6fcd
+                    name: 微信
+                    icon: mdi:wechat
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pchaj02_u8dokycssz
+                    name: 文件
+                    icon: mdi:laptop
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pcvvl1lb4a9dl_rfol
+                    name: Steam
+                    icon: mdi:steam
+                    icon_height: 40px
+              - type: horizontal-stack
+                cards:
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    icon: mdi:music-note-eighth
+                    name: 网易云
+                    entity: button.pcw6wx4fn4x_csldrm
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    entity: button.pcsecvpkfoj1gzmad5
+                    name: Clash
+                    icon: mdi:key
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: toggle
+                    name: Chrome
+                    icon: mdi:google-chrome
+                    entity: button.pcx8dqxeod_ebq_iwd
+                    icon_height: 40px
+                  - show_name: true
+                    show_icon: true
+                    type: button
+                    tap_action:
+                      action: navigate
+                      navigation_path: '#pop_more'
+                    icon: mdi:dots-vertical
+                    name: 更多
+                    icon_height: 40px
+            visibility:
+              - condition: state
+                entity: input_boolean.fu_ping_qi_dong
+                state: 'on'
+    theme: ios-dark-mode
+    cards: []
+    background:
+      opacity: 82
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+      image: /api/image/serve/2d70565a31f434f7d05eede067e7cf0b/original
+  - type: masonry
+    path: ''
+    cards: []

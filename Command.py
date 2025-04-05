@@ -49,7 +49,7 @@ def Send_Monitor_MQTT_Discovery():
     if monitor_supported:
         for monitor_num, monitor_info in monitors.items():
             Send_MQTT_Discovery(None, name=monitor_info.get("Name"), name_id=f"monitor{monitor_num}", type="light")
-
+        Send_MQTT_Discovery(None,name="DDC/CI控制",name_id="monitorddcci",type="text")
 
 def discovery():
     count = 2
@@ -82,6 +82,7 @@ def subcribe():
     if monitor_supported:
         for monitor_num, monitor_info in monitors.items():
             MQTT_Subcribe(f"homeassistant/light/{device_name}monitor{monitor_num}/set")
+        MQTT_Subcribe(f"homeassistant/text/{device_name}monitorddcci/set")
     MQTT_Subcribe(f"homeassistant/number/{device_name}volume/set")
     MQTT_Subcribe(f"{device_name}/messages")
 
