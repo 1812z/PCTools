@@ -19,7 +19,7 @@
 
 ### HA界面展示:
 1.另类副屏(页面示例见example/dashboard.txt):  
-<img src="img\Panel.jpg" alt="图片" width="400" height="250" />  
+<img src=".github\images\1743859715274.jpg" alt="图片" width="400" height="250" />  
 2.主页面:  
 <img src=".github\images\image.png" alt="手机视图" height="500"/>
 
@@ -48,7 +48,7 @@
 
 ![图片](https://img2.moeblog.vip/images/vO74.png "图片")
 
-(2)启动Twinkle tray，确保能正常读取显示器信息，如不支持请将`config.json` 内 `monitor_supported` 改为false
+(2)启动Twinkle tray，确保能正常读取显示器信息，如不支持请关闭设置里的显示器功能
 
 
 ### 2.运行python程序
@@ -82,8 +82,6 @@ py文件会自动导入，执行其中的fun函数，lnk快捷方式则直接打
 
 
 ## 三.Tips
-关于卡死：因为没写抓捕报错，也没写异常处理，如果卡死请到任务管理器结束所有python进程，重新打开程序吧   
-关于发现: 目前设定自动运行后自动执行一次发现，以免设备出现“不可用”情况，但是电脑休眠后启动数据可能不再更新，等待修复TAT  
 推荐软件:openrgb，支持Ha接入控制RGB灯光  
 
 感谢大佬的开源库： https://github.com/gwy15/python_aida64  
