@@ -2,16 +2,16 @@ import threading
 import sched
 import time
 from Update_State_Data import send_data
-import json
+from logger_manager import Logger
+from config_manager import load_config,set_config,get_config
 
-def read_config():
-    with open('config.json', 'r') as file:
-        config = json.load(file)
-    return config.get('interval', 10)  # 默认间隔为10秒
+logger = Logger(__name__)
 
 class PeriodicTask:
-    def __init__(self, interval=None, function=None):
-        self.interval = interval or read_config()
+    def __init__(self, function=None):
+        interval = get_config("interval")
+        self.interval = interval
+        logger.debug(f"定时器初始化,上报间隔 {interval} 秒")
         self.function = function
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.thread = threading.Thread(target=self._run)
@@ -48,7 +48,7 @@ class PeriodicTask:
 
 def tasks():
     result = send_data()
-    # print(result)
+    logger.debug(f"MQTT定时器上报数据\n {result}")
     
 periodic_task = PeriodicTask(function=tasks)
 
@@ -59,5 +59,5 @@ def stop_task():
     periodic_task.stop()
 
 if __name__ == "__main__":
-    tasks()
+    periodic_task.start()
 

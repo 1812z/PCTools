@@ -7,8 +7,9 @@ from Toast import show_toast
 from volume import set_volume
 from Twinkle_Tray import get_monitors_state
 from Update_State_Data import send_data
-# 初始化
+from logger_manager import Logger
 
+logger = Logger(__name__)
 
 def init_data():
     global current_directory
@@ -47,7 +48,7 @@ def MQTT_Command(command, data):
             "user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
         if "ddcci" in key:
             run = [path] + data.split(' ')
-            print(run)
+            logger.info(f"DDC/CI命令: {run}")
             subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
             return
         if data == "OFF":
@@ -65,15 +66,17 @@ def MQTT_Command(command, data):
                 brightness = str(int(data) * 100 // 255)
                 run = [path, "--MonitorNum=" + str(monitor_num+1), "--Set=" + brightness]
                 subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-                print(info.get("Name") + "亮度:", brightness)
+                logger.info(info.get("Name") + "亮度:" + brightness)
         send_data(False, False, True)
     elif key == device_name + "volume":  # 音量控制
-        set_volume(int(data) / 100)
+        volume = int(data) / 100
+        set_volume(volume)
         send_data(False, True, False)
+        logger.info(f"设置音量至: {volume}")
     else:                              # 运行程序
         file_type = run_file.split('.')[1]
         if file_type == "lnk":  # 快捷方式
-            print("命令:", key, "打开快捷方式:", run_file)
+            logger.info("命令:" + key + "打开快捷方式:" + run_file)
             run = current_directory + '\\' + run_file
             # os.system(f'start "" "{run}"')
             subprocess.Popen(['explorer', run])
@@ -89,7 +92,7 @@ def MQTT_Command(command, data):
     
 
 def Python_File(run_file):
-    print("执行PY文件:", run_file)
+    logger.info("执行PY文件:" + run_file)
 
     file_path = os.path.join(os.path.dirname(
         __file__), 'commands', f'{run_file}')
@@ -103,4 +106,4 @@ def Python_File(run_file):
     if hasattr(module, 'fun'):
         module.fun()
     else:
-        print(f"模块 {run_file} 中没有名为 'fun' 的函数")
+        logger.info(f"模块 {run_file} 中没有名为 'fun' 的函数")

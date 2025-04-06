@@ -1,56 +1,65 @@
+import json
 import time
 import paho.mqtt.client as mqtt
-import json
+from config_manager import load_config,set_config,get_config
+from logger_manager import Logger
 
-global mqttc
+global mqttc,initialized
+initialized = False
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-
+logger = Logger(__name__)
 subscribed_topics = []
 
 
 def on_connect(client, userdata, flags, reason_code, properties):
+    global initialized
     if reason_code.is_failure:
-        print(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")
+        logger.error(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")    
     else:
-        print("成功连接到:", broker)
+        logger.info(f"成功连接到: {broker}")
         if subscribed_topics:
             re_subscribe()
 
+def on_connect_fail(reason_code):
+    logger.error(f"连接 {broker}:{port} 失败,错误码:{reason_code},请检查MQTT配置")
 
 def on_message(client, userdata, data):
-    from Execute_Command import MQTT_Command
     userdata.append(data.payload)
     message = data.payload.decode()
     if fun2:
+        from Execute_Command import MQTT_Command
         MQTT_Command(data.topic, message)
-    print(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
+    logger.debug(f"MQTT主题: `{data.topic}` 消息: `{message}` ")
+
 
 # 初始化MQTT
-
-
 def init_data():
-    global json_data, device_name, broker, fun2
+    global initialized
+    if initialized:
+        return
+    global json_data, device_name, broker, fun2, port
     # 读取账号密码
-    with open('config.json', 'r') as file:
-        json_data = json.load(file)
-        username = json_data.get("username")
-        password = json_data.get("password")
-        broker = json_data.get("HA_MQTT")
-        port = json_data.get("HA_MQTT_port")
-        device_name = json_data.get("device_name")
-        fun2 = json_data.get("fun2")
-        mqttc.user_data_set([])
-        mqttc._username = username
-        mqttc._password = password
-        mqttc.on_connect = on_connect
-        mqttc.on_message = on_message
-        try:
-            mqttc.connect(broker, port)
-        except:
-            print("MQTT连接失败")
+    json_data = load_config()
+    username = get_config("username")
+    password = get_config("password")
+    broker = get_config("HA_MQTT")
+    port = get_config("HA_MQTT_port")
+    device_name = get_config("device_name")
+    fun2 = get_config("fun2")
+    mqttc.user_data_set([])
+    mqttc._username = username
+    mqttc._password = password
+    mqttc.on_connect = on_connect
+    mqttc.on_message = on_message
+    mqttc.on_connect_fail = on_connect_fail
+    initialized = True
+    try:
+        mqttc.connect(broker,port)
+    except:
+        logger.error(f"连接 {broker}:{port} 失败,请检查MQTT配置")
 
 
-init_data()
+
 # device_class HA设备类型
 # topic_id 数据编号，默认空
 # name 实体名称
@@ -58,6 +67,7 @@ init_data()
 # type 实体类型 默认sensor
 def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id='', type="sensor",is_aida64=False):
     global device_name
+    init_data()
     # 发现示例
     discovery_data = {
         "name": "Sensor1",
@@ -162,13 +172,15 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
                         discovery_data["icon"] = "mdi:download-network"
                     elif "Upload" in name:
                         discovery_data["icon"] = "mdi:upload-network"
-            elif "time" in name.lower():
+            elif "Time" in name:
                 discovery_data["icon"] = "mdi:clock-outline"
-            elif "clock" in name.lower():
+            elif "Clock" in name:
                 discovery_data["unit_of_measurement"] = "MHz"
             else:
                 discovery_data["unit_of_measurement"] = "%"
                 if "gpu" in name.lower():
+                    if "momory" in name:
+                        discovery_data["unit_of_measurement"] = "MB"
                     discovery_data["icon"] = "mdi:expansion-card"
                 elif "memory" in name.lower():
                     discovery_data["icon"] = "mdi:memory"
@@ -194,10 +206,12 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
   
 # 发送自定义消息
 def Publish_MQTT_Message(topic, message, qos=0):
+    init_data()
     mqttc.publish(topic, message,qos)
 
 # 更新状态数据
 def Update_State_data(data,topic,type):
+    init_data()
     if type == "number":
         state_topic = f"homeassistant/number/{device_name}{topic}/state"
         Publish_MQTT_Message(state_topic, str(data))
@@ -210,6 +224,7 @@ def Update_State_data(data,topic,type):
 
 
 def MQTT_Subcribe(topic):
+    init_data()
     mqttc.subscribe(topic)
     subscribed_topics.append(topic)
 
@@ -222,6 +237,7 @@ def re_subscribe():
 
 # MQTT 进程管理
 def start_mqtt():
+    init_data()
     try:
         mqttc.loop_start()
         timer = 0
@@ -229,11 +245,12 @@ def start_mqtt():
             time.sleep(1)
             timer += 1
             if mqttc.is_connected():
+                logger.debug("MQTT订阅进程启动成功")
                 return 0
             elif timer == 5:
-                return 1
+                return 1     
     except:
-        return 1
+        logger.error("MQTT连接失败,请检查服务器配置")
 
 
 def stop_mqtt_loop():

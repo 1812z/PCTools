@@ -3,8 +3,11 @@ import keyboard
 import time
 from Toast import show_toast
 from MQTT import Send_MQTT_Discovery, Publish_MQTT_Message
-listening = False
+from logger_manager import Logger
+from config_manager import load_config,set_config,get_config
 
+listening = False
+logger = Logger(__name__)
 
 def send_discovery(hotkeys):
     info = "快捷键发现: \n"
@@ -26,15 +29,14 @@ def init_binary_sensor(hotkeys):
 
 def init_data():
     # 初始化
-    with open('config.json', 'r') as file:
-        global json_data
-        global hotkey_notify
-        global suppress
-        global device_name
-        json_data = json.load(file)
-        hotkey_notify = json_data.get("hotkey_notify")
-        suppress = json_data.get("suppress")
-        device_name = json_data.get("device_name")
+    global json_data
+    global hotkey_notify
+    global suppress
+    global device_name
+    json_data = load_config()
+    hotkey_notify = json_data.get("hotkey_notify")
+    suppress = json_data.get("suppress")
+    device_name = json_data.get("device_name")
     load_hotkeys()
 
 
@@ -43,20 +45,20 @@ def save_hotkey(hotkey):
     if hotkey not in existing_hotkeys:
         with open('hotkeys.txt', 'a') as file:
             file.write(hotkey + '\n')
-            print(f"保存快捷键: {hotkey}")
+            logger.info(f"保存快捷键: {hotkey}")
     else:
-        print(f"快捷键 '{hotkey}' 已存在，未保存。")
+        logger.info(f"快捷键 '{hotkey}' 已存在，未保存。")
 
 
 def capture_hotkeys():
-    print("开始捕获快捷键，按 'esc' 停止捕获...")
+    logger.info("开始捕获快捷键，按 'esc' 停止捕获...")
     captured_hotkeys = []
 
     def record_hotkey():
         hotkey = keyboard.read_event().name
         if hotkey != 'esc':
             captured_hotkeys.append(hotkey)
-            print(f"捕获到快捷键: {captured_hotkeys}")
+            logger.info(f"捕获到快捷键: {captured_hotkeys}")
 
     while True:
         event = keyboard.read_event()
@@ -77,6 +79,7 @@ def load_hotkeys():
             hotkeys = [line.strip() for line in file.readlines()]
             return hotkeys
     except FileNotFoundError:
+        logger.error("hotkeys.txt加载失败")
         return []
 
 
@@ -85,7 +88,7 @@ def command(h: str):
     for item in key_list:
         keyboard.release(item)
         # print(item)
-    print("触发了快捷键:", h)
+    logger.debug("触发了快捷键:", h)
     if hotkey_notify == True:
         show_toast("PCTools", "触发了快捷键:" + h)
     topic = f"homeassistant/binary_sensor/{device_name}hotkey{h.replace("+", "-")}/state"
@@ -100,7 +103,7 @@ def listen_hotkeys():
         listening = True
         init_data()
         send_discovery(hotkeys)
-        print("开始监听快捷键...", hotkeys)
+        logger.info(f"开始监听快捷键...{hotkeys}")
         for hotkey in hotkeys:
             keyboard.add_hotkey(hotkey, lambda h=hotkey: command(h), suppress=suppress, trigger_on_release=False)
         # keyboard.wait('esc')
@@ -114,7 +117,7 @@ def stop_listen():
         listening = False
         for hotkey in hotkeys:
             keyboard.remove_hotkey(hotkey)
-        print("已停止监听快捷键")
+        logger.info("已停止监听快捷键")
         return 0
     return 1
 

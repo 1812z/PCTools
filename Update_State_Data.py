@@ -1,18 +1,18 @@
 import time
 from Twinkle_Tray import get_monitors_state
 import python_aida64
-from pprint import pprint
 import json
 from volume import get_volume
 from MQTT import Send_MQTT_Discovery,Update_State_data,Publish_MQTT_Message
+from logger_manager import Logger
+from config_manager import load_config,set_config,get_config
 
 debug = False
+logger = Logger(__name__)
 
 def init():
-    with open('config.json', 'r') as file:
         global device_name
-        json_data = json.load(file)
-        device_name = json_data.get("device_name")
+        device_name = get_config("device_name")
 
         
 # 发送音量信息
@@ -27,7 +27,7 @@ def get_aida64_data():
     global aida64_data
     aida64_data = python_aida64.getData()
     if aida64_data == None:
-        print("Aida64数据读取失败")
+        logger.error("Aida64数据读取失败")
 
 
 # 发送Aida64传感器数据
@@ -58,16 +58,19 @@ def send_data(aida64=True, volume=True, monitor=True):
         try:
             info += f"显示器:{send_monitor_state()}\n"
         except:
-            print("显示器数据读取失败")
+            logger.error("显示器数据读取失败")
     # 心跳包
     Publish_MQTT_Message(f"homeassistant/{device_name}/availability","online")
+    logger.debug(info)
     return info
 
 
 # 发现设备
-def discovery():
+def discovery_aida64():
     get_aida64_data()
-    
+    if aida64_data is None:
+        logger.error("Aida64数据读取失败")
+        return "Aida64数据读取失败"
     # 使用字典管理各类别的计数器
     category_counters = {
         'temp': 0,
@@ -78,8 +81,7 @@ def discovery():
     }
     
     info_lines = []
-    print("发送Discovery MQTT信息")
-
+  
     for category, items in aida64_data.items():
         if category not in category_counters:
             continue
@@ -101,13 +103,13 @@ def discovery():
 
     total_entities = sum(category_counters.values())
     summary = f"发现了{total_entities}个实体"
- 
+    logger.info(f"发送Aida64实体 Discovery MQTT信息,共{total_entities}个实体")
     return f"{summary}\n" + "\n".join(info_lines)
 
 init()
 
 if __name__ == "__main__":
-    discovery()
+    discovery_aida64()
     time.sleep(1)
     print(send_data())
 

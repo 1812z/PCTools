@@ -6,9 +6,10 @@ from flask import Flask, Response
 import multiprocessing
 import signal
 import os
+from logger_manager import Logger
 
 app = Flask(__name__)
-
+logger = Logger(__name__)
 
 @app.route('/screenshot.jpg')
 def get_screenshot():
@@ -57,7 +58,7 @@ def generate_frames():
 
 
 def run_flask_app(host, port):
-    app.run(host=host, port=port)
+    app.run(host=host, port=port,debug=False)
 
 
 class FlaskAppManager:
@@ -68,17 +69,20 @@ class FlaskAppManager:
 
     def start(self):
         if self.process is None:
-            self.process = multiprocessing.Process(
-                target=run_flask_app, args=(self.host, self.port))
-            self.process.start()
-            print(f"Flask进程启动 http://{self.host}:{self.port}")
-
+            try:
+                self.process = multiprocessing.Process(
+                    target=run_flask_app, args=(self.host, self.port))
+                self.process.start()
+                logger.info(f"Flask进程启动 http://{self.host}:{self.port}")
+            except:
+                logger.error(f"Flask进程启动失败,请检查端口占用")
+                
     def stop(self):
         if self.process is not None:
             os.kill(self.process.pid, signal.SIGTERM)
             self.process.join()
             self.process = None
-            print("Flask进程停止")
+            logger.info("Flask进程停止")
 
 
 if __name__ == "__main__":

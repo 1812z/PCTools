@@ -3,7 +3,9 @@ from ctypes import wintypes
 import threading
 import time
 from MQTT import Send_MQTT_Discovery, Update_State_data
+from logger_manager import Logger
 
+logger = Logger(__name__)
 # 定义常量
 EVENT_SYSTEM_FOREGROUND = 0x0003
 WINEVENT_OUTOFCONTEXT = 0x0000
@@ -28,7 +30,7 @@ WinEventProcType = ctypes.WINFUNCTYPE(
 
 def discovery():
     info = Send_MQTT_Discovery(None, None, "前台应用", "ForegroundWindow", "sensor")
-    # print(info)
+    logger.debug(info)
 
 def win_event_proc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
     current_hwnd = user32.GetForegroundWindow()
@@ -42,7 +44,7 @@ def win_event_proc(hWinEventHook, event, hwnd, idObject, idChild, dwEventThread,
         user32.GetClassNameW(current_hwnd, class_buffer, 256)
         class_name = class_buffer.value
 
-        print(f"HWND={current_hwnd}, Title='{window_title}', Class='{class_name}'")
+        logger.debug(f"HWND={current_hwnd}, Title='{window_title}', Class='{class_name}'")
         if window_title:
             Update_State_data(str(window_title), "ForegroundWindow", "sensor")
 
@@ -55,17 +57,17 @@ class WindowListener:
 
     def start(self):
         if self.thread and self.thread.is_alive():
-            print("监听已在运行")
+            logger.info("监听已在运行")
             return
 
         self.stop_event.clear()
         self.thread = threading.Thread(target=self._run_listener, daemon=True)
         self.thread.start()
-        print("窗口监听已启动")
+        logger.info("窗口监听已启动")
 
     def stop(self):
         if not self.thread or not self.thread.is_alive():
-            print("监听未运行")
+            logger.info("监听未运行")
             return
 
         self.stop_event.set()
@@ -73,7 +75,7 @@ class WindowListener:
             user32.UnhookWinEvent(self.hook)
             self.hook = None
         self.thread.join(timeout=1)
-        print("窗口监听已停止")
+        logger.info("窗口监听已停止")
 
     def _run_listener(self):
         discovery()

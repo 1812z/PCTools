@@ -2,6 +2,9 @@ import os
 import sys
 import win32com.client
 import pythoncom
+from logger_manager import Logger
+
+logger = Logger(__name__)
 
 def add_to_startup(script_name='gui.py'):
     pythoncom.CoInitialize()  # 初始化 COM 库
@@ -25,7 +28,7 @@ def add_to_startup(script_name='gui.py'):
     # 保存快捷方式
     shortcut.Save()
 
-    print(f"{script_name} 已成功加入开机启动项")
+    logger.info(f"{script_name} 已成功加入开机启动项")
     return f"{script_name} 已成功加入开机启动项"
 
 
@@ -37,10 +40,10 @@ def remove_from_startup(script_name='gui.py'):
     # 检查快捷方式是否存在
     if os.path.exists(shortcut_path):
         os.remove(shortcut_path)
-        print(f"{script_name} 已成功从开机启动项移除")
+        logger.info(f"{script_name} 已成功从开机启动项移除")
         return f"{script_name} 已成功从开机启动项移除"
     else:
-        print(f"未找到 {script_name} 的启动项")
+        logger.info(f"未找到 {script_name} 的启动项")
         return f"未找到 {script_name} 的启动项"
 
 if __name__ == "__main__":

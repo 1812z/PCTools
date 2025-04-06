@@ -3,11 +3,10 @@ import threading
 import time
 from PIL import Image
 import flet as ft
-from Update_State_Data import discovery, send_data
+from Update_State_Data import discovery_aida64, send_data
 from flet_core import MainAxisAlignment, CrossAxisAlignment
 from web_task import FlaskAppManager
 from timer import start_task, stop_task
-import json
 from MQTT import start_mqtt, stop_mqtt_loop
 from Command import discovery as discovery_comm,subcribe
 import pystray
@@ -16,17 +15,14 @@ import HA_widget_task
 from Hotkey_capture import load_hotkeys, capture_hotkeys, listen_hotkeys, stop_listen, send_discovery
 from Toast import show_toast
 from WIndows_Listener import listener as window_listener
-version = "V4.4"
+from config_manager import load_config,set_config,get_config
+from logger_manager import Logger
+
+version = "V4.5"
 
 manager = FlaskAppManager('0.0.0.0', 5000)
 page = None
-
-
-def save_json_data(key, data):
-    json_data[key] = data
-    with open('config.json', 'w', encoding='utf-8') as file:
-        json.dump(json_data, file, indent=4, ensure_ascii=False)
-
+logger = Logger("Gui")
 
 def show_snackbar(page: ft.Page, message: str):
     snackbar = ft.SnackBar(
@@ -40,27 +36,27 @@ def show_snackbar(page: ft.Page, message: str):
     page.update()
 
 def start():
-    if fun1:
-        if discovery() !=1:
+    try:
+        if fun2:
+            discovery_comm()
+            if start_mqtt() == 0:
+                subcribe()
+            else:
+                show_toast("MQTT订阅失败,请检查MQTT配置")
+                return
+        if fun1 or fun2:
             start_task()
-        else:
-            show_toast("[ERROR]PCTools","MQTT发现失败")
-    if fun2:
-        discovery_comm()
-        if start_mqtt() == 0:
-            subcribe()
-        else:
-            show_toast("[ERROR]PCTools","MQTT订阅失败")
-    if fun3:
-        manager.start()
-    if fun5:
-        HA_widget_task.start_ha_widget()
-    if fun6:
-        listen_hotkeys()
-    if fun7:
-        window_listener.start()
-
-
+        if fun3:
+            manager.start()
+        if fun5:
+            HA_widget_task.start_ha_widget()
+        if fun6:
+            listen_hotkeys()
+        if fun7:
+            window_listener.start()
+    except:
+        logger.error("服务启动失败，请检查日志")
+        show_toast("服务启动失败，请检查日志")
 
 
 def save_hotkeys_to_file():
@@ -74,7 +70,31 @@ def close_windows():
         page.window_destroy()
     except:
         return
+    
 
+def stop():
+    global run_flag
+    if run_flag == True:
+        show_snackbar(page, "停止进程中...")
+        logger.info("停止进程中...")
+        if fun1:
+            stop_task()
+        if fun2:
+            stop_mqtt_loop()
+        if fun3:
+            manager.stop()
+        if fun5:
+            HA_widget_task.stop_ha_widget()
+        if fun6:
+            stop_listen()
+        if fun7:
+            window_listener.stop()
+
+        run_flag = False
+        show_snackbar(page, "成功停止所有进程")
+        logger.info("成功停止所有进程")
+    else:
+        show_snackbar(page, "都还没运行呀")
 
 def main(newpage: ft.Page):
     global page
@@ -88,21 +108,9 @@ def main(newpage: ft.Page):
     setting = ft.Tab(text="设置")
     tab_hotkey = ft.Tab(text="快捷键")
     
-    def button_send_discovery(e):
-        result = discovery() + discovery_comm() + send_discovery(hotkeys)
-        print(result)
-        dialog = ft.AlertDialog(
-            title=ft.Text("信息"),
-            content=ft.Text(value=result),
-            scrollable=True
-        )
-        page.dialog = dialog
-        dialog.open = True
-        page.update()
-
     def button_send_data(e):
         try: 
-            discovery()
+            discovery_aida64()
             result = send_data()    
         except :
             dialog = ft.AlertDialog(
@@ -135,60 +143,6 @@ def main(newpage: ft.Page):
             start()
             show_snackbar(page, "服务启动成功")
 
-    def button_stop(e):
-        global run_flag
-        if run_flag == True:
-            show_snackbar(page, "停止进程中...")
-            if fun1:
-                stop_task()
-                print("停止监控反馈")
-            if fun2:
-                stop_mqtt_loop()
-                print("停止远程命令")
-            if fun3:
-                manager.stop()
-                print("停止画面传输")
-            if fun5:
-                HA_widget_task.stop_ha_widget()
-                print("停止小部件")
-            if fun6:
-                stop_listen()
-                print("停止按键捕获")
-            if fun7:
-                print("停止前台应用反馈")
-                window_listener.stop()
-
-            run_flag = False
-            show_snackbar(page, "已经停止进程")
-        else:
-            show_snackbar(page, "都还没运行呀")
-
-    def switch_fun1(e):
-        global fun1
-        fun1 = e.control.value
-        save_json_data("fun1", fun1)
-
-    def switch_fun2(e):
-        global fun2
-        fun2 = e.control.value
-        save_json_data("fun2", fun2)
-
-    def switch_fun3(e):
-        global fun3
-        fun3 = e.control.value
-        save_json_data("fun3", fun3)
-
-
-    def switch_fun5(e):
-        global fun5
-        fun5 = e.control.value
-        save_json_data("fun5", fun5)
-
-    def switch_fun6(e):
-        global fun6
-        fun6 = e.control.value
-        save_json_data("fun6", fun6)
-
     def switch_fun4(e,button):
         global fun4
         if fun4:
@@ -210,46 +164,25 @@ def main(newpage: ft.Page):
             )
             show_snackbar(page, startup.add_to_startup())
         fun4 = not fun4
-        save_json_data("fun4", fun4)
+        set_config("fun4", fun4)
         page.update()
 
-    def switch_fun7(e):
-        global fun7
-        fun7 = e.control.value
-        save_json_data("fun7", fun7)
+    def handle_input(field_name):
+        def callback(e):
+            value = e.control.value
+            if value.isdigit():
+                parsed_value = int(value)
+            else:
+                parsed_value = value  
+            set_config(field_name, parsed_value)
+        return callback
 
-    def switch_hotkey_notify(e):
-        global hotkey_notify
-        hotkey_notify = e.control.value
-        save_json_data("hotkey_notify", hotkey_notify)
-
-    def switch_suppress(e):
-        global suppress
-        suppress = e.control.value
-        save_json_data("suppress", suppress)
-
-
-    def input_user(e):
-        save_json_data("username", e.control.value)
-
-    def input_pass(e):
-        save_json_data("password", e.control.value)
-
-    def input_interval(e):
-        save_json_data("interval", int(e.control.value))
-
-    def input_ha_broker(e):
-        save_json_data("HA_MQTT", e.control.value)
-
-    def input_port(e):
-        save_json_data("HA_MQTT_port", int(e.control.value))
-
-    def input_device_name(e):
-        save_json_data("device_name", e.control.value)
-
-    def input_url(e):
-        save_json_data("url", e.control.value)
-
+    def button_switch(field_name):
+        def callback(e):
+            value = e.control.value
+            set_config(field_name, value)
+        return callback
+    
     def open_repo(e):
         page.launch_url('https://github.com/1812z/PCTools')
 
@@ -283,6 +216,10 @@ def main(newpage: ft.Page):
         hotkeys.remove(hotkey)
         save_hotkeys_to_file()
         update_hotkey_list()
+        
+    def tab_changed(e):
+        if e.control.selected_index == 1:
+            show_snackbar(page,"输入每一项数据后，请使用回车键保存")
 
     def update_hotkey_list():
         # 更新列表视图
@@ -308,7 +245,6 @@ def main(newpage: ft.Page):
                             ft.IconButton(
                                 ft.icons.DELETE, on_click=lambda e, h=hotkey: delete_hotkey(h)),
                         ],
-
                     )
                 )
         else:
@@ -340,7 +276,6 @@ def main(newpage: ft.Page):
 
         ft.Column(
             [
-
                 ft.Container(
                     content=ft.Image(
                         src="img\\home-assistant-wordmark-with-margins-color-on-light.png",
@@ -383,7 +318,7 @@ def main(newpage: ft.Page):
                         ],
                         alignment=ft.MainAxisAlignment.SPACE_AROUND,
                     ),
-                    on_click=button_stop,
+                    on_click=lambda e: stop(),
                     width=130,
                     height=40
                 ),
@@ -415,7 +350,6 @@ def main(newpage: ft.Page):
             ],
             alignment=MainAxisAlignment.CENTER,
             horizontal_alignment=CrossAxisAlignment.CENTER,
-
         )
     ]
 
@@ -432,56 +366,47 @@ def main(newpage: ft.Page):
                 ft.Row(
                     [
                         ft.Container(width=90),
-                        ft.Switch(label="监控反馈", label_position='left',
-                                  scale=1.2, value=fun1, on_change=switch_fun1),
-                        ft.Container(width=10),
-                        ft.TextField(label="HA_MQTT_Broker", width=130,
-                                     on_submit=input_ha_broker, value=read_ha_broker),
-                        ft.TextField(label="PORT", width=60,
-                                     on_submit=input_port, value=read_port)
+                        ft.Column(
+                        [
+                            ft.Switch(label="监控反馈", label_position='left',
+                                    scale=1.2, value=fun1, on_change=button_switch("fun1")),
+                            ft.Switch(label="远程命令", label_position='left',
+                                    scale=1.2, value=fun2, on_change=button_switch("fun2")),
+                            ft.Switch(label="画面传输", label_position='left',
+                                    scale=1.2, value=fun3, on_change=button_switch("fun3")),
+                            ft.Switch(label="网页部件", label_position='left', scale=1.2,
+                                    value=fun5, on_change=button_switch("fun5")),
+                            ft.Switch(label="前台监听", label_position='left', scale=1.2,
+                                    value=fun7, on_change=button_switch("fun7"),tooltip="实时反馈前台应用名称"),
+                            ft.Switch(label="  显示器  ", label_position='left', scale=1.2,
+                                    value=fun7, on_change=button_switch("monitor_supported"),tooltip="开启后支持读取/控制显示器亮度等")
+                            ]
+                            ),
+                            ft.Container(width=10),
+                        ft.Column(
+                            [
+                                ft.Row([
+                                    ft.TextField(label="HA_MQTT_Broker", width=130,
+                                                on_submit=handle_input("HA_MQTT"), value=read_ha_broker),
+                                    ft.TextField(label="PORT", width=60,
+                                                on_submit=handle_input("HA_MQTT_port"), value=read_port)
+                                    ]),
+                                ft.TextField(label="HA_MQTT账户", width=200,
+                                            on_submit=handle_input("username"), value=read_user),
+                                ft.TextField(label="HA_MQTT密码", width=200,
+                                            on_submit=handle_input("password"), value=read_password),
+                                ft.TextField(label="侧边栏网址(https://)", width=200,
+                                            on_submit=handle_input("url"), value=read_url),
+                                ft.Row([
+                                    ft.TextField(label="数据发送间隔", width=100,
+                                                on_submit=handle_input("interval"), value=read_interval),
+                                    ft.TextField(label="设备标识符", width=90,
+                                                on_submit=handle_input("device_name"), value=read_device_name)
+                                    ]),
+                            ]
+                            )
                     ]
-                ), ft.Row(
-                    [
-                        ft.Container(width=90),
-                        ft.Switch(label="远程命令", label_position='left',
-                                  scale=1.2, value=fun2, on_change=switch_fun2),
-                        ft.Container(width=10),
-                        ft.TextField(label="HA_MQTT账户", width=200,
-                                     on_submit=input_user, value=read_user)
-                    ]
-
-                ), ft.Row(
-                    [
-                        ft.Container(width=90),
-                        ft.Switch(label="画面传输", label_position='left',
-                                  scale=1.2, value=fun3, on_change=switch_fun3),
-                        ft.Container(width=10),
-                        ft.TextField(label="HA_MQTT密码", width=200,
-                                     on_submit=input_pass, value=read_password)
-                    ]
-
-                ), ft.Row(
-                    [
-                        ft.Container(width=90),
-                        ft.Switch(label="网页部件", label_position='left', scale=1.2,
-                                  value=fun5, on_change=switch_fun5),
-                        ft.Container(width=10),
-                        ft.TextField(label="侧边栏网址(https://)", width=200,
-                                     on_submit=input_url, value=read_url),
-
-                    ]
-                ), ft.Row(
-                    [
-                        ft.Container(width=90),
-                        ft.Switch(label="前台监听", label_position='left', scale=1.2,
-                                  value=fun7, on_change=switch_fun7,tooltip="实时反馈前台应用名称"),
-                        ft.Container(width=10),
-                        ft.TextField(label="数据发送间隔", width=100,
-                                     on_submit=input_interval, value=read_interval),
-                        ft.TextField(label="设备标识符", width=90,
-                                     on_submit=input_device_name, value=read_device_name),
-                    ]
-                )
+                    )
             ], alignment=MainAxisAlignment.CENTER,
             horizontal_alignment=CrossAxisAlignment.CENTER,
         )
@@ -500,13 +425,13 @@ def main(newpage: ft.Page):
                 ft.Row(
                     [
                         ft.Switch(label="快捷键", label_position='left',
-                                  scale=1.2, value=fun6, on_change=switch_fun6,tooltip="开启后随服务启动"),
+                                  scale=1.2, value=fun6, on_change=button_switch("fun6"),tooltip="开启后随服务启动"),
                         ft.Container(width=20),
                         ft.Switch(label="触发通知", label_position='left',
-                                scale=1.2, value=hotkey_notify, on_change=switch_hotkey_notify),
+                                scale=1.2, value=hotkey_notify, on_change=button_switch("hotkey_notify")),
                         ft.Container(width=20),
                         ft.Switch(label="阻断按键", label_position='left',
-                                scale=1.2, value=suppress, on_change=switch_suppress,tooltip="阻止快捷键被其它软件响应"),
+                                scale=1.2, value=suppress, on_change=button_switch("false"),tooltip="阻止快捷键被其它软件响应"),
                     ], alignment=ft.MainAxisAlignment.CENTER
                 ),
                 ft.Row(
@@ -538,7 +463,6 @@ def main(newpage: ft.Page):
                             width=120,
                             height=40
                         ),
-
                         ft.ElevatedButton(
                             content=ft.Row(
                                 [
@@ -555,7 +479,6 @@ def main(newpage: ft.Page):
                     ], alignment=ft.MainAxisAlignment.CENTER
                 ),
                 hotkey_view
-
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -564,10 +487,9 @@ def main(newpage: ft.Page):
     home.content = ft.Column(controls=home_page)
     setting.content = ft.Column(controls=setting_page)
     tab_hotkey.content = ft.Column(controls=hotkey_page)
-    tabbar = ft.Tabs()
+    tabbar = ft.Tabs(on_change=tab_changed)
     tabbar.tabs = [home, setting, tab_hotkey]
     page.add(tabbar)
-
     page.update()
     update_hotkey_list()
 
@@ -581,23 +503,7 @@ def on_exit(icon, item):
         time.sleep(1)
         icon.stop()
     else:
-        if fun1:
-            stop_task()
-            print("停止监控反馈")
-        if fun2:
-            stop_mqtt_loop()
-            print("停止远程命令")
-        if fun3:
-            manager.stop()
-            print("停止画面传输")
-        if fun5:
-            HA_widget_task.stop_ha_widget()
-            print("停止小部件")
-        if fun6:
-            print("停止快捷键捕获")
-        if fun7:
-            print("停止前台应用反馈")
-            window_listener.stop()
+        stop()
         icon_flag = False
         close_windows()
         icon.stop()
@@ -620,37 +526,35 @@ def icon_task():
     icon.run()
 
 
-def user_directory():
-    save_json_data("user_directory", os.path.expanduser("~"))
-
-
 show_menu_flag = False
 icon_flag = True
+
 if __name__ == "__main__":
     global run_flag
     global hotkeys
     run_flag = False
     threading.Thread(target=icon_task).start()
     hotkeys = load_hotkeys()
-    with open('config.json', 'r') as file:
-        json_data = json.load(file)
-        fun1 = json_data.get("fun1")
-        fun2 = json_data.get("fun2")
-        fun3 = json_data.get("fun3")
-        fun4 = json_data.get("fun4")
-        fun5 = json_data.get("fun5")
-        fun6 = json_data.get("fun6")
-        fun7 = json_data.get("fun7")
-        suppress = json_data.get("suppress")
-        hotkey_notify = json_data.get("hotkey_notify")
-        read_user = json_data.get("username")
-        read_password = "密码已隐藏"
-        read_interval = json_data.get("interval")
-        read_ha_broker = json_data.get("HA_MQTT")
-        read_port = json_data.get("HA_MQTT_port")
-        read_device_name = json_data.get("device_name")
-        read_url = json_data.get("url")
-        user_directory()
+
+    fun1 = get_config("fun1")
+    fun2 = get_config("fun2")
+    fun3 = get_config("fun3")
+    fun4 = get_config("fun4")
+    fun5 = get_config("fun5")
+    fun6 = get_config("fun6")
+    fun7 = get_config("fun7")
+  
+    suppress = get_config("suppress")
+    hotkey_notify = get_config("hotkey_notify")
+    read_user = get_config("username")
+    read_password = get_config("password")
+    read_interval = get_config("interval")
+    read_ha_broker = get_config("HA_MQTT")
+    read_port = get_config("HA_MQTT_port")
+    read_device_name = get_config("device_name")
+    read_url = get_config("url")
+    set_config("user_directory", os.path.expanduser("~"))
+
     if fun4:
         run_flag = True
         start()
