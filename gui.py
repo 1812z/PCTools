@@ -75,7 +75,8 @@ def close_windows():
 def stop():
     global run_flag
     if run_flag == True:
-        show_snackbar(page, "停止进程中...")
+        if page.window_visible:
+            show_snackbar(page, "停止进程中...")
         logger.info("停止进程中...")
         if fun1:
             stop_task()
