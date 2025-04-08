@@ -230,7 +230,7 @@ def MQTT_Subcribe(topic):
 
 
 def re_subscribe():
-    print("MQTT重新订阅")
+    logger.warning("MQTT重连成功,重新订阅主题")
     for topic in subscribed_topics:
         mqttc.subscribe(topic)
 

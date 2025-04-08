@@ -1,7 +1,7 @@
 import json
 import subprocess
 import re
-
+import os
 
 with open('config.json', 'r') as file:
     global json_data
@@ -9,9 +9,9 @@ with open('config.json', 'r') as file:
     global path
     json_data = json.load(file)
     device_name = json_data.get("device_name")
-    user_directory = json_data.get("user_directory")
-    path = json_data.get("user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
-
+    user_directory = os.path.expanduser("~")
+    path = user_directory+ "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
+    print(path)
 def remove_ansi_escape(text):
     ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
     return ansi_escape.sub('', text)
