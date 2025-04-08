@@ -45,6 +45,7 @@ def start():
                 show_toast("MQTT订阅失败,请检查MQTT配置")
                 return
         if fun1 or fun2:
+            discovery_aida64()
             start_task()
         if fun3:
             manager.start()

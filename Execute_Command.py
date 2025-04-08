@@ -53,7 +53,11 @@ def MQTT_Command(command, data):
             # 方案一,关闭电源:
             # run = [path, "--MonitorNum=1", "--VCP=0xD6:0x04"]
             # subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-            # 方案二,仅熄灭显示器
+            # monitor_num_key = int(key[9:]) + 1
+            # run = [path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x04"]
+            # subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+            # logger.info(f"显示器{monitor_num_key}关机")
+            # 方案二,仅熄灭显示器,不关闭电源,但会熄灭所有显示器
             Python_File("turn_off_screen.py")
         elif data == "ON":
             Python_File("wake_up_screen.py")  # 模拟输入唤醒显示器

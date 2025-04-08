@@ -155,6 +155,8 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
         
         case "sys":
             discovery_data.pop('device_class', None)
+            if "Utilization" in name:
+                discovery_data["unit_of_measurement"] = "%"
             if "Disk" in name:
                 discovery_data["icon"] = "mdi:harddisk"
                 if "Activity" in name:
@@ -176,15 +178,19 @@ def Send_MQTT_Discovery(device_class=None, topic_id=None,name='Sensor1', name_id
                 discovery_data["icon"] = "mdi:clock-outline"
             elif "Clock" in name:
                 discovery_data["unit_of_measurement"] = "MHz"
-            else:
+            elif "Volume" in name:
                 discovery_data["unit_of_measurement"] = "%"
-                if "gpu" in name.lower():
-                    if "momory" in name:
+                discovery_data["icon"] = "mdi:volume-high"
+            else:
+                if "GPU" in name:
+                    if "Memory" in name:
                         discovery_data["unit_of_measurement"] = "MB"
                     discovery_data["icon"] = "mdi:expansion-card"
-                elif "memory" in name.lower():
+                elif "Memory" in name:
+                    discovery_data["unit_of_measurement"] = "%"
                     discovery_data["icon"] = "mdi:memory"
-                elif "cpu" in name.lower():
+                elif "CPU" in name:
+                    discovery_data["unit_of_measurement"] = "%"
                     discovery_data["icon"] = "mdi:cpu-64-bit"
                                         
         case "temp":
