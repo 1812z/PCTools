@@ -27,7 +27,7 @@ logger = Logger("Gui")
 def show_snackbar(page: ft.Page, message: str):
     snackbar = ft.SnackBar(
         content=ft.Text(message),
-        action="OK",u
+        action="OK",
         action_color=ft.colors.WHITE,
         duration=2000
     )

@@ -15,7 +15,7 @@ def init_data():
     global current_directory
     current_file_path = os.path.abspath(__file__)
     current_directory = os.path.dirname(current_file_path)
-    current_directory = current_directory + '\\' + "commands"
+    current_directory = os.path.join(current_directory, "commands")
     # print(current_directory)
     # 命令映射表
     with open('commands.json', 'r', encoding='utf-8') as file:
@@ -27,10 +27,8 @@ def init_data():
     with open('config.json', 'r') as file:
         global json_data
         global device_name
-        global user_directory
         json_data = json.load(file)
         device_name = json_data.get("device_name")
-        user_directory = json_data.get("user_directory")
 
 
 init_data()
@@ -44,8 +42,7 @@ def MQTT_Command(command, data):
     run_file = command_data.get(key)
 
     if device_name + "monitor" in key:  # 显示器控制
-        path = json_data.get(
-            "user_directory") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
+        path =  os.path.expanduser("~") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
         if "ddcci" in key:
             run = [path] + data.split(' ')
             logger.info(f"DDC/CI命令: {run}")
@@ -61,12 +58,11 @@ def MQTT_Command(command, data):
         elif data == "ON":
             Python_File("wake_up_screen.py")  # 模拟输入唤醒显示器
         else:
-            monitors = get_monitors_state()
-            for monitor_num, info in monitors.items():
-                brightness = str(int(data) * 100 // 255)
-                run = [path, "--MonitorNum=" + str(monitor_num+1), "--Set=" + brightness]
-                subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-                logger.info(info.get("Name") + "亮度:" + brightness)
+            monitor_num_key = int(key[9:]) + 1
+            brightness = str(int(data) * 100 // 255)
+            run = [path, "--MonitorNum=" + str(monitor_num_key), "--Set=" + brightness]
+            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+            logger.info(f"显示器{monitor_num_key}亮度: {brightness}")
         send_data(False, False, True)
     elif key == device_name + "volume":  # 音量控制
         volume = int(data) / 100
