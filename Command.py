@@ -25,11 +25,9 @@ def init_data():
     with open('config.json', 'r') as file:
         global json_data
         global device_name
-        global user_directory
         global monitor_supported
         json_data = json.load(file)
         device_name = json_data.get("device_name")
-        user_directory = json_data.get("user_directory")
         monitor_supported = json_data.get("monitor_supported")
     if monitor_supported:
         global monitors
