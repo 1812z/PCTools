@@ -27,7 +27,7 @@ logger = Logger("Gui")
 def show_snackbar(page: ft.Page, message: str):
     snackbar = ft.SnackBar(
         content=ft.Text(message),
-        action="OK",
+        action="OK",u
         action_color=ft.colors.WHITE,
         duration=2000
     )
@@ -554,7 +554,6 @@ if __name__ == "__main__":
     read_port = get_config("HA_MQTT_port")
     read_device_name = get_config("device_name")
     read_url = get_config("url")
-    set_config("user_directory", os.path.expanduser("~"))
 
     if fun4:
         run_flag = True
