@@ -18,7 +18,8 @@ def init():
 # 发送音量信息
 def send_volume():
     volume = get_volume()
-    Update_State_data(volume, "volume", "number")
+    if volume:
+        Update_State_data(volume, "volume", "number")
     return volume
 
 
