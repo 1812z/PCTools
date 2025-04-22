@@ -1,4 +1,3 @@
-import os
 import threading
 import time
 from PIL import Image
@@ -104,6 +103,7 @@ def main(newpage: ft.Page):
 
     page.window_width = 600
     page.window_height = 590
+    page.theme_mode = ft.ThemeMode.LIGHT
     page.title = "PCTools"
     page.window_resizable = True
     home = ft.Tab(text="主页")

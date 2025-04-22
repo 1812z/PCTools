@@ -2,6 +2,9 @@ import json
 import subprocess
 import re
 import os
+from logger_manager import Logger
+
+logger = Logger(__name__)
 
 with open('config.json', 'r') as file:
     global json_data
@@ -21,12 +24,13 @@ def run_twinkle_tray_list():
         result = subprocess.run(
             [path, "--List"],
             capture_output=True,
+            encoding='UTF-8',
             text=True,
             check=True
         )
         return result.stdout
     except subprocess.CalledProcessError as e:
-        print("执行命令失败:", e)
+        logger.error("执行命令失败:", e)
         return None
 
 def extract_monitors_info(info_str):
@@ -58,13 +62,19 @@ def extract_monitors_info(info_str):
 
 def get_monitors_state():
     output = run_twinkle_tray_list()
-    monitors_info = extract_monitors_info(output)
-    return monitors_info
+    if output:
+        monitors_info = extract_monitors_info(output)
+        return monitors_info
+    else:
+        logger.info("找不到兼容显示器")
+        return None
+    
 
 if __name__ == "__main__":
     # 运行命令，获取显示器信息
-    output = run_twinkle_tray_list()
-    if output:
+    
+    try:
+        output = run_twinkle_tray_list()
         print("获取到的监视器信息:")
         print(output)
         monitors = get_monitors_state()
@@ -74,5 +84,5 @@ if __name__ == "__main__":
             print("  MonitorID:", info.get("MonitorID"))
             print("  Name:", info.get("Name"))
             print("  Brightness:", info.get("Brightness"))
-    else:
+    except:
         print("未能获取到监视器信息。")
