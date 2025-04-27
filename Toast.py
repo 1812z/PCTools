@@ -1,7 +1,7 @@
 from plyer import notification
 
 
-def show_toast(title, message):
+def show_toast(self, title, message,timeout = 5):
     '''
     显示 toast 消息
     '''
@@ -9,10 +9,7 @@ def show_toast(title, message):
         title=title,
         message=message,
         app_name='PCTools',
-        timeout=5
+        timeout=timeout
     )
-    print("Toast通知:", message)
 
 
-if __name__ == "__main__":
-    show_toast("Test", "1111")

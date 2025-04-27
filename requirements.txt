@@ -3,7 +3,7 @@ flet==0.22.1
 opencv-python==4.10.0.84
 paho-mqtt==2.1.0
 pillow==10.3.0
-PyAutoGUI==0.9.54
+mss==10.0.0
 pycaw==20240210
 pystray==0.19.5
 plyer==2.1.0
