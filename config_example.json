@@ -1,15 +1,12 @@
 {
     "username": "1812z",
     "password": "password",
-    "HA_MQTT": "192.168.43.10",
+    "HA_MQTT": "broker.emqx.io",
     "device_name": "PC",
     "HA_MQTT_port": 1883,
-    "fun5": true,
-    "fun6": true,
-    "hotkey_notify": false,
-    "suppress": false,
-    "fun7": true,
-    "monitor_supported": true,
     "ha_prefix": "homeassistant",
-    "auto_start": false
+    "auto_start": false,
+    "Hotkey_notify": false,
+    "Hotkey_suppress": false,
+    "Widget_url": "https://bing.com"
 }

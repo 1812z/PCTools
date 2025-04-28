@@ -1,8 +1,6 @@
 import time
 from time import sleep
-
 from plyer import notification
-
 from Timer import TimerManager
 from Win_reg import WindowsRegistry
 from Logger import  Logger
@@ -13,9 +11,10 @@ import inspect
 from pathlib import Path
 
 class Core:
-    def __init__(self):
+    def __init__(self, gui):
         self.is_initialized = False
 
+        self.gui = None
         # Core 提供的接口
         self.log = Logger()
         self.config = Config(self)
@@ -52,9 +51,8 @@ class Core:
 
             module_name = self._normalize_module_name(file.name)
             relative_path = file.relative_to(plugins_dir.parent)
-            module_path = str(relative_path.with_suffix('')).replace('\\', '.')
 
-            self.plugin_paths[module_name] = module_path
+            self.plugin_paths[module_name] = relative_path
             # 跳过.disabled文件的导入和类加载
             if file.suffix == '.disabled':
                 self.disabled_plugins.add(module_name)
@@ -89,7 +87,7 @@ class Core:
             return 0
 
         if plugin_name in self.plugin_instances.keys():
-            self.log.warning(f"⚠️ 插件 {plugin_name} 已初始化")
+            self.log.warning(f"插件 {plugin_name} 已初始化")
             return 1
 
         if plugin_name not in self.plugin_instances.keys():
@@ -104,6 +102,7 @@ class Core:
         """内部方法：创建插件实例"""
         try:
             module_path = self.plugin_paths[plugin_name]
+            module_path = str(module_path.with_suffix('')).replace('\\', '.')
             module = importlib.import_module(module_path)
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 if name == plugin_name:
@@ -299,6 +298,7 @@ class Core:
             return False
 
         file_path = self.plugin_paths[module_name]
+        print(file_path)
         if file_path.suffix != '.disabled':
             self.log.info(f"⚠️ 插件 {module_name} 不是禁用状态")
             return False

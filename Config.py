@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -6,6 +7,7 @@ class Config:
     def __init__(self, core):
         self._config_file = Path("config.json")
         self.core = core
+        self._config_example_file = Path("config_example.json")
         self.config_data = self.load_config()
 
     def load_config(self) -> Optional[Dict[str, Any]]:
@@ -17,14 +19,17 @@ class Config:
                     self.core.log.debug(f"⚙️成功加载配置文件: {self._config_file}")
                 return data
             else:
-                self.core.log.warning("配置文件不存在")
-                return None
+                self.core.log.warning("配置文件不存在,已创建config.json")
+                shutil.copy(self._config_example_file, self._config_file)
+                return self.load_config()
         except json.JSONDecodeError as e:
             self.core.log.error(f"配置文件格式错误: {str(e)}，请检查")
-            return None
+            shutil.copy(self._config_example_file, self._config_file)
+            return self.load_config()
         except Exception as e:
             self.core.log.error(f"加载配置文件时出错: {str(e)}，请检查")
-            return None
+            shutil.copy(self._config_example_file, self._config_file)
+            return self.load_config()
 
     def save_config(self,data: Dict[str, Any]) -> bool:
         """保存配置到文件"""

@@ -1,0 +1,1 @@
+.\python-3.12.9-embed-amd64\python.exe gui.py

@@ -107,12 +107,12 @@ def main():
     global select_key
     with open('config.json', 'r') as file:
         json_data = json.load(file)
-        select_key = json_data.get("select_key")
+        select_key = json_data.get("Widget_select_key")
         if not select_key:
             select_key = 'menu'
         keyboard.add_hotkey(select_key, lambda h=select_key: command(h), suppress=False)
         
-        url = json_data.get("url")
+        url = json_data.get("Widget_url")
 
     api = Api()
     global window
