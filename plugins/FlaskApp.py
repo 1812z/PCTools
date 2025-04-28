@@ -1,24 +1,33 @@
-import io
 import time
-import pyautogui
+import numpy as np
 import cv2
 from flask import Flask, Response
 import multiprocessing
 import signal
 import os
-from logger_manager import Logger
+import mss
 
 app = Flask(__name__)
-logger = Logger(__name__)
 
 @app.route('/screenshot.jpg')
 def get_screenshot():
-    screenshot = pyautogui.screenshot()
-    img_byte_array = io.BytesIO()
-    screenshot.save(img_byte_array, format='JPEG', quality=50)
-    img_byte_array.seek(0)
-    return Response(img_byte_array.read(), mimetype='image/jpeg')
+    with mss.mss() as sct:
+        # 获取主显示器截图
+        monitor = sct.monitors[1]
+        screenshot = np.array(sct.grab(monitor))
 
+        # 优化1：调整分辨率（可选）
+        if screenshot.shape[1] > 1920:  # 如果宽度大于1920则缩小
+            screenshot = cv2.resize(screenshot, (1920, 1080))
+
+        # 优化2：高效JPEG编码
+        _, buffer = cv2.imencode('.jpg', screenshot, [
+            cv2.IMWRITE_JPEG_QUALITY, 80,  # 质量调整为80（50-100）
+            cv2.IMWRITE_JPEG_OPTIMIZE, 1  # 启用JPEG优化
+        ])
+
+        # 直接返回内存中的字节数据，避免使用BytesIO
+        return Response(buffer.tobytes(), mimetype='image/jpeg')
 
 @app.route('/screen')
 def get_screen():
@@ -31,15 +40,20 @@ def video_feed():
 
 
 def generate_screenshots():
-    while True:
-        screenshot = pyautogui.screenshot()
-        img_byte_array = io.BytesIO()
-        screenshot.save(img_byte_array, format='JPEG', quality=50)
-        img_byte_array.seek(0)
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + img_byte_array.read() + b'\r\n')
-        time.sleep(0.3)
+    with mss.mss() as sct:
+        monitor = sct.monitors[1]  # 获取主显示器
+        while True:
+            # 使用mss快速截图
+            screenshot = np.array(sct.grab(monitor))
 
+            # 转换为JPEG格式
+            _, buffer = cv2.imencode('.jpg', screenshot,
+                                     [cv2.IMWRITE_JPEG_QUALITY, 70])
+            frame = buffer.tobytes()
+
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            time.sleep(0.05)
 
 def generate_frames():
     camera = cv2.VideoCapture(2)
@@ -61,11 +75,12 @@ def run_flask_app(host, port):
     app.run(host=host, port=port,debug=False)
 
 
-class FlaskAppManager:
-    def __init__(self, host='127.0.0.1', port=5000):
+class FlaskApp:
+    def __init__(self, core, host='0.0.0.0', port=5000):
         self.host = host
         self.port = port
         self.process = None
+        self.core = core
 
     def start(self):
         if self.process is None:
@@ -73,20 +88,20 @@ class FlaskAppManager:
                 self.process = multiprocessing.Process(
                     target=run_flask_app, args=(self.host, self.port))
                 self.process.start()
-                logger.info(f"Flask进程启动 http://{self.host}:{self.port}")
-            except:
-                logger.error(f"Flask进程启动失败,请检查端口占用")
+                self.core.log.info(f"Flask进程启动 http://{self.host}:{self.port}")
+            except Exception as e:
+                self.core.log.error(f"Flask进程启动失败: {e}")
                 
     def stop(self):
         if self.process is not None:
             os.kill(self.process.pid, signal.SIGTERM)
             self.process.join()
             self.process = None
-            logger.info("Flask进程停止")
+            self.core.log.info("Flask进程停止")
 
 
 if __name__ == "__main__":
-    manager = FlaskAppManager('192.168.44.236', 5000)
+    manager = FlaskApp('0.0.0.0', 5000)
     manager.start()
 
     try:

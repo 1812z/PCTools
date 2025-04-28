@@ -3,9 +3,7 @@ import json
 import webview
 import screeninfo
 import keyboard
-from logger_manager import Logger
 
-logger = Logger(__name__)
 window_show = False
 
 class Api:
@@ -93,10 +91,9 @@ def inject_js(window):
     try:
         window.evaluate_js(js_code)
     except Exception as e:
-        logger.error(f"注入 JavaScript 失败: {e}")
+        print(f"注入 JavaScript 失败: {e}")
 
 def command(h):
-    logger.info("触发了快捷键:" + h)
     global window_show
     if window_show:
         window.hide()
@@ -110,12 +107,12 @@ def main():
     global select_key
     with open('config.json', 'r') as file:
         json_data = json.load(file)
-        select_key = json_data.get("select_key")
+        select_key = json_data.get("Widget_select_key")
         if not select_key:
             select_key = 'menu'
         keyboard.add_hotkey(select_key, lambda h=select_key: command(h), suppress=False)
         
-        url = json_data.get("url")
+        url = json_data.get("Widget_url")
 
     api = Api()
     global window

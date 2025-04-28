@@ -1,13 +1,13 @@
-Flask==3.0.3
+Flask==3.1.0
 flet==0.22.1
 opencv-python==4.10.0.84
-paho-mqtt==2.1.0
+paho-mqtt
 pillow==10.3.0
-PyAutoGUI==0.9.54
+mss==10.0.0
 pycaw==20240210
 pystray==0.19.5
 plyer==2.1.0
-pywin32==307
+pywin32==310
 keyboard==0.13.5
 screeninfo==0.8.1
 pywebview==5.3.2
