@@ -273,7 +273,7 @@ class MQTT:
                 break
 
         if not module_name:
-            self.core.log.warning(f"⚠️ 未找到匹配的模块: {topic}")
+            self.core.log.warning(f"⚠️ 未找到匹配的模块: {module_name}")
             return
 
         # 获取模块实例

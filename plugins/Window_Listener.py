@@ -107,6 +107,6 @@ class Window_Listener:
             user32.GetClassNameW(current_hwnd, class_buffer, 256)
             class_name = class_buffer.value
 
-            self.core.log.debug(f"HWND={current_hwnd}, Title='{window_title}', Class='{class_name}'")
+            self.core.log.debug(f"前台应用: HWND={current_hwnd}, Title='{window_title}', Class='{class_name}'")
             if window_title:
                 self.core.mqtt.update_state_data(str(window_title), "Window_Listener_Foreground_Window", "sensor")

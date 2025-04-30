@@ -22,7 +22,7 @@ class Logger:
         'RESET': '\033[0m'      # 重置颜色
     }
 
-    def __init__(self, name: str = 'root', level: int = logging.DEBUG):
+    def __init__(self, name: str = 'main', level: int = logging.DEBUG):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
 
