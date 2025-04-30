@@ -11,10 +11,10 @@ import inspect
 from pathlib import Path
 
 class Core:
-    def __init__(self, gui):
+    def __init__(self, gui = None):
         self.is_initialized = False
 
-        self.gui = None
+        self.gui = gui
         # Core 提供的接口
         self.log = Logger()
         self.config = Config(self)
@@ -27,6 +27,8 @@ class Core:
         self.error_plugins = [] #加载失败的插件
 
         self._base_path = Path(__file__).parent / "plugins"
+        # self.icon_path = str(Path(__file__).parent / "img" / "logo.png")
+
 
         self._load_plugins()
 
@@ -169,10 +171,10 @@ class Core:
                     self.log.debug(f"🔧 {module_name} 配置: {c}")
 
                     for entity in c:
-                        sleep(0.2)
                         icon = entity["icon"] if "icon" in entity else None
                         self.mqtt.send_mqtt_discovery(entity_type=entity["entity_type"], name=entity["name"], entity_id=f"{module_name}_{entity["entity_id"]}",icon=icon)
-                        self.log.debug(f"{module_name} 成功新增 {len(c)} 个主题")
+                        sleep(0.3)
+                    self.log.debug(f"{module_name} 成功新增 {len(c)} 个主题")
                 else:
                     self.log.debug(f"⚠️ {module_name} 无 config ,跳过发现")
             except Exception as e:
@@ -338,6 +340,7 @@ class Core:
             app_name='PCTools',
             timeout=timeout
         )
+
         self.log.info("发送Toast通知{title}")
 
     def start_timer(self):

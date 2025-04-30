@@ -199,10 +199,18 @@ class GUI:
             self.core.initialize()
             update_plugin_page()
 
+        def delattr_plugin_button(e):
+            self.show_snackbar("卸载插件类...")
+            self.core.delattr_all_plugin()
+            update_plugin_page()
+
         def update_plugin_page():
             plugins_view.controls.clear()
             plugins_view.controls.append(ft.Row(
-                [ft.ElevatedButton("载入插件", on_click=load_plugin_button)]
+                [
+                    ft.ElevatedButton("载入插件", on_click=load_plugin_button),
+                    ft.ElevatedButton("卸载插件", on_click=delattr_plugin_button)
+                ]
             ))
 
             if self.core.plugin_paths:

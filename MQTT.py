@@ -1,3 +1,4 @@
+import asyncio
 import json
 from time import sleep
 
@@ -290,7 +291,10 @@ class MQTT:
 
         # 调用处理方法
         try:
-            handler(entity,payload)
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            loop.run_until_complete(handler(entity,payload))
             self.core.log.info(f"📦 {module_name} 实体: {entity} 状态: {payload}")
         except Exception as e:
             self.core.log.error(f"❌ 处理MQTT消息失败: {str(e)}")
