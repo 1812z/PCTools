@@ -10,7 +10,7 @@ import startup
 class GUI:
     def __init__(self, core_instance):
         self.ft = ft
-        self.version = "V5.0"
+        self.version = "V5.1"
         self.page = None
 
         self.show_menu_flag = False
