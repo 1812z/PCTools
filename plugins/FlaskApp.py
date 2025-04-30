@@ -1,33 +1,47 @@
 import time
 import numpy as np
 import cv2
-from flask import Flask, Response
+from flask import Flask, Response, request, jsonify
 import multiprocessing
 import signal
 import os
 import mss
+import requests
 
 app = Flask(__name__)
+select_monitor = 1  # 默认选择第一个显示器
+
+
+@app.route('/set_monitor/<int:monitor_index>', methods=['GET'])
+def set_monitor(monitor_index):
+    global select_monitor
+    try:
+        with mss.mss() as sct:
+            if 1 <= monitor_index < len(sct.monitors):
+                select_monitor = monitor_index
+                return jsonify({'success': True, 'message': f'Monitor set to {monitor_index}'})
+            else:
+                return jsonify({'success': False, 'message': 'Invalid monitor index'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 
 @app.route('/screenshot.jpg')
 def get_screenshot():
     with mss.mss() as sct:
-        # 获取主显示器截图
-        monitor = sct.monitors[1]
+        monitor = sct.monitors[select_monitor]
         screenshot = np.array(sct.grab(monitor))
 
-        # 优化1：调整分辨率（可选）
-        if screenshot.shape[1] > 1920:  # 如果宽度大于1920则缩小
+        if screenshot.shape[1] > 1920:
             screenshot = cv2.resize(screenshot, (1920, 1080))
 
-        # 优化2：高效JPEG编码
         _, buffer = cv2.imencode('.jpg', screenshot, [
-            cv2.IMWRITE_JPEG_QUALITY, 80,  # 质量调整为80（50-100）
-            cv2.IMWRITE_JPEG_OPTIMIZE, 1  # 启用JPEG优化
+            cv2.IMWRITE_JPEG_QUALITY, 80,
+            cv2.IMWRITE_JPEG_OPTIMIZE, 1
         ])
 
-        # 直接返回内存中的字节数据，避免使用BytesIO
         return Response(buffer.tobytes(), mimetype='image/jpeg')
+
 
 @app.route('/screen')
 def get_screen():
@@ -41,19 +55,19 @@ def video_feed():
 
 def generate_screenshots():
     with mss.mss() as sct:
-        monitor = sct.monitors[1]  # 获取主显示器
+        monitor = sct.monitors[select_monitor]
+        current_monitor = select_monitor
         while True:
-            # 使用mss快速截图
+            if current_monitor != select_monitor:
+                monitor = sct.monitors[select_monitor]
             screenshot = np.array(sct.grab(monitor))
-
-            # 转换为JPEG格式
             _, buffer = cv2.imencode('.jpg', screenshot,
                                      [cv2.IMWRITE_JPEG_QUALITY, 70])
             frame = buffer.tobytes()
-
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             time.sleep(0.05)
+
 
 def generate_frames():
     camera = cv2.VideoCapture(2)
@@ -72,7 +86,7 @@ def generate_frames():
 
 
 def run_flask_app(host, port):
-    app.run(host=host, port=port,debug=False)
+    app.run(host=host, port=port, debug=False)
 
 
 class FlaskApp:
@@ -81,6 +95,13 @@ class FlaskApp:
         self.port = port
         self.process = None
         self.core = core
+        self.config = [
+            {
+                "name": "FlaskApp_显示器选择",
+                "entity_type": "number",
+                "entity_id": "index",
+                "icon": "mdi:monitor"
+            }]
 
     def start(self):
         if self.process is None:
@@ -91,7 +112,8 @@ class FlaskApp:
                 self.core.log.info(f"Flask进程启动 http://{self.host}:{self.port}")
             except Exception as e:
                 self.core.log.error(f"Flask进程启动失败: {e}")
-                
+        self.core.mqtt.update_state_data(1, "FlaskApp_index", "number")
+
     def stop(self):
         if self.process is not None:
             os.kill(self.process.pid, signal.SIGTERM)
@@ -99,13 +121,24 @@ class FlaskApp:
             self.process = None
             self.core.log.info("Flask进程停止")
 
+    def change_monitor(self, index):
+        url = f"http://localhost:5000/set_monitor/{index}"
+        try:
+            response = requests.get(url)
+            data = response.json()
+            if data['success']:
+                global  select_monitor
+                select_monitor = index
+                self.core.log.info(f"成功切换到显示器 {index}")
+                self.update_state()
+            else:
+                self.core.log.error(f"错误: {data['message']}")
+        except requests.exceptions.RequestException as e:
+            self.core.log.error(f"请求失败: {e}")
 
-if __name__ == "__main__":
-    manager = FlaskApp('0.0.0.0', 5000)
-    manager.start()
+    def handle_mqtt(self, entity, payload):
+        self.change_monitor(int(payload))
 
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        manager.stop()
+
+    def update_state(self):
+        self.core.mqtt.update_state_data(select_monitor, "FlaskApp_index", "number")

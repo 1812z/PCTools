@@ -1,3 +1,5 @@
+import asyncio
+import inspect
 import threading
 import sched
 import time
@@ -16,20 +18,45 @@ class PeriodicTask:
         self.lock = threading.Lock()
         self.event = None
         self.core.log = self.core.log
+        self.is_async = inspect.iscoroutinefunction(function)
+
     def _run(self):
         next_run_time = time.time()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
         while not self.stop_event.is_set():
             now = time.time()
             if now >= next_run_time:
                 with self.lock:
-                    if not self.stop_event.is_set():  # Check again after acquiring lock
-                        self.event = self.scheduler.enter(0, 1, self.function, ())
+                    if not self.stop_event.is_set():  # 获取锁后再次检查
+                        if self.is_async:
+                            # 如果是异步函数，使用特殊的包装函数
+                            self.event = self.scheduler.enter(0, 1, self._run_async_function, ())
+                        else:
+                            # 同步函数保持原样
+                            self.event = self.scheduler.enter(0, 1, self.function, ())
+
                 self.scheduler.run(blocking=False)
                 next_run_time = now + self.interval
                 self.core.log.debug(
                     f"🕛定时器 {self.name} 下次执行时间: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(next_run_time))}")
 
             time.sleep(1)
+
+        # 关闭事件循环
+        loop.close()
+
+    def _run_async_function(self):
+        """运行异步函数的包装器"""
+        loop = asyncio.get_event_loop()
+        try:
+            # 运行异步函数直到完成
+            future = asyncio.ensure_future(self.function(), loop=loop)
+            loop.run_until_complete(future)
+        except Exception as e:
+            self.core.log.error(f"❌ 异步定时任务 {self.name} 执行失败: {e}")
+
 
     def start(self):
         if self.thread is None or not self.thread.is_alive():

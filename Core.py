@@ -1,4 +1,6 @@
+import asyncio
 import time
+from cgitb import handler
 from time import sleep
 from plyer import notification
 from Timer import TimerManager
@@ -197,7 +199,14 @@ class Core:
                         plugin = getattr(self, module_name)
 
                         if hasattr(plugin, update_method):
-                            getattr(plugin, update_method)()
+                            handler = getattr(plugin, update_method)
+                            if inspect.iscoroutinefunction(handler):
+                                # 异步调用
+                                loop = asyncio.new_event_loop()
+                                asyncio.set_event_loop(loop)
+                                loop.run_until_complete(handler())
+                            else:
+                                handler()
                             self.log.debug(f"{module_name}: 更新数据")
                     else:
                         self.log.warning(f"{module_name}: MODULE_NOT_FOUND")
@@ -383,6 +392,7 @@ if __name__ == '__main__':
     try:
         while True:
             time.sleep(1)
+            core.FlaskApp.change_monitor(int(input("xsq")))
     except KeyboardInterrupt:
         core.stop()
 

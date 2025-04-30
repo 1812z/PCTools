@@ -1,7 +1,6 @@
 from winsdk.windows.devices import radios
 
 
-
 class Bluetooth:
     def __init__(self, core):
         self.core = core
@@ -32,7 +31,6 @@ class Bluetooth:
         if payload == "ON":
             result = await self.bluetooth_power(True)
             self.core.log.info(f"蓝牙设备: ON {result}")
-
         else:
             result = await self.bluetooth_power(False)
             self.core.log.info(f"蓝牙设备: OFF {result}")
@@ -43,6 +41,7 @@ class Bluetooth:
             if this_radio.kind == radios.RadioKind.BLUETOOTH:
                 state =  "ON" if this_radio.state == radios.RadioState.ON else "OFF"
                 self.core.mqtt.update_state_data(state, "Bluetooth_Power", "switch")
+                return
         self.core.log.error("找不到蓝牙设备")
 
 
