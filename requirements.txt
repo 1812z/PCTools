@@ -12,3 +12,4 @@ keyboard==0.13.5
 screeninfo==0.8.1
 pywebview==5.3.2
 winsdk
+comtypes==1.4.10
