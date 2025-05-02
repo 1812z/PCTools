@@ -2,7 +2,6 @@ import threading
 import time
 from PIL import Image
 import flet as ft
-from flet_core import MainAxisAlignment, CrossAxisAlignment
 import pystray
 import startup
 
@@ -26,7 +25,6 @@ class GUI:
         self.read_device_name = core.config.get_config("device_name")
         self.core = core_instance
 
-
     def show_snackbar(self, message: str):
         """显示通知条消息"""
         if not self.page:
@@ -37,8 +35,7 @@ class GUI:
                 action="OK",
                 duration=2000
             )
-            self.page.snack_bar = snackbar
-            snackbar.open = True
+            self.page.open(snackbar)
             self.page.update()
         except Exception as e:
             if self.core:
@@ -58,7 +55,6 @@ class GUI:
                 self.core.log.error(f"服务启动失败: {e}")
                 self.core.show_toast(f"错误", "服务启动失败: {e}")
             return False
-
 
     def close_windows(self):
         """关闭窗口"""
@@ -85,9 +81,9 @@ class GUI:
     def main(self, new_page: ft.Page):
         """主要UI逻辑函数"""
         self.page = new_page
-        self.page.window_width = 550
-        self.page.window_height = 590
-        self.page.window_resizable = False
+        self.page.window.width= 550
+        self.page.window.height = 590
+        self.page.window.resizable = False
 
         self.page.theme_mode = ft.ThemeMode.LIGHT
         self.page.title = "PCTools"
@@ -120,24 +116,10 @@ class GUI:
                 if self.start():
                     self.show_snackbar("服务启动成功")
 
-        def switch_auto_start(e, button):
+        def switch_auto_start(e):
             if self.auto_start:
-                button.content = ft.Row(
-                    [
-                        ft.Icon(ft.icons.AUTO_AWESOME),
-                        ft.Text("自启动OFF", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                )
                 self.show_snackbar(startup.remove_from_startup())
             else:
-                button.content = ft.Row(
-                    [
-                        ft.Icon(ft.icons.AUTO_AWESOME),
-                        ft.Text("自启动ON", weight=ft.FontWeight.W_600),
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                )
                 self.show_snackbar(startup.add_to_startup())
             self.auto_start = not self.auto_start
             self.core.config.set_config("auto_start", self.auto_start)
@@ -156,7 +138,6 @@ class GUI:
 
             return callback
 
-
         def open_repo(e):
             self.page.launch_url('https://github.com/1812z/PCTools')
 
@@ -174,8 +155,7 @@ class GUI:
         # 创建动态页面
         plugins_view = ft.ListView(height=450, width=450, spacing=5)
 
-
-        def show_page(e,h):
+        def show_page(e, h):
             bubble_page = h(e)
 
             def close_dialog(e):
@@ -228,18 +208,18 @@ class GUI:
                     elif plugin in self.core.error_plugins:
                         plugin_name = "❌" + plugin
                     name_text = ft.Text(plugin_name, size=16, weight=ft.FontWeight.BOLD, width=250)
-
                     handler = getattr(self.core.plugin_instances.get(plugin), "setting_page", None)
+                    setting_disabled = False if available and handler else True
                     settings_btn = ft.IconButton(
-                        icon=ft.icons.SETTINGS,
+                        icon=ft.Icons.SETTINGS,
                         icon_size=20,
                         tooltip="插件设置",
-                        disabled=False if available and handler else True,
-                        on_click=lambda e, h=handler: show_page(e,h)
+                        disabled=setting_disabled,
+                        on_click=lambda e, h=handler: show_page(e, h)
                     )
 
                     info_btn = ft.IconButton(
-                        icon=ft.icons.INFO_OUTLINE,
+                        icon=ft.Icons.INFO_OUTLINE,
                         icon_size=20,
                         tooltip=f"插件信息\n加载状态: {loaded}\n插件路径: {path}\n"
                     )
@@ -248,8 +228,7 @@ class GUI:
                         def callback(e):
                             new_status = e.control.value
                             self.core.plugin_manage(plugin, new_status)
-                            settings_btn.disabled = not new_status
-                            info_btn.disabled = not new_status
+                            settings_btn.disabled = not new_status or setting_disabled
                             e.page.update()
 
                         return callback
@@ -277,12 +256,11 @@ class GUI:
                     # 添加边框和边距
                     container = ft.Container(
                         content=row,
-                        padding=10,
-                        border=ft.border.all(1, ft.colors.GREY_300),
-                        border_radius=5,
-                        margin=ft.margin.only(bottom=10)
+                        padding=8,
+                        border=ft.border.all(2,ft.Colors.GREY),
+                        border_radius=8,
+                        margin=0
                     )
-
                     plugins_view.controls.append(container)
             else:
                 info_row = ft.Row(
@@ -302,19 +280,6 @@ class GUI:
             )
         )
 
-        auto_start_button = ft.ElevatedButton(
-            content=ft.Row(
-                [
-                    ft.Icon(ft.icons.AUTO_AWESOME),
-                    ft.Text("自启动", weight=ft.FontWeight.W_600),
-                ],
-                alignment=ft.MainAxisAlignment.SPACE_AROUND,
-            ),
-            on_click=lambda e: switch_auto_start(e, auto_start_button),
-            width=130,
-            height=40
-        )
-
         def create_button(icon, text, on_click):
             return ft.ElevatedButton(
                 content=ft.Row(
@@ -326,81 +291,72 @@ class GUI:
                 height=40
             )
 
-        start_button = create_button(ft.icons.PLAY_ARROW, "开始", button_start)
-        stop_button = create_button(ft.icons.STOP_ROUNDED, "停止", lambda e: self.stop())
-        send_data_button = create_button(ft.icons.SEND_AND_ARCHIVE, "发送数据", button_send_data)
-        follow_button = create_button(ft.icons.THUMB_UP_ALT_ROUNDED, "关注我", follow)
+        start_button = create_button(ft.Icons.PLAY_ARROW, "开始", button_start)
+        stop_button = create_button(ft.Icons.STOP_ROUNDED, "停止", lambda e: self.stop())
+        send_data_button = create_button(ft.Icons.SEND_AND_ARCHIVE, "发送数据", button_send_data)
+        follow_button = create_button(ft.Icons.THUMB_UP_ALT_ROUNDED, "关注我", follow)
+        auto_start_button = create_button(ft.Icons.THUMB_UP_ALT_ROUNDED, "自启动", switch_auto_start)
 
-        home_page = [
-            ft.Column(
-                [
-                    logo,
-                    ft.Container(
-                        content=ft.Text(
-                            self.version + ' by 1812z',
-                            size=20,
-                            ),
+        home_page = ft.Column(
+            [
+                logo,
+                ft.Container(
+                    content=ft.Text(
+                        self.version + ' by 1812z',
+                        size=20,
+                    )
+                ),
+                ft.Container(
+                    content=ft.TextButton(
+                        "Github",
+                        animate_size=20,
+                        on_click=open_repo
                     ),
-                    ft.Container(
-                        content=ft.TextButton(
-                            "Github",
-                            animate_size=20, on_click=open_repo
-                        ),
-                    ),
-                    start_button,
-                    stop_button,
-                    send_data_button,
-                    auto_start_button,
-                    follow_button,
-                ],
-                alignment=MainAxisAlignment.CENTER,
-                horizontal_alignment=CrossAxisAlignment.CENTER,
-            )
-        ]
+                    width=120
+                ),
 
-        setting_page = [
-            ft.Column(
-                [
-                    logo,
-                    ft.Row(
-                        [
-                            ft.Container(width=80),
-                            ft.Column(
-                                [
-                                ]
-                            ),
-                            ft.Container(width=10),
-                            ft.Column(
-                                [
-                                    ft.Row([
-                                        ft.TextField(label="HA_MQTT_Broker", width=160,
-                                                     on_submit=handle_input("HA_MQTT"), value=self.read_ha_broker),
-                                        ft.TextField(label="PORT", width=80,
-                                                     on_submit=handle_input("HA_MQTT_port"), value=self.read_port)
-                                    ]),
-                                    ft.TextField(label="HA_MQTT账户", width=250,
-                                                 on_submit=handle_input("username"), value=self.read_user),
-                                    ft.TextField(label="HA_MQTT密码", width=250,
-                                                 on_submit=handle_input("password"), value=self.read_password),
-                                    ft.Row([
-                                        ft.TextField(label="设备标识符", width=250,
-                                                     on_submit=handle_input("device_name"), value=self.read_device_name)
-                                    ]
+                            start_button,
+                            stop_button,
+                            send_data_button,
+                            auto_start_button,
+                            follow_button,
 
-                                )],
-                            ),
-                        ]
-                    ),
-                ],
-                alignment=MainAxisAlignment.CENTER,
-                horizontal_alignment=CrossAxisAlignment.CENTER,
-            )
-        ]
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            run_alignment=ft.MainAxisAlignment.CENTER,
+            spacing=10,
+            expand=True
+        )
 
+        setting_page = ft.Column(
+            [
+                logo,
+                ft.Column(
+                    [
+                        ft.Row([
+                            ft.TextField(label="HA_MQTT_Broker", width=160,
+                                         on_submit=handle_input("HA_MQTT"), value=self.read_ha_broker),
+                            ft.TextField(label="PORT", width=80,
+                                         on_submit=handle_input("HA_MQTT_port"), value=self.read_port)
+                        ],wrap=True),
+                        ft.TextField(label="HA_MQTT账户", width=250,
+                                     on_submit=handle_input("username"), value=self.read_user),
+                        ft.TextField(label="HA_MQTT密码", width=250,
+                                     on_submit=handle_input("password"), value=self.read_password),
+                        ft.TextField(label="设备标识符", width=250,
+                                    on_submit=handle_input("device_name"), value=self.read_device_name)
+                        ],
+                    run_alignment=ft.MainAxisAlignment.CENTER,
+                    horizontal_alignment = ft.CrossAxisAlignment.CENTER,
+                ),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            run_alignment=ft.MainAxisAlignment.CENTER,
+            spacing = 10,
+            expand = True
+        )
 
-
-        plugin_page = [
-            ft.Column(
+        plugin_page = ft.Column(
                 [
                     ft.Container(height=10),
                     ft.Row(
@@ -410,21 +366,20 @@ class GUI:
                         ]
                     )
                 ],
-                alignment=MainAxisAlignment.CENTER,
-                horizontal_alignment=CrossAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ]
-        tab_home.content = ft.Column(controls=home_page)
-        tab_setting.content = ft.Column(controls=setting_page)
-        tab_plugins.content = ft.Column(controls=plugin_page)
+
+
+        tab_home.content = home_page
+        tab_setting.content = setting_page
+        tab_plugins.content = plugin_page
         tabs = ft.Tabs(
             selected_index=0,
             tabs=[tab_home, tab_setting, tab_plugins],
-            on_change=tab_changed,
+            on_change=tab_changed
         )
 
         self.page.add(tabs)
-
 
     def on_exit(self):
         """退出前执行的函数"""
@@ -439,9 +394,11 @@ class GUI:
             if self.core:
                 self.core.log.error(f"退出异常: {e}")
 
+
 def show_menu():
     global show_menu_flag
     show_menu_flag = True
+
 
 def icon_task():
     """系统托盘图标任务"""
@@ -461,23 +418,19 @@ def icon_task():
     icon.run()
 
 
-
-def main(page):
-    gui.main(page)
-
-
 icon_flag = True
 show_menu_flag = False
 gui = None
 core = None
 if __name__ == "__main__":
-    threading.Thread(target=icon_task).start()
     from Core import Core
-    core = Core(gui)
+    core = Core(None)
     gui = GUI(core)
+    core.gui = gui
+    threading.Thread(target=icon_task).start()
 
     if not gui.auto_start:
-        ft.app(target=main)
+        ft.app(target=gui.main)
     else:
         gui.start()
 
@@ -486,10 +439,6 @@ if __name__ == "__main__":
             time.sleep(1)
             if show_menu_flag:
                 show_menu_flag = False
-                ft.app(target=main)
+                ft.app(target=gui.main)
         except KeyboardInterrupt as e:
             gui.on_exit()
-
-
-
-
