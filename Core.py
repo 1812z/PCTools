@@ -1,6 +1,5 @@
 import asyncio
 import time
-from cgitb import handler
 from time import sleep
 from plyer import notification
 from Timer import TimerManager
@@ -388,11 +387,9 @@ if __name__ == '__main__':
     core = Core()
     core.initialize()
     core.start()
-    core.mqtt.mqtt_subscribe("homeassistant/switch/PC_Win_Color_APP_Dark_Mode/set")
     try:
         while True:
             time.sleep(1)
-            core.FlaskApp.change_monitor(int(input("xsq")))
     except KeyboardInterrupt:
         core.stop()
 
