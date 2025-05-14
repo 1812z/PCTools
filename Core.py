@@ -109,7 +109,6 @@ class Core:
             module = importlib.import_module(module_path)
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 if name == plugin_name:
-
                     instance = obj(self)
                     self.plugin_instances[plugin_name] = instance
                     setattr(self, plugin_name, instance)
@@ -349,7 +348,7 @@ class Core:
             timeout=timeout
         )
 
-        self.log.info("发送Toast通知{title}")
+        self.log.info(f"发送Toast通知{title}")
 
     def start_timer(self):
         for key,item in self.timer_dict.items():
