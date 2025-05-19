@@ -26,7 +26,7 @@ class TextNotify:
 
     def extract_and_copy_verification_code(self, text):
         # 定义匹配验证码的正则表达式
-        pattern = r'(验证码|驗證碼)[：:](\d{4,6})'
+        pattern = r'(?:[Vv]erification\s*[Cc]ode|[Cc]ode|[Aa]uth\s*[Cc]ode|验证码|驗證碼)[：:\s]*?(\d{4,8})'
         match = re.search(pattern, text)
 
         if match:
