@@ -119,7 +119,7 @@ class FlaskApp:
             os.kill(self.process.pid, signal.SIGTERM)
             self.process.join()
             self.process = None
-            self.core.log.info("Flask进程停止")
+            self.core.log.debug("Flask进程停止")
 
     def change_monitor(self, index):
         url = f"http://localhost:5000/set_monitor/{index}"

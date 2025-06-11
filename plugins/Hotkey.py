@@ -114,7 +114,7 @@ class Hotkey:
             self.listening = False
             for hotkey in self.hotkeys:
                 keyboard.remove_hotkey(hotkey)
-            self.core.log.info("已停止监听快捷键")
+            self.core.log.debug("已停止监听快捷键")
             return 0
         return 1
 
