@@ -31,6 +31,8 @@ class Logger:
         if not self.logger.handlers:
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setLevel(level)
+            console_handler.encoding = 'utf-8'
+
 
             class CallerAwareFormatter(logging.Formatter):
                 def format(self, record):
@@ -47,7 +49,7 @@ class Logger:
 
             # 如果提供了日志文件路径，添加文件handler
             if log_file:
-                file_handler = logging.FileHandler(log_file, mode='w')  # mode='w'表示覆盖写入
+                file_handler = logging.FileHandler(log_file, mode='w',encoding='utf-8')  # mode='w'表示覆盖写入
                 file_handler.setLevel(level)
                 # 文件日志使用不包含颜色的格式
                 file_formatter = logging.Formatter(
