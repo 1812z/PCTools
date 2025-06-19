@@ -60,7 +60,9 @@ class GUI:
         """关闭窗口"""
         try:
             if self.page:
-                self.page.window_destroy()
+                self.page.window.close()
+                return None
+            return None
         except Exception as e:
             return e
 
@@ -385,11 +387,12 @@ class GUI:
         """退出前执行的函数"""
         global icon_flag
         try:
-            if icon_flag:
-                icon_flag = False
             if self.is_running:
                 self.stop()
-            self.close_windows()
+            if not self.is_running:
+                if icon_flag:
+                    icon_flag = False
+                self.close_windows()
         except Exception as e:
             if self.core:
                 self.core.log.error(f"退出异常: {e}")
@@ -410,8 +413,8 @@ def icon_task():
         if str(item) == "打开主界面":
             show_menu()
         elif str(item) == "退出":
-            icon.stop()
             gui.on_exit()
+            icon.stop()
 
     menu = (pystray.MenuItem('打开主界面', on_clicked), pystray.MenuItem('退出', on_clicked))
     icon = pystray.Icon("PCTools", image, "PCTools", menu)
