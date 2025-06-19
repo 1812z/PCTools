@@ -13,6 +13,10 @@ from pathlib import Path
 
 class Core:
     def __init__(self, gui = None):
+        self.timer = None
+        self.reg = None
+        self.mqtt = None
+
         self.is_initialized = False
 
         self.gui = gui
