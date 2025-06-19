@@ -125,10 +125,10 @@ class GUI:
             self.core.config.set_config("auto_start", self.auto_start)
             self.page.update()
 
-        def handle_input(field_name):
+        def handle_input(field_name, input_type="string"):
             def callback(e):
                 value = e.control.value
-                if value.isdigit():
+                if input_type == "int":
                     parsed_value = int(value)
                 else:
                     parsed_value = value
@@ -337,7 +337,7 @@ class GUI:
                             ft.TextField(label="HA_MQTT_Broker", width=160,
                                          on_submit=handle_input("HA_MQTT"), value=self.read_ha_broker),
                             ft.TextField(label="PORT", width=80,
-                                         on_submit=handle_input("HA_MQTT_port"), value=self.read_port)
+                                         on_submit=handle_input("HA_MQTT_port","int"), value=self.read_port)
                         ],wrap=True),
                         ft.TextField(label="HA_MQTT账户", width=250,
                                      on_submit=handle_input("username"), value=self.read_user),

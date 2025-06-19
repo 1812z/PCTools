@@ -17,7 +17,7 @@ class Core:
 
         self.gui = gui
         # Core 提供的接口
-        self.log = Logger()
+        self.log = Logger(log_file="app.log")
         self.config = Config(self)
 
         self.timer_dict = {}
