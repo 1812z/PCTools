@@ -135,7 +135,7 @@ class GUI:
                 else:
                     parsed_value = value
                 self.core.config.set_config(field_name, parsed_value)
-                if self.core.mqtt:
+                if hasattr(self.core, 'mqtt'):
                     self.core.mqtt.reconnect()
 
             return callback
