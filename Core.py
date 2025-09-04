@@ -1,5 +1,4 @@
 import asyncio
-import time
 from time import sleep
 from plyer import notification
 from Timer import TimerManager
@@ -323,6 +322,8 @@ class Core:
             self.disabled_plugins.discard(module_name)
             self.plugin_paths[module_name] = enabled_path  # 更新保存的路径
             self.log.info(f"✅ 已启用插件: {module_name}")
+            if self.gui and self.is_initialized:
+                self.gui.show_snackbar("启用插件后请重启软件")
             return True
         except Exception as e:
             self.log.error(f"❌ 启用插件 {module_name} 失败: {str(e)}")
@@ -392,7 +393,7 @@ if __name__ == '__main__':
     core.start()
     try:
         while True:
-            time.sleep(1)
+            sleep(1)
     except KeyboardInterrupt:
         core.stop()
 
