@@ -166,7 +166,7 @@ class Hotkey:
                             ),
                             ft.Container(width=40),
                             ft.IconButton(
-                                ft.icons.DELETE, on_click=lambda e, h=hotkey: self.delete_hotkey(e,h)),
+                                ft.Icons.DELETE, on_click=lambda e, h=hotkey: self.delete_hotkey(e,h)),
                         ],
                     )
                 )

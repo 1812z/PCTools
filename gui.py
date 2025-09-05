@@ -8,6 +8,8 @@ import startup
 
 class GUI:
     def __init__(self, core_instance):
+        self.is_starting = False
+        self.is_stopping = False
         self.ft = ft
         self.version = "V5.1"
         self.page = None
@@ -45,9 +47,11 @@ class GUI:
         """启动服务"""
         try:
             if self.core:
+                self.is_starting = True
                 self.core.initialize()
                 self.core.start()
                 self.is_running = True
+                self.is_starting = False
                 return True
             return False
         except Exception as e:
@@ -68,17 +72,22 @@ class GUI:
 
     def stop(self):
         """停止服务"""
-        if self.is_running:
+        if self.is_running and not self.is_starting and not self.is_stopping:
+            self.is_stopping = True
             self.show_snackbar("停止进程中...")
-            if self.core:
-                self.core.log.info("停止进程中...")
-                self.core.stop()
+            self.core.log.info("停止进程中...")
+            self.core.stop()
             self.is_running = False
             self.show_snackbar("成功停止所有进程")
-            if self.core:
-                self.core.log.info("成功停止所有进程")
-        else:
+            self.core.log.info("成功停止所有进程")
+            self.is_stopping = False
+        elif not self.is_starting and not self.is_stopping:
             self.show_snackbar("都还没运行呀")
+        elif not self.is_stopping:
+            self.show_snackbar("启动中无法停止...")
+        else:
+            self.show_snackbar("如果卡死请使用任务管理器终止python进程")
+
 
     def main(self, new_page: ft.Page):
         """主要UI逻辑函数"""
@@ -111,7 +120,7 @@ class GUI:
                 self.page.update()
 
         def button_start(e):
-            if self.is_running:
+            if self.is_running or self.is_starting:
                 self.show_snackbar("请勿多次启动!")
             else:
                 self.show_snackbar("启动进程...")
@@ -151,30 +160,33 @@ class GUI:
                 self.show_snackbar("输入每一项数据后，请使用回车键保存")
             elif e.control.selected_index == 2:
                 if self.is_running:
-                    self.show_snackbar("运行时无法配置插件")
+                    self.show_snackbar("运行时无法配置")
+                elif self.core.is_initialized is False:
+                    self.show_snackbar("如需修改插件配置，请先载入插件")
                 update_plugin_page()
 
         # 创建动态页面
         plugins_view = ft.ListView(height=450, width=450, spacing=5)
 
         def show_page(e, h):
-            bubble_page = h(e)
+            if h is None:
+                self.show_snackbar("该插件没有设置页面")
+                return
 
-            def close_dialog(e):
-                dlg.open = False
+            try:
+                bubble_page = h(e)
+                dlg = ft.AlertDialog(
+                    title=ft.Text("插件设置"),
+                    content=bubble_page[0],
+                    actions=[
+                        ft.TextButton("返回", on_click=lambda e: e.page.close(dlg)),
+                    ],
+                )
+                e.page.open(dlg)
                 e.page.update()
-
-            dlg = ft.AlertDialog(
-                title=ft.Text("设置"),
-                content=bubble_page[0],
-                actions=[
-                    ft.TextButton("确定", on_click=close_dialog),
-                ],
-            )
-
-            e.page.dialog = dlg
-            dlg.open = True
-            e.page.update()
+            except Exception as ex:
+                self.core.log.error(f"打开设置页面失败: {ex}")
+                self.show_snackbar(f"打开设置失败: {ex}")
 
         def load_plugin_button(e):
             self.show_snackbar("初始化插件类...")
@@ -190,8 +202,7 @@ class GUI:
             plugins_view.controls.clear()
             plugins_view.controls.append(ft.Row(
                 [
-                    ft.ElevatedButton("载入插件", on_click=load_plugin_button),
-                    ft.ElevatedButton("卸载插件", on_click=delattr_plugin_button)
+                    ft.ElevatedButton("载入插件", on_click=load_plugin_button, disabled=self.core.is_initialized),
                 ]
             ))
 

@@ -139,3 +139,4 @@ class Win_Color:
         elif entity == "SYS_Dark_Mode":
             self.Sys_enabled = comm
             return self.set_dark_mode(APP_enabled=self.APP_enabled, Sys_enabled=self.Sys_enabled )
+        return None
