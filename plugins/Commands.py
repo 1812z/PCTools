@@ -1,6 +1,6 @@
 import base64
 import hashlib
-import json
+import flet as ft
 import os
 import subprocess
 
@@ -65,3 +65,13 @@ class Commands:
             else:  # 其它文件
                 run = self.current_directory + '\\' + run_file
                 os.system(f'start "" "{run}"')
+
+    def setting_page(self, e):
+        """设置页面"""
+        return ft.Column(
+            [
+                ft.ElevatedButton("打开目录", on_click=lambda e: os.startfile(self.current_directory))
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
