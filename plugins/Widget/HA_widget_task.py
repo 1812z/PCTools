@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 import sys
-
+import flet as ft
 
 def run_ha_widget():
     from Widget import _HA_widget
@@ -11,6 +11,8 @@ class HA_widget_task:
     def __init__(self, core):
         self.core = core
         self.process = None
+
+        self.read_Widget_url = self.core.config.get_config("Widget_url")
 
         parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if parent_dir not in sys.path:
@@ -30,7 +32,23 @@ class HA_widget_task:
             self.process.kill()
         else:
             self.core.log.debug("小部件进程已停止。")
-   
+
+    def save_url(self):
+        def callback(e):
+            value = e.control.value
+            self.core.config.set_config("Widget_url", str(value))
+        return callback
+
+    def setting_page(self, e):
+        """设置页面"""
+        return ft.Column(
+            [
+                ft.TextField(label="网页URL", width=250,
+                             on_submit=self.save_url(), value=self.read_Widget_url),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
 
 
 

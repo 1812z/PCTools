@@ -201,9 +201,7 @@ class Hotkey:
         """设置页面"""
         # 当设置页面被加载时，标记控件已添加到页面
         self._page_ready = True
-
-        hotkey_page = [
-            ft.Column(
+        hotkey_page = ft.Column(
                 [
                     ft.Row(
                         [
@@ -261,7 +259,7 @@ class Hotkey:
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
-        ]
+
 
         self.update_hotkey_list(e)
 

@@ -177,7 +177,7 @@ class GUI:
                 bubble_page = h(e)
                 dlg = ft.AlertDialog(
                     title=ft.Text("插件设置"),
-                    content=bubble_page[0],
+                    content=bubble_page,
                     actions=[
                         ft.TextButton("返回", on_click=lambda e: e.page.close(dlg)),
                     ],
