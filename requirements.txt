@@ -17,3 +17,4 @@ pyperclip
 requests==2.32.3
 numpy==1.26.4
 trio
+packaging==23.2
