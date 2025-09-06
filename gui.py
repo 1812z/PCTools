@@ -1,23 +1,21 @@
-import threading
 import time
-from PIL import Image
 import flet as ft
-import pystray
 import startup
-
+from TrayManager import TrayManager
 
 class GUI:
     def __init__(self, core_instance):
         self.is_starting = False
         self.is_stopping = False
         self.ft = ft
-        self.version = "V5.1"
-        self.page = None
+        self.version = "V5.2"
 
+        self.is_running = False
         self.show_menu_flag = False
         self.icon_flag = False
         self.core = None
-        self.is_running = False
+        self.page = None
+        self.tray = None
 
         self.auto_start = core.config.get_config("auto_start")
         self.read_user = core.config.get_config("username")
@@ -176,8 +174,14 @@ class GUI:
             try:
                 bubble_page = h(e)
                 dlg = ft.AlertDialog(
+                    adaptive=True,
                     title=ft.Text("插件设置"),
-                    content=bubble_page,
+                    content=ft.Container(
+                        content=bubble_page,
+                        height=300,
+                        width=400,
+                        margin=10,
+                    ),
                     actions=[
                         ft.TextButton("返回", on_click=lambda e: e.page.close(dlg)),
                     ],
@@ -394,46 +398,16 @@ class GUI:
 
         self.page.add(tabs)
 
-    def on_exit(self):
-        """退出前执行的函数"""
-        global icon_flag
+    def exit(self):
         try:
             if self.is_running:
                 self.stop()
-            if not self.is_running:
-                if icon_flag:
-                    icon_flag = False
-                self.close_windows()
+            self.close_windows()
+            self.tray.stop()
         except Exception as e:
-            if self.core:
-                self.core.log.error(f"退出异常: {e}")
-
-
-def show_menu():
-    global show_menu_flag
-    show_menu_flag = True
-
-
-def icon_task():
-    """系统托盘图标任务"""
-    global icon_flag
-    icon_flag = True
-    image = Image.open("img\\logo.png")
-
-    def on_clicked(icon, item):
-        if str(item) == "打开主界面":
-            show_menu()
-        elif str(item) == "退出":
-            gui.on_exit()
-            icon.stop()
-
-    menu = (pystray.MenuItem('打开主界面', on_clicked), pystray.MenuItem('退出', on_clicked))
-    icon = pystray.Icon("PCTools", image, "PCTools", menu)
-    icon.run()
-
+            self.core.log.error(f"退出异常: {e}")
 
 icon_flag = True
-show_menu_flag = False
 gui = None
 core = None
 if __name__ == "__main__":
@@ -441,18 +415,19 @@ if __name__ == "__main__":
     core = Core(None)
     gui = GUI(core)
     core.gui = gui
-    threading.Thread(target=icon_task).start()
+    gui.tray = TrayManager(gui)
+    gui.tray.start()
 
     if not gui.auto_start:
         ft.app(target=gui.main)
     else:
         gui.start()
 
-    while icon_flag:
+    while gui.tray.is_running:
         try:
-            time.sleep(1)
-            if show_menu_flag:
-                show_menu_flag = False
+            if gui.show_menu_flag:
+                gui.show_menu_flag = False
                 ft.app(target=gui.main)
+            time.sleep(1)
         except KeyboardInterrupt as e:
-            gui.on_exit()
+            gui.exit()

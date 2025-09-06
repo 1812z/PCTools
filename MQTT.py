@@ -67,7 +67,7 @@ class MQTT:
                 "name": "PC",
                 "manufacturer": "1812z",
                 "model": "PCTools",
-                "sw_version": "2025.4.26",
+                "sw_version": "2025.9.6",
                 "configuration_url": "https://1812z.top"
             }
         }

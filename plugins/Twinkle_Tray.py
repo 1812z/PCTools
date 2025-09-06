@@ -4,6 +4,7 @@ import re
 import os
 import time
 import keyboard
+import flet as ft
 
 
 def _remove_ansi_escape(text):
@@ -49,7 +50,10 @@ class Twinkle_Tray:
         }
         self.config = []
         self.generate_entity()
-
+        self.read_monitor_power_type = core.config.get_config("read_monitor_power_type")
+        if self.read_monitor_power_type is None:
+            self.read_monitor_power_type = 2
+            self.core.config.set_config("monitor_power_type", 2)
     def generate_entity(self):
         monitors = self.get_monitors_state()
         if monitors:
@@ -126,15 +130,24 @@ class Twinkle_Tray:
             return
         if data == "OFF":
             # 显示器关机方案
-            # 方案一,关闭电源:
-            # run = [path, "--MonitorNum=1", "--VCP=0xD6:0x04"]
-            # subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-            # monitor_num_key = int(key[9:]) + 1
-            # run = [path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x04"]
-            # subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-            # logger.info(f"显示器{monitor_num_key}关机")
-            # 方案二,仅熄灭显示器,不关闭电源,但会熄灭所有显示器
-            ctypes.windll.user32.SendMessageW(0xFFFF, 0x112, 0xF170, 2)  # 0xF170 = WM_SYSCOMMAND, 2 = SC_MONITORPOWER)
+            power_type = 0
+            match power_type:
+                case 0:
+                    # 方案一，仅熄灭显示器，不关闭电源，但会熄灭所有显示器，可能导致程序异常
+                    ctypes.windll.user32.SendMessageW(0xFFFF, 0x112, 0xF170, 2)  # 0xF170 = WM_SYSCOMMAND, 2 = SC_MONITORPOWER)
+                case 1:
+                    # 方案二，休眠显示器:
+                    monitor_num_key = int(key) + 1
+                    run = [self.path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x04"]
+                    subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+                    self.core.log.info(f"显示器{monitor_num_key}待机")
+                case 2:
+                    # 方案三，显示器关机，无法手动唤醒
+                    monitor_num_key = int(key) + 1
+                    run = [self.path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x05"]
+                    subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+                    self.core.log.info(f"显示器{monitor_num_key}关机")
+
         elif data == "ON":
             self.wake_up_screen()  # 模拟输入唤醒显示器
         else:
@@ -169,5 +182,36 @@ class Twinkle_Tray:
                 print("  Brightness:", info.get("Brightness"))
         except:
             print("未能获取到监视器信息。")
+
+    def save_power_type(self):
+        def callback(e):
+            value = e.control.value
+            self.core.config.set_config("monitor_power_type", int(value))
+        return callback
+
+    def on_option_changed(self, e):
+        self.read_monitor_power_type = e.control.value
+        self.core.config.set_config("monitor_power_type", int(e.control.value))
+    def setting_page(self, e):
+        """设置页面"""
+        radio0 = ft.Radio(value="0", label="系统层关闭画面")
+        radio1 = ft.Radio(value="1", label="显示器休眠")
+        radio2 = ft.Radio(value="2", label="显示器关机(默认)")
+        # 将按钮放入RadioGroup管理
+        radio_group = ft.RadioGroup(
+            content=ft.Column([radio0, radio1, radio2], spacing=10),
+            on_change=self.on_option_changed,
+            value=str(self.read_monitor_power_type)  # 设置默认选中项
+        )
+        # 构建页面布局
+
+        return ft.Column(
+                [
+                    ft.Text("请选择显示器关闭方式：", size=20),
+                    radio_group
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            )
 
 
