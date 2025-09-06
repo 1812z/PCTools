@@ -8,7 +8,7 @@ class GUI:
         self.is_starting = False
         self.is_stopping = False
         self.ft = ft
-        self.version = "V5.2"
+        self.version = "v5.2"
 
         self.is_running = False
         self.show_menu_flag = False
@@ -99,6 +99,7 @@ class GUI:
         tab_home = ft.Tab(text="主页")
         tab_setting = ft.Tab(text="设置")
         tab_plugins = ft.Tab(text="插件")
+        tab_about = ft.Tab(text="关于")
 
         def button_send_data(e):
             try:
@@ -197,10 +198,6 @@ class GUI:
             self.core.initialize()
             update_plugin_page()
 
-        def delattr_plugin_button(e):
-            self.show_snackbar("卸载插件类...")
-            self.core.delattr_all_plugin()
-            update_plugin_page()
 
         def update_plugin_page():
             plugins_view.controls.clear()
@@ -331,13 +328,11 @@ class GUI:
                     ),
                     width=120
                 ),
-
                             start_button,
                             stop_button,
                             send_data_button,
                             auto_start_button,
                             follow_button,
-
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             run_alignment=ft.MainAxisAlignment.CENTER,
@@ -386,13 +381,33 @@ class GUI:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
 
+        about_page = ft.Column(
+            [
+                ft.Container(
+                    content=ft.Text(
+                        "感谢使用,可以的话求投喂,有需要的功能也可以联系我(VX: |1812z| )，会尽快写(AI)好",
+                        size=20,
+                    )
+                ),
+                ft.Container(
+                    content=ft.Image(
+                        src="img\\wechat.png",
+                        fit=ft.ImageFit.CONTAIN,
+                        width=400
+                    )
+                ),
+            ],
+            spacing=10,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
 
         tab_home.content = home_page
         tab_setting.content = setting_page
         tab_plugins.content = plugin_page
+        tab_about.content = about_page
         tabs = ft.Tabs(
             selected_index=0,
-            tabs=[tab_home, tab_setting, tab_plugins],
+            tabs=[tab_home, tab_setting, tab_plugins,tab_about],
             on_change=tab_changed
         )
 
