@@ -9,6 +9,9 @@
     "Hotkey_notify": false,
     "Hotkey_suppress": false,
     "Widget_url": "https://bing.com",
+    "monitor_power_type": 2,
     "version": "v5.3",
-    "check_update": true
+    "check_update": true,
+    "aida64_updater": 5,
+    "auto_update": false
 }

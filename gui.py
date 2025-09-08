@@ -132,13 +132,13 @@ class GUI:
                     self.show_snackbar("服务启动成功")
 
         def switch_auto_start(e):
-            if self.core.config.get_config("auto_start"):
-                self.show_snackbar(startup.remove_from_startup())
-            else:
+            if e.control.value:
                 self.show_snackbar(startup.add_to_startup())
-            self.core.config.set_config("auto_start", not self.core.config.get_config("auto_start"))
+                self.core.config.set_config("auto_start", True)
+            else:
+                self.show_snackbar(startup.remove_from_startup())
+                self.core.config.set_config("auto_start", False)
             self.page.update()
-
 
         def open_repo(e):
             self.page.launch_url('https://github.com/1812z/PCTools')
@@ -310,44 +310,52 @@ class GUI:
                     on_change=on_change,
                 )
             else:
-                right_control = ft.Container()
+                right_control =  ft.IconButton(
+                    icon=ft.Icons.ARROW_FORWARD_IOS,
+                    icon_size=20,
+                    on_click=on_change)
 
             """构建带图标的设置选项"""
-            return ft.Container(
-                content=ft.Row(
-                    controls=[
-                        # 左侧图标和文字
-                        ft.Row(
+            return (ft.Column(
+                controls=[
+                    ft.Divider(height=10),
+                    ft.Container(
+                        content=ft.Row(
                             controls=[
-                                ft.Icon(icon_name, size=25),
-                                ft.Column(
+                                # 左侧图标和文字
+                                ft.Row(
                                     controls=[
-                                        ft.Text(title, weight=ft.FontWeight.BOLD),
-                                        ft.Text(subtitle, size=12, color=ft.Colors.GREY_600),
+                                        ft.Icon(icon_name, size=25),
+                                        ft.Column(
+                                            controls=[
+                                                ft.Text(title, weight=ft.FontWeight.BOLD),
+                                                ft.Text(subtitle, size=12, color=ft.Colors.GREY_600),
+                                            ],
+                                            spacing=2
+                                        )
                                     ],
-                                    spacing=2
-                                )
+                                    spacing=10,
+                                    alignment=ft.MainAxisAlignment.START,
+                                    expand=True
+                                ),
+                                # 右侧开关
+                                right_control
                             ],
-                            spacing=10,
-                            alignment=ft.MainAxisAlignment.START,
-                            expand=True
+                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER
                         ),
-                        # 右侧开关
-                        right_control
-                    ],
-                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    vertical_alignment=ft.CrossAxisAlignment.CENTER
-                ),
-                padding=ft.padding.symmetric(vertical=5, horizontal=10),
-                border=ft.border.only(bottom=ft.border.BorderSide(0.5, ft.Colors.GREY_300)),
-                on_click=on_change if on_change else None
+                        padding=ft.padding.symmetric(vertical=5, horizontal=10),
+                        on_click=on_change if on_change else None
+                    )]
+                )
             )
+
+
 
         start_button = create_button(ft.Icons.PLAY_ARROW, "开始", button_start)
         stop_button = create_button(ft.Icons.STOP_ROUNDED, "停止", lambda e: self.stop())
         send_data_button = create_button(ft.Icons.SEND_AND_ARCHIVE, "发送数据", button_send_data)
         follow_button = create_button(ft.Icons.THUMB_UP_ALT_ROUNDED, "关注我", follow)
-        auto_start_button = create_button(ft.Icons.THUMB_UP_ALT_ROUNDED, "自启动", switch_auto_start)
 
         home_page = ft.Column(
             [
@@ -369,7 +377,6 @@ class GUI:
                             start_button,
                             stop_button,
                             send_data_button,
-                            auto_start_button,
                             follow_button,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -433,7 +440,6 @@ class GUI:
         setting_page = ft.ListView(
             controls=[
                 logo,
-                ft.Divider(height=10),
                 build_setting_option(
                     icon_name=ft.Icons.NETWORK_CELL,
                     title="MQTT设置",
@@ -448,6 +454,20 @@ class GUI:
                     subtitle="启动时自动检查新版本并提示",
                     toggle_value=self.core.config.get_config("check_update"),
                     on_change=lambda e: self.core.config.set_config("check_update",e.control.value)
+                ),
+                build_setting_option(
+                    icon_name=ft.Icons.BROWSER_UPDATED,
+                    title="自动更新",
+                    subtitle="检查到新版本时自动更新",
+                    toggle_value=self.core.config.get_config("auto_update"),
+                    on_change=lambda e: self.core.config.set_config("auto_update", e.control.value)
+                ),
+                build_setting_option(
+                    icon_name=ft.Icons.POWER_SETTINGS_NEW,
+                    title="自启动",
+                    subtitle="开机后自动打开程序",
+                    toggle_value=self.core.config.get_config("auto_start"),
+                    on_change=lambda e: switch_auto_start(e)
                 ),
             ],
             spacing=15,

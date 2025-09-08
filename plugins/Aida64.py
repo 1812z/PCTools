@@ -6,7 +6,7 @@ class Aida64:
     def __init__(self, core):
         self.core = core
         self.updater = {
-            "timer": self.core.config.get_config("aida64_updater"),
+            "timer": 5 if not core.config.get_config("aida64_updater") else core.config.get_config("aida64_updater"),
         }
         self.discovery()
 

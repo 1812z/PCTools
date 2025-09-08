@@ -43,8 +43,14 @@ class UpdateChecker:
         self.update_available = version.parse(self.latest_version) > version.parse(self.current_version)
         self.gui.core.log.info(f"当前版本: {self.current_version}，最新版本: {self.latest_version} 更新状态: {self.update_available}")
         if self.update_available:
-            self.gui.show_snackbar(f"新版本{self.latest_version}可用，转到关于以更新", 4000)
-            self.gui.core.show_toast("PCTools新版本可用", f"当前版本: {self.current_version}，最新版本: {self.latest_version}")
+
+            if self.gui.core.config.get_config("auto_update"):
+                self.gui.core.show_toast("PCTools更新中",f"最新版本: {self.latest_version}")
+                self._perform_update()
+            else:
+                self.gui.show_snackbar(f"新版本{self.latest_version}可用，转到关于以更新", 4000)
+                self.gui.core.show_toast("PCTools新版本可用",f"当前版本: {self.current_version}，最新版本: {self.latest_version}")
+
         return self.update_available, self.latest_version
 
     def get_latest_release(self):
@@ -85,7 +91,7 @@ class UpdateChecker:
             update_btn = ft.ElevatedButton(
                 "立即更新",
                 icon=ft.Icons.UPDATE,
-                on_click=lambda _: self._perform_update(page)
+                on_click=lambda _: self._perform_update()
             )
             status_row.controls.append(update_btn)
         else:
@@ -99,7 +105,7 @@ class UpdateChecker:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
 
-    def _perform_update(self, page: ft.Page):
+    def _perform_update(self):
         if not self.latest_release:
             self.gui.show_snackbar("无法获取发布信息")
             return
