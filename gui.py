@@ -83,7 +83,16 @@ class GUI:
         else:
             self.show_snackbar("如果卡死请使用任务管理器终止python进程")
 
+    def handle_input(self, field_name, input_type="string"):
+        def callback(e):
+            value = e.control.value
+            if input_type == "int":
+                parsed_value = int(value)
+            else:
+                parsed_value = value
+            self.core.config.set_config(field_name, parsed_value)
 
+        return callback
     def main(self, new_page: ft.Page):
         """主要UI逻辑函数"""
         self.page = new_page
@@ -130,16 +139,6 @@ class GUI:
             self.core.config.set_config("auto_start", not self.core.config.get_config("auto_start"))
             self.page.update()
 
-        def handle_input(field_name, input_type="string"):
-            def callback(e):
-                value = e.control.value
-                if input_type == "int":
-                    parsed_value = int(value)
-                else:
-                    parsed_value = value
-                self.core.config.set_config(field_name, parsed_value)
-
-            return callback
 
         def open_repo(e):
             self.page.launch_url('https://github.com/1812z/PCTools')
@@ -392,32 +391,32 @@ class GUI:
                     [
                         ft.TextField(
                             label="HA_MQTT_Broker",
-                            on_submit=handle_input("HA_MQTT"),
+                            on_submit=self.handle_input("HA_MQTT"),
                             value=self.core.config.get_config("HA_MQTT")
                         ),
                         ft.TextField(
                             label="PORT",
-                            on_submit=handle_input("HA_MQTT_port", "int"),
+                            on_submit=self.handle_input("HA_MQTT_port", "int"),
                             value=self.core.config.get_config("HA_MQTT_port")
                         ),
                         ft.TextField(
                             label="HA_MQTT账户",
-                            on_submit=handle_input("username"),
+                            on_submit=self.handle_input("username"),
                             value=self.core.config.get_config("username")
                         ),
                         ft.TextField(
                             label="HA_MQTT密码",
-                            on_submit=handle_input("password"),
+                            on_submit=self.handle_input("password"),
                             value=self.core.config.get_config("password")
                         ),
                         ft.TextField(
                             label="发现前缀",
-                            on_submit=handle_input("ha_prefix"),
+                            on_submit=self.handle_input("ha_prefix"),
                             value=self.core.config.get_config("ha_prefix")
                         ),
                         ft.TextField(
                             label="设备唯一标识符(仅支持英文字符)",
-                            on_submit=handle_input("device_name"),
+                            on_submit=self.handle_input("device_name"),
                             value=self.core.config.get_config("device_name")
                         ),
                     ]

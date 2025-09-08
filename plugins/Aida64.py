@@ -1,12 +1,12 @@
 import json
-
+import flet as ft
 import python_aida64
 
 class Aida64:
     def __init__(self, core):
         self.core = core
         self.updater = {
-            "timer": 5
+            "timer": self.core.config.get_config("aida64_updater"),
         }
         self.discovery()
 
@@ -56,6 +56,28 @@ class Aida64:
         if aida64_data:
             data = json.dumps(aida64_data)
             self.core.mqtt.update_state_data(data, "Aida64", "sensor")
+
+    def setting_page(self, e):
+        """设置页面"""
+        return ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.Text("数据更新间隔"),
+                        ft.TextField(
+                            label="单位:秒",
+                            on_submit=self.core.gui.handle_input("aida64_updater", "int"),
+                            value=self.core.config.get_config("aida64_updater")
+                        ),
+
+                    ]
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+
 
 
 
