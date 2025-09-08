@@ -123,8 +123,7 @@ class UpdateChecker:
             self.gui.show_snackbar("下载失败")
             return
 
-        self.gui.show_snackbar("下载完成，准备更新...")
-
+        self.gui.core.show_toast("下载完成", "即将退出以更新")
         # 创建更新脚本
         update_script = f"""import os
 import time
