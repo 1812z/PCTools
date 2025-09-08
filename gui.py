@@ -2,13 +2,15 @@ import time
 import flet as ft
 import startup
 from TrayManager import TrayManager
+from Updater import UpdateChecker
+
 
 class GUI:
     def __init__(self, core_instance):
         self.is_starting = False
         self.is_stopping = False
         self.ft = ft
-        self.version = "v5.2"
+        self.version = "v5.3"
 
         self.is_running = False
         self.show_menu_flag = False
@@ -16,16 +18,11 @@ class GUI:
         self.core = None
         self.page = None
         self.tray = None
+        self.updater = None
 
-        self.auto_start = core.config.get_config("auto_start")
-        self.read_user = core.config.get_config("username")
-        self.read_password = core.config.get_config("password")
-        self.read_ha_broker = core.config.get_config("HA_MQTT")
-        self.read_port = core.config.get_config("HA_MQTT_port")
-        self.read_device_name = core.config.get_config("device_name")
         self.core = core_instance
 
-    def show_snackbar(self, message: str):
+    def show_snackbar(self, message: str, duration=2000):
         """显示通知条消息"""
         if not self.page:
             return
@@ -33,7 +30,7 @@ class GUI:
             snackbar = ft.SnackBar(
                 content=ft.Text(message),
                 action="OK",
-                duration=2000
+                duration=duration
             )
             self.page.open(snackbar)
             self.page.update()
@@ -111,8 +108,7 @@ class GUI:
                     content=ft.Text(value=f"数据更新失败:{e}"),
                     scrollable=True
                 )
-                self.page.dialog = dialog
-                dialog.open = True
+                self.page.open(dialog)
                 self.page.update()
             else:
                 self.show_snackbar("数据更新成功")
@@ -127,12 +123,11 @@ class GUI:
                     self.show_snackbar("服务启动成功")
 
         def switch_auto_start(e):
-            if self.auto_start:
+            if self.core.config.get_config("auto_start"):
                 self.show_snackbar(startup.remove_from_startup())
             else:
                 self.show_snackbar(startup.add_to_startup())
-            self.auto_start = not self.auto_start
-            self.core.config.set_config("auto_start", self.auto_start)
+            self.core.config.set_config("auto_start", not self.core.config.get_config("auto_start"))
             self.page.update()
 
         def handle_input(field_name, input_type="string"):
@@ -143,8 +138,6 @@ class GUI:
                 else:
                     parsed_value = value
                 self.core.config.set_config(field_name, parsed_value)
-                if hasattr(self.core, 'mqtt'):
-                    self.core.mqtt.reconnect()
 
             return callback
 
@@ -156,7 +149,7 @@ class GUI:
 
         def tab_changed(e):
             if e.control.selected_index == 1:
-                self.show_snackbar("输入每一项数据后，请使用回车键保存")
+                self.show_snackbar("修改设置后建议重启软件")
             elif e.control.selected_index == 2:
                 if self.is_running:
                     self.show_snackbar("运行时无法配置")
@@ -197,7 +190,6 @@ class GUI:
             self.show_snackbar("初始化插件类...")
             self.core.initialize()
             update_plugin_page()
-
 
         def update_plugin_page():
             plugins_view.controls.clear()
@@ -271,7 +263,7 @@ class GUI:
                     container = ft.Container(
                         content=row,
                         padding=8,
-                        border=ft.border.all(2,ft.Colors.GREY),
+                        border=ft.border.all(2, ft.Colors.GREY),
                         border_radius=8,
                         margin=0
                     )
@@ -294,7 +286,7 @@ class GUI:
             )
         )
 
-        def create_button(icon, text, on_click):
+        def create_button(icon: str, text: str, on_click=None):
             return ft.ElevatedButton(
                 content=ft.Row(
                     [ft.Icon(icon), ft.Text(text, weight=ft.FontWeight.W_600)],
@@ -303,6 +295,53 @@ class GUI:
                 on_click=on_click,
                 width=130,
                 height=40
+            )
+
+        def build_setting_option(
+                icon_name: str,
+                title: str,
+                subtitle: str,
+                toggle_value: bool = False,
+                on_change=None,
+                control_type="switch"
+        ):
+            if control_type == "switch":
+                right_control = ft.Switch(
+                    value=toggle_value,
+                    on_change=on_change,
+                )
+            else:
+                right_control = ft.Container()
+
+            """构建带图标的设置选项"""
+            return ft.Container(
+                content=ft.Row(
+                    controls=[
+                        # 左侧图标和文字
+                        ft.Row(
+                            controls=[
+                                ft.Icon(icon_name, size=25),
+                                ft.Column(
+                                    controls=[
+                                        ft.Text(title, weight=ft.FontWeight.BOLD),
+                                        ft.Text(subtitle, size=12, color=ft.Colors.GREY_600),
+                                    ],
+                                    spacing=2
+                                )
+                            ],
+                            spacing=10,
+                            alignment=ft.MainAxisAlignment.START,
+                            expand=True
+                        ),
+                        # 右侧开关
+                        right_control
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER
+                ),
+                padding=ft.padding.symmetric(vertical=5, horizontal=10),
+                border=ft.border.only(bottom=ft.border.BorderSide(0.5, ft.Colors.GREY_300)),
+                on_click=on_change if on_change else None
             )
 
         start_button = create_button(ft.Icons.PLAY_ARROW, "开始", button_start)
@@ -340,32 +379,81 @@ class GUI:
             expand=True
         )
 
-        setting_page = ft.Column(
-            [
-                logo,
-                ft.Column(
+        def open_mqtt_setting(self):
+            self.page.open(mqtt_setting)
+            self.page.update()
+
+        # MQTT设置
+        mqtt_setting = ft.AlertDialog(
+            adaptive=True,
+            title=ft.Text("MQTT设置(每一项输入框按回车保存)"),
+            content=ft.Container(
+                content=ft.Column(
                     [
-                        ft.Row([
-                            ft.TextField(label="HA_MQTT_Broker", width=160,
-                                         on_submit=handle_input("HA_MQTT"), value=self.read_ha_broker),
-                            ft.TextField(label="PORT", width=80,
-                                         on_submit=handle_input("HA_MQTT_port","int"), value=self.read_port)
-                        ],wrap=True),
-                        ft.TextField(label="HA_MQTT账户", width=250,
-                                     on_submit=handle_input("username"), value=self.read_user),
-                        ft.TextField(label="HA_MQTT密码", width=250,
-                                     on_submit=handle_input("password"), value=self.read_password),
-                        ft.TextField(label="设备标识符", width=250,
-                                    on_submit=handle_input("device_name"), value=self.read_device_name)
-                        ],
-                    run_alignment=ft.MainAxisAlignment.CENTER,
-                    horizontal_alignment = ft.CrossAxisAlignment.CENTER,
+                        ft.TextField(
+                            label="HA_MQTT_Broker",
+                            on_submit=handle_input("HA_MQTT"),
+                            value=self.core.config.get_config("HA_MQTT")
+                        ),
+                        ft.TextField(
+                            label="PORT",
+                            on_submit=handle_input("HA_MQTT_port", "int"),
+                            value=self.core.config.get_config("HA_MQTT_port")
+                        ),
+                        ft.TextField(
+                            label="HA_MQTT账户",
+                            on_submit=handle_input("username"),
+                            value=self.core.config.get_config("username")
+                        ),
+                        ft.TextField(
+                            label="HA_MQTT密码",
+                            on_submit=handle_input("password"),
+                            value=self.core.config.get_config("password")
+                        ),
+                        ft.TextField(
+                            label="发现前缀",
+                            on_submit=handle_input("ha_prefix"),
+                            value=self.core.config.get_config("ha_prefix")
+                        ),
+                        ft.TextField(
+                            label="设备唯一标识符(仅支持英文字符)",
+                            on_submit=handle_input("device_name"),
+                            value=self.core.config.get_config("device_name")
+                        ),
+                    ]
+                ),
+                height=300,
+                width=400,
+                margin=10,
+            ),
+            actions=[
+                ft.TextButton("返回", on_click=lambda e: e.page.close(mqtt_setting)),
+            ],
+        )
+
+        setting_page = ft.ListView(
+            controls=[
+                logo,
+                ft.Divider(height=10),
+                build_setting_option(
+                    icon_name=ft.Icons.NETWORK_CELL,
+                    title="MQTT设置",
+                    subtitle="配置MQTT连接信息",
+                    toggle_value=False,
+                    on_change=open_mqtt_setting,
+                    control_type="dialog"
+                ),
+                build_setting_option(
+                    icon_name=ft.Icons.UPDATE,
+                    title="检查更新",
+                    subtitle="启动时自动检查新版本并提示",
+                    toggle_value=self.core.config.get_config("check_update"),
+                    on_change=lambda e: self.core.config.set_config("check_update",e.control.value)
                 ),
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            run_alignment=ft.MainAxisAlignment.CENTER,
-            spacing = 10,
-            expand = True
+            spacing=15,
+            padding=ft.padding.only(left=60, right=60),
+            expand=True
         )
 
         plugin_page = ft.Column(
@@ -381,23 +469,26 @@ class GUI:
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
 
+        update_component = self.updater.create_update_ui(self.page)
         about_page = ft.Column(
             [
+                update_component,
                 ft.Container(
                     content=ft.Text(
-                        "感谢使用,可以的话求投喂,有需要的功能也可以联系我(VX: |1812z| )，会尽快写(AI)好",
-                        size=20,
+                        "感谢使用,求投喂,有需要的功能也可以联系我(VX: |1812z| )，会尽快写(AI)好",
+                        size=15
                     )
                 ),
                 ft.Container(
                     content=ft.Image(
                         src="img\\wechat.png",
                         fit=ft.ImageFit.CONTAIN,
-                        width=400
+                        width=300
                     )
                 ),
             ],
             spacing=10,
+            scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
@@ -431,12 +522,15 @@ if __name__ == "__main__":
     gui = GUI(core)
     core.gui = gui
     gui.tray = TrayManager(gui)
+    gui.updater = UpdateChecker(gui, "1812z", "PCTools", "config_example.json")
     gui.tray.start()
 
-    if not gui.auto_start:
+    if not gui.core.config.get_config("auto_start"):
         ft.app(target=gui.main)
     else:
         gui.start()
+        if gui.core.config.get_config("check_update"):
+            gui.updater.check_for_updates()
 
     while gui.tray.is_running:
         try:

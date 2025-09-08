@@ -9,5 +9,6 @@
     "Hotkey_notify": false,
     "Hotkey_suppress": false,
     "Widget_url": "https://bing.com",
-    "version": "v5.2"
+    "version": "v5.3",
+    "check_update": true
 }

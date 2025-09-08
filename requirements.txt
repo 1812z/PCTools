@@ -1,7 +1,7 @@
 Flask==3.1.0
 flet==0.28.3
 opencv-python==4.10.0.84
-paho-mqtt
+paho-mqtt==2.1.0
 pillow==10.3.0
 mss==10.0.0
 pycaw==20240210
@@ -11,10 +11,10 @@ pywin32==310
 keyboard==0.13.5
 screeninfo==0.8.1
 pywebview==5.3.2
-winsdk
+winsdk==1.0.0b10
 comtypes==1.4.10
-pyperclip
+pyperclip==1.9.0
 requests==2.32.3
 numpy==1.26.4
-trio
+trio==0.30.0
 packaging==23.2

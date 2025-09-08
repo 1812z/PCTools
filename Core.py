@@ -19,7 +19,6 @@ class Core:
         self.is_initialized = False
 
         self.gui = gui
-        # Core 提供的接口
         self.log = Logger(log_file="app.log")
         self.config = Config(self)
 
@@ -33,7 +32,6 @@ class Core:
         self._base_path = Path(__file__).parent / "plugins"
         # self.icon_path = str(Path(__file__).parent / "img" / "logo.png")
 
-
         self._load_plugins()
 
     def initialize(self):
@@ -41,7 +39,6 @@ class Core:
             self.mqtt = MQTT(self)
             self.reg = WindowsRegistry()
             self.timer = TimerManager(self)
-
 
             self.initialize_plugin()
             self.config_plugin()
