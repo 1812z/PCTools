@@ -101,7 +101,7 @@ class UpdateChecker:
 
     def _perform_update(self, page: ft.Page):
         if not self.latest_release:
-            self.gui.show_snackbar(page, "无法获取发布信息")
+            self.gui.show_snackbar("无法获取发布信息")
             return
 
         asset_name = f"{self.REPO_NAME}_{self.latest_version}_Windows_x64.zip"
@@ -113,17 +113,17 @@ class UpdateChecker:
                 break
 
         if not target_asset:
-            self.gui.show_snackbar(page, f"未找到 {asset_name} 资源")
+            self.gui.show_snackbar(f"未找到 {asset_name} 资源")
             return
 
-        self.gui.show_snackbar(page, "正在下载更新...")
+        self.gui.show_snackbar("正在下载更新...")
 
         zip_path = os.path.join(os.getcwd(), asset_name)
         if not self.download_asset(target_asset["browser_download_url"], zip_path):
-            self.gui.show_snackbar(page, "下载失败")
+            self.gui.show_snackbar("下载失败")
             return
 
-        self.gui.show_snackbar(page, "下载完成，准备更新...")
+        self.gui.show_snackbar("下载完成，准备更新...")
 
         # 创建更新脚本
         update_script = f"""import os
