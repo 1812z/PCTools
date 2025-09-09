@@ -8,6 +8,8 @@ from packaging import version
 import flet as ft
 from typing import Tuple, Optional
 
+from tenacity import retry
+
 
 class UpdateChecker:
     def __init__(self, gui, repo_owner: str, repo_name: str, config_file: str):
@@ -55,14 +57,28 @@ class UpdateChecker:
 
     def get_latest_release(self):
         url = f"https://api.github.com/repos/{self.REPO_OWNER}/{self.REPO_NAME}/releases/latest"
-        response = requests.get(url)
+        try:
+            response = requests.get(url)
+        except requests.exceptions.RequestException:
+            self.gui.core.log.error("网络错误,请检查到Github连接")
+            return None
+        except requests.exceptions.ProxyError:
+            self.gui.core.log.error("代理错误,请检查代理设置")
+            return None
         if response.status_code == 200:
             return response.json()
         return None
 
     def download_asset(self, asset_url: str, save_path: str) -> bool:
         headers = {"Accept": "application/octet-stream"}
-        response = requests.get(asset_url, headers=headers, stream=True)
+        try:
+            response = requests.get(asset_url, headers=headers, stream=True)
+        except requests.exceptions.RequestException:
+            self.gui.core.log.error("网络错误,请检查到Github连接")
+            return False
+        except requests.exceptions.ProxyError:
+            self.gui.core.log.error("代理错误,请检查代理设置")
+            return False
         if response.status_code == 200:
             with open(save_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
@@ -94,8 +110,11 @@ class UpdateChecker:
                 on_click=lambda _: self._perform_update()
             )
             status_row.controls.append(update_btn)
-        else:
+        elif latest_ver:
             status_text = ft.Text("当前已是最新版本", color=ft.Colors.BLUE, size=16)
+            status_row.controls.append(status_text)
+        else:
+            status_text = ft.Text("获取失败,请检查日志", color=ft.Colors.RED, size=16)
             status_row.controls.append(status_text)
 
         return ft.Column(
