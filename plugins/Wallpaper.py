@@ -37,6 +37,12 @@ class Wallpaper:
                 'entity_type': 'button',
                 'entity_id': 'unmute',
                 'icon': 'mdi:wallpaper'
+            },
+            {
+                'name': '下一个壁纸',
+                'entity_type': 'button',
+                'entity_id': 'nextWallpaper',
+                'icon': 'mdi:skip-next'
             }
         ]
 

@@ -173,7 +173,7 @@ class Core:
                     for entity in c:
                         icon = entity["icon"] if "icon" in entity else None
                         self.mqtt.send_mqtt_discovery(entity_type=entity["entity_type"], name=entity["name"], entity_id=f"{module_name}_{entity["entity_id"]}",icon=icon)
-                        sleep(0.3)
+                        sleep(0.1)
                     self.log.debug(f"{module_name} 成功新增 {len(c)} 个主题")
                 else:
                     self.log.debug(f"⚠️ {module_name} 无 config ,跳过发现")

@@ -1,4 +1,4 @@
-Flask==3.1.0
+Flask==3.1.2
 flet==0.28.3
 opencv-python==4.10.0.84
 paho-mqtt==2.1.0
@@ -14,7 +14,7 @@ pywebview==5.3.2
 winsdk==1.0.0b10
 comtypes==1.4.10
 pyperclip==1.9.0
-requests==2.32.3
+requests==2.32.5
 numpy==1.26.4
 trio==0.30.0
 packaging==23.2

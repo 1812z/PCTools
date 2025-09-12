@@ -8,8 +8,6 @@ from packaging import version
 import flet as ft
 from typing import Tuple, Optional
 
-from tenacity import retry
-
 
 class UpdateChecker:
     def __init__(self, gui, repo_owner: str, repo_name: str, config_file: str):

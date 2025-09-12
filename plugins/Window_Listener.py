@@ -1,46 +1,36 @@
-import ctypes
-from ctypes import wintypes
+import win32gui
+import win32process
 import threading
 import time
-
-
-# 定义常量
-EVENT_SYSTEM_FOREGROUND = 0x0003
-WINEVENT_OUTOFCONTEXT = 0x0000
-WINEVENT_SKIPOWNPROCESS = 0x0002
-WINEVENT_FLAGS = WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS
-
-# 加载必要的 DLL
-user32 = ctypes.WinDLL('user32', use_last_error=True)
-kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
-
-# 定义回调函数类型
-WinEventProcType = ctypes.WINFUNCTYPE(
-    None,
-    ctypes.c_void_p,
-    ctypes.c_uint,
-    ctypes.c_void_p,
-    ctypes.c_long,
-    ctypes.c_long,
-    ctypes.c_uint,
-    ctypes.c_uint
-)
+import psutil
 
 
 class Window_Listener:
     def __init__(self, core):
         self.core = core
-        self.hook = None
         self.stop_event = threading.Event()
         self.thread = None
-        self.win_event_proc = WinEventProcType(self.win_event_proc)
 
-        self.config =[{
-                "name": "前台应用",
+        self.config = [
+            {
+                "name": "前台应用窗口",
                 "entity_type": "sensor",
                 "entity_id": "Foreground_Window",
                 "icon": "mdi:application-edit-outline"
-            }]
+            },
+            {
+                "name": "前台应用进程",
+                "entity_type": "sensor",
+                "entity_id": "Foreground_Window_exe",
+                "icon": "mdi:application-edit-outline"
+            },
+            {
+                "name": "前台应用路径",
+                "entity_type": "sensor",
+                "entity_id": "Foreground_Window_path",
+                "icon": "mdi:application-edit-outline"
+            }
+        ]
 
     def start(self):
         if self.thread and self.thread.is_alive():
@@ -59,54 +49,56 @@ class Window_Listener:
             return False
 
         self.stop_event.set()
-        if self.hook:
-            user32.UnhookWinEvent(self.hook)
-            self.hook = None
         self.thread.join(timeout=1)
         self.core.log.debug("窗口监听已停止")
         return True
 
     def _run_listener(self):
-        self.hook = user32.SetWinEventHook(
-            EVENT_SYSTEM_FOREGROUND,
-            EVENT_SYSTEM_FOREGROUND,
-            0,
-            self.win_event_proc,
-            0,
-            0,
-            WINEVENT_FLAGS
-        )
-        
-        if not self.hook:
-            raise ctypes.WinError(ctypes.get_last_error())
+        last_window = None
+        while not self.stop_event.is_set():
+            try:
+                current_hwnd = win32gui.GetForegroundWindow()
+                if current_hwnd != last_window:
+                    last_window = current_hwnd
+                    window_info = self._get_window_info(current_hwnd)
+                    if window_info:
+                        self.core.log.debug(f"前台应用: {window_info}")
+                        self.core.mqtt.update_state_data(window_info["window_title"],"Window_Listener_Foreground_Window","sensor")
+                        self.core.mqtt.update_state_data(window_info["exe_path"],"Window_Listener_Foreground_Window_path","sensor")
+                        self.core.mqtt.update_state_data(window_info["exe_name"],"Window_Listener_Foreground_Window_exe","sensor")
+                time.sleep(0.1)
+            except Exception as e:
+                self.core.log.error(f"窗口监听错误: {e}")
+                time.sleep(1)
 
+    def _get_window_info(self, hwnd):
         try:
-            msg = wintypes.MSG()
-            while not self.stop_event.is_set():
-                if user32.PeekMessageW(ctypes.byref(msg), 0, 0, 0, 0x0001):
-                    if msg.message == 0x0012:
-                        break
-                    user32.TranslateMessage(ctypes.byref(msg))
-                    user32.DispatchMessageW(ctypes.byref(msg))
-                else:
-                    time.sleep(0.05)
-        finally:
-            if self.hook:
-                user32.UnhookWinEvent(self.hook)
-                self.hook = None
+            # 获取窗口标题
+            window_title = win32gui.GetWindowText(hwnd)
 
-    def win_event_proc(self, hWinEventHook, event, hwnd, idObject, idChild, dwEventThread, dwmsEventTime):
-        current_hwnd = user32.GetForegroundWindow()
-        if current_hwnd:
-            length = user32.GetWindowTextLengthW(current_hwnd)
-            buffer = ctypes.create_unicode_buffer(length + 1)
-            user32.GetWindowTextW(current_hwnd, buffer, length + 1)
-            window_title = buffer.value
+            # 获取窗口类名
+            class_name = win32gui.GetClassName(hwnd)
 
-            class_buffer = ctypes.create_unicode_buffer(256)
-            user32.GetClassNameW(current_hwnd, class_buffer, 256)
-            class_name = class_buffer.value
+            # 获取进程ID
+            _, pid = win32process.GetWindowThreadProcessId(hwnd)
 
-            self.core.log.debug(f"前台应用: HWND={current_hwnd}, Title='{window_title}', Class='{class_name}'")
-            if window_title:
-                self.core.mqtt.update_state_data(str(window_title), "Window_Listener_Foreground_Window", "sensor")
+            # 获取进程信息
+            process = psutil.Process(pid)
+
+            # 获取EXE路径
+            exe_path = process.exe()
+
+            # 获取EXE名称
+            exe_name = process.name()
+
+            return {
+                "hwnd": hwnd,
+                "window_title": window_title,
+                "class_name": class_name,
+                "pid": pid,
+                "exe_path": exe_path,
+                "exe_name": exe_name
+            }
+        except Exception as e:
+            self.core.log.error(f"获取窗口信息错误: {e}")
+            return None

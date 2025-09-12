@@ -10,7 +10,7 @@ class GUI:
         self.is_starting = False
         self.is_stopping = False
         self.ft = ft
-        self.version = "v5.3"
+        self.version = "v5.4"
 
         self.is_running = False
         self.show_menu_flag = False
