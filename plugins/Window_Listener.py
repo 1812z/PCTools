@@ -3,7 +3,10 @@ import win32process
 import threading
 import time
 import psutil
+import requests
+import flet as ft
 
+last_app = None
 
 class Window_Listener:
     def __init__(self, core):
@@ -63,6 +66,7 @@ class Window_Listener:
                     window_info = self._get_window_info(current_hwnd)
                     if window_info:
                         self.core.log.debug(f"前台应用: {window_info}")
+                        self.report_app_change(window_info["exe_name"])
                         self.core.mqtt.update_state_data(window_info["window_title"],"Window_Listener_Foreground_Window","sensor")
                         self.core.mqtt.update_state_data(window_info["exe_path"],"Window_Listener_Foreground_Window_path","sensor")
                         self.core.mqtt.update_state_data(window_info["exe_name"],"Window_Listener_Foreground_Window_exe","sensor")
@@ -102,3 +106,56 @@ class Window_Listener:
         except Exception as e:
             self.core.log.error(f"获取窗口信息错误: {e}")
             return None
+
+    def report_app_change(self, current_app):
+        """上报应用程序变化"""
+        global last_app
+
+        if current_app != last_app:
+            try:
+                payload = {
+                    "secret": self.core.config.get_config("post_secret_key"),
+                    "device": self.core.config.get_config("post_device_id"),
+                    "app_name": current_app,
+                    "running": True
+                }
+
+                response = requests.post(self.core.config.get_config("post_api_url"), json=payload)
+
+                if response.status_code == 200:
+                    self.core.log.info(f"成功上报: {current_app}")
+                    last_app = current_app
+                else:
+                    self.core.log.error(f"上报失败: {response.text}")
+
+            except Exception as e:
+                self.core.log.error(f"发生错误: {str(e)}")
+
+    def handle_url_input(self, field_name, input_type="string"):
+        def callback(e):
+            parsed_value = e.control.value
+            self.core.config.set_config(field_name, parsed_value)
+
+        return callback
+    def setting_page(self, e):
+        def handle_switch_change(e):
+            # 获取开关状态并保存配置
+            is_enabled = e.control.value
+            self.core.config.set_config("post_enabled", is_enabled)
+
+
+        """设置页面"""
+        return ft.Column(
+            [
+                ft.Row(
+                    [ft.Switch(label="应用数据上报", value=self.core.config.get_config("post_enabled"),
+                          on_change=handle_switch_change)]
+                ),
+                ft.TextField(label="上报API_URL", width=250, on_submit=self.handle_url_input("post_api_url"), value=self.core.config.get_config("post_api_url")),
+                ft.TextField(label="设备名称", width=250, on_submit=self.handle_url_input("post_device_id"), value=self.core.config.get_config("post_device_id")),
+                ft.TextField(label="Secret密钥", width=250, on_submit=self.handle_url_input("post_secret_key"), value=self.core.config.get_config("post_secret_key"))
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+

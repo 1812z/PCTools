@@ -142,6 +142,20 @@ class MQTT:
                 discovery_data["command_topic"] = f"{base_topic}_{entity_id}/set"
                 self.mqtt_subscribe(discovery_data["command_topic"])
 
+            case('media_player', _):
+                discovery_data["command_topic"] = f"{base_topic}_{entity_id}/set"
+        # = {
+        #     "name": "Windows Media Control",
+        #     "command_topic": "windows_media/control",
+        #     "state_topic": "windows_media/state",
+        #     "unique_id": "windows_media_player_001",
+        #     "device": {
+        #         "identifiers": ["windows_media_control"],
+        #         "name": "Windows Media",
+        #         "manufacturer": "Custom"
+        #     }
+        # }
+
         # 子类型处理
         match device_class:
             case "pwr":
@@ -250,9 +264,12 @@ class MQTT:
 
 
     def re_subscribe(self):
+        # 1.重新订阅
         self.core.log.info("MQTT连接成功,重新订阅主题")
         for topic in self.subscribed_topics:
             self.mqttc.subscribe(topic)
+        # 2.发送discovery包
+        self.core.config_plugin_entities()
 
     def handle_mqtt_message(self, topic: str, payload: dict):
         """
@@ -326,6 +343,7 @@ class MQTT:
         if not self.mqttc.is_connected():
             self.connect_broker()
         self.mqttc.loop_start()
+        self.core.config_plugin_entities()
 
 
     def stop_mqtt(self):

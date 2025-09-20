@@ -41,7 +41,7 @@ class Core:
             self.timer = TimerManager(self)
 
             self.initialize_plugin()
-            self.config_plugin()
+            self.config_plugin_timer()
             self.is_initialized = True
 
     def _load_plugins(self):
@@ -155,16 +155,10 @@ class Core:
                 status.update(self.get_module_status(name))
         return status
 
-    def config_plugin(self):
+    def config_plugin_entities(self):
         for module_name in list(self.plugin_instances.keys()):
             try:
                 module = getattr(self, module_name)
-                # 添加定时器
-                if hasattr(module, 'updater'):
-                    if module.updater.get("timer"):
-                        self.timer_dict[module.__class__.__name__] = module.updater.get("timer")
-                        self.timer.create_timer(module.__class__.__name__, module.update_state, module.updater.get("timer"))
-
                 # 检查是否存在 config 属性
                 if hasattr(module, 'config'):
                     c = module.config
@@ -172,15 +166,29 @@ class Core:
 
                     for entity in c:
                         icon = entity["icon"] if "icon" in entity else None
-                        self.mqtt.send_mqtt_discovery(entity_type=entity["entity_type"], name=entity["name"], entity_id=f"{module_name}_{entity["entity_id"]}",icon=icon)
+                        self.mqtt.send_mqtt_discovery(entity_type=entity["entity_type"], name=entity["name"], entity_id=f"{module_name}_{entity["entity_id"]}", icon=icon)
                         sleep(0.1)
                     self.log.debug(f"{module_name} 成功新增 {len(c)} 个主题")
                 else:
                     self.log.debug(f"⚠️ {module_name} 无 config ,跳过发现")
             except Exception as e:
+                self.log.error(f"❌ 插件 {module_name} 实体新增失败: {str(e)}")
+        self.log.info(f"✅ 插件实体发现完成")
+
+    def config_plugin_timer(self):
+        for module_name in list(self.plugin_instances.keys()):
+            try:
+                module = getattr(self, module_name)
+                # 添加定时器
+                if hasattr(module, 'updater'):
+                    if module.updater.get("timer"):
+                        self.timer_dict[module.__class__.__name__] = module.updater.get("timer")
+                        self.timer.create_timer(module.__class__.__name__, module.update_state,
+                                                module.updater.get("timer"))
+            except Exception as e:
                 self.log.error(f"❌ 读取 {module_name} 配置失败: {str(e)}")
 
-        self.log.info(f"✅ 插件初始化完成")
+        self.log.info(f"✅ 插件定时器初始化完成")
 
     def update_module_status(self):
         """
