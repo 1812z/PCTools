@@ -99,7 +99,7 @@ class GUI:
         self.page.window.width= 550
         self.page.window.height = 590
         self.page.window.resizable = False
-
+        self.page.window.maximizable = False
         self.page.theme_mode = ft.ThemeMode.LIGHT
         self.page.title = "PCTools"
         tab_home = ft.Tab(text="主页")
