@@ -2,13 +2,17 @@ import json
 import flet as ft
 import python_aida64
 
+PLUGIN_NAME = "Aida64"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "使用Aida64内存共享功能读取相应传感器数据，并同步显示到Ha"
+
 class Aida64:
     def __init__(self, core):
         self.core = core
         self.updater = {
             "timer": 5 if not core.config.get_config("aida64_updater") else core.config.get_config("aida64_updater"),
         }
-        self.discovery()
 
     def get_aida64_data(self):
         aida64_data = python_aida64.getData()

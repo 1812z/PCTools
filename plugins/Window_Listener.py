@@ -6,6 +6,11 @@ import psutil
 import requests
 import flet as ft
 
+PLUGIN_NAME = "前台软件显示"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "同步显示前台运行的应用，支持接入到Runtime Tracker统计面板"
+
 last_app = None
 
 class Window_Listener:
@@ -66,7 +71,8 @@ class Window_Listener:
                     window_info = self._get_window_info(current_hwnd)
                     if window_info:
                         self.core.log.debug(f"前台应用: {window_info}")
-                        self.report_app_change(window_info["exe_name"])
+                        if self.core.config.get_config("post_enabled"):
+                            self.report_app_change(window_info["exe_name"])
                         self.core.mqtt.update_state_data(window_info["window_title"],"Window_Listener_Foreground_Window","sensor")
                         self.core.mqtt.update_state_data(window_info["exe_path"],"Window_Listener_Foreground_Window_path","sensor")
                         self.core.mqtt.update_state_data(window_info["exe_name"],"Window_Listener_Foreground_Window_exe","sensor")

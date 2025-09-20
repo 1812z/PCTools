@@ -152,8 +152,6 @@ class GUI:
             elif e.control.selected_index == 2:
                 if self.is_running:
                     self.show_snackbar("运行时无法配置")
-                elif self.core.is_initialized is False:
-                    self.show_snackbar("如需修改插件配置，请先载入插件")
                 update_plugin_page()
 
         # 创建动态页面
@@ -185,36 +183,54 @@ class GUI:
                 self.core.log.error(f"打开设置页面失败: {ex}")
                 self.show_snackbar(f"打开设置失败: {ex}")
 
-        def load_plugin_button(e):
-            self.show_snackbar("初始化插件类...")
-            self.core.initialize()
-            update_plugin_page()
+        def show_plugin_info(e, name, version, author, description, path, load_status):
+            plugin_info = ft.AlertDialog(
+                adaptive=True,
+                title=ft.Text(f"{name} 详细信息"),
+                content=ft.Container(
+                    content=ft.Column(
+                        [
+                            ft.Text(f"作者: {author}"),
+                            ft.Text(f"版本: {version}"),
+                            ft.Text(f"描述: {description}"),
+                            ft.Text(f"路径: {path}"),
+                            ft.Text(f"状态: {'已加载' if load_status else '未加载'}")
+                        ],
+                        spacing=10
+                    ),
+                    height=300,
+                    width=400,
+                    margin=10,
+                ),
+                actions=[
+                    ft.TextButton("返回", on_click=lambda e: e.page.close(plugin_info)),
+                ],
+            )
+            e.page.open(plugin_info)
+            e.page.update()
 
         def update_plugin_page():
             plugins_view.controls.clear()
-            plugins_view.controls.append(ft.Row(
-                [
-                    ft.ElevatedButton("载入插件", on_click=load_plugin_button, disabled=self.core.is_initialized),
-                ]
-            ))
 
-            if self.core.plugin_paths:
-                for plugin in list(self.core.plugin_paths.keys()):
-                    status = False if plugin in self.core.disabled_plugins else True
-                    loaded = plugin in self.core.plugin_instances.keys()
+            if self.core.plugins["paths"]:
+                for plugin in list(self.core.plugins["paths"].keys()):
+                    status = False if plugin in self.core.plugins["disabled"] else True
+                    loaded = plugin in self.core.plugins["instances"].keys()
 
                     available = status and loaded and not self.is_running
-                    path = self.core.plugin_paths.get(plugin)
+                    path = self.core.plugins["paths"].get(plugin)
 
-                    # 创建控件
-                    plugin_name = plugin
-                    if plugin in self.core.plugin_instances.keys():
-                        plugin_name = "✅" + plugin
-                    elif plugin in self.core.error_plugins:
-                        plugin_name = "❌" + plugin
+                    plugin_name = self.core.plugins["info"].get(plugin, {}).get("display_name", plugin)
+                    if plugin in self.core.plugins["instances"].keys():
+                        plugin_name = "✅" + plugin_name
+                    elif plugin in self.core.plugins["errors"]:
+                        plugin_name = "❌" + plugin_name
                     name_text = ft.Text(plugin_name, size=16, weight=ft.FontWeight.BOLD, width=250)
-                    handler = getattr(self.core.plugin_instances.get(plugin), "setting_page", None)
+
+                    # 插件设置按钮
+                    handler = getattr(self.core.plugins["instances"].get(plugin), "setting_page", None)
                     setting_disabled = False if available and handler else True
+
                     settings_btn = ft.IconButton(
                         icon=ft.Icons.SETTINGS,
                         icon_size=20,
@@ -222,11 +238,18 @@ class GUI:
                         disabled=setting_disabled,
                         on_click=lambda e, h=handler: show_page(e, h)
                     )
-
+                    # 插件详情按钮
                     info_btn = ft.IconButton(
                         icon=ft.Icons.INFO_OUTLINE,
                         icon_size=20,
-                        tooltip=f"插件信息\n加载状态: {loaded}\n插件路径: {path}\n"
+                        tooltip=f"插件信息\n加载状态: {loaded}\n插件路径: {path}\n",
+                        on_click=lambda e, name=plugin,
+                                        version=self.core.plugins["info"].get(plugin, {}).get("version"),
+                                        author=self.core.plugins["info"].get(plugin, {}).get("author"),
+                                        description=self.core.plugins["info"].get(plugin, {}).get("description"),
+                                        path=path,
+                                        load_status=loaded: show_plugin_info(e, name, version, author, description,
+                                                                             path, load_status)
                     )
 
                     def create_switch_callback(plugin, settings_btn, info_btn):

@@ -2,6 +2,10 @@ import keyboard
 import time
 import flet as ft
 
+PLUGIN_NAME = "键盘快捷键"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "将键盘作为Ha的触发器，支持组合快捷键"
 
 class Hotkey:
     def __init__(self, core):
@@ -98,10 +102,12 @@ class Hotkey:
         time.sleep(1)
         self.core.mqtt.publish(topic, "OFF")
 
+    def discovery(self):
+        self.send_discovery(self.hotkeys)
+
     def start(self):
         if not self.listening:
             self.listening = True
-            self.send_discovery(self.hotkeys)
             self.core.log.info(f"开始监听快捷键...{self.hotkeys}")
             for hotkey in self.hotkeys:
                 keyboard.add_hotkey(hotkey, lambda h=hotkey: self.command(h), suppress=self.suppress,

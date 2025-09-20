@@ -24,10 +24,14 @@ class Core:
 
         self.timer_dict = {}
 
-        self.plugin_instances = {}  # 保存已初始化的插件类的实例 {name: instance}
-        self.disabled_plugins = set() # 保存被禁用的插件名
-        self.plugin_paths = {}  # 保存所有插件文件路径
-        self.error_plugins = [] #加载失败的插件
+        self.plugins = {
+            "instances": {},  # {name: instance}
+            "disabled": set(),  # 被禁用的插件名
+            "paths": {},  # {name: path}
+            "errors": [],  # 加载失败的插件名或错误信息
+            "info": {} # 插件显示名称，版本，作者
+        }
+
 
         self._base_path = Path(__file__).parent / "plugins"
         # self.icon_path = str(Path(__file__).parent / "img" / "logo.png")
@@ -45,7 +49,7 @@ class Core:
             self.is_initialized = True
 
     def _load_plugins(self):
-        """加载所有插件模块，但不初始化"""
+        """加载所有插件模块，并初始化"""
         plugins_dir = Path(__file__).parent / "plugins"
 
         for file in plugins_dir.glob("**/*.py*"):  # 同时匹配.py和.py.disabled
@@ -55,15 +59,16 @@ class Core:
             module_name = self._normalize_module_name(file.name)
             relative_path = file.relative_to(plugins_dir.parent)
 
-            self.plugin_paths[module_name] = relative_path
+            self.plugins["paths"][module_name] = relative_path
             # 跳过.disabled文件的导入和类加载
             if file.suffix == '.disabled':
-                self.disabled_plugins.add(module_name)
+                self.plugins["disabled"].add(module_name)
                 self.log.info(f"✅ 成功发现禁用的插件: {module_name}")
                 continue
             else:
                 self.log.info(f"✅ 成功发现启用的插件: {module_name}")
 
+        self.initialize()
 
     def initialize_plugin(self, plugin_name=None):
         """
@@ -71,7 +76,7 @@ class Core:
           :param plugin_name: 要初始化的插件名(不带.py)，None表示初始化所有可用插件
           :return: 成功初始化的数量
           """
-        if not self.plugin_paths.keys():
+        if not self.plugins["paths"].keys():
             self._load_plugins()
 
         plugin_name = self._normalize_module_name(plugin_name) if plugin_name else None
@@ -79,21 +84,21 @@ class Core:
         if plugin_name is None:
             # 初始化所有可用插件(未被禁用的)
             return  sum(
-                self._create_instance(name) or (self.error_plugins.append(name) or 0)
-                for name in self.plugin_paths.keys()
-                if name not in self.disabled_plugins and name not in self.plugin_instances
+                self._create_instance(name) or (self.plugins["errors"].append(name) or 0)
+                for name in self.plugins["paths"].keys()
+                if name not in self.plugins["disabled"] and name not in self.plugins["instances"]
             )
 
         # 初始化指定插件
-        if plugin_name in self.disabled_plugins:
+        if plugin_name in self.plugins["disabled"]:
             self.log.warning(f"⚠️ 插件 {plugin_name} 已被禁用")
             return 0
 
-        if plugin_name in self.plugin_instances.keys():
+        if plugin_name in self.plugins["instances"]:
             self.log.warning(f"插件 {plugin_name} 已初始化")
             return 1
 
-        if plugin_name not in self.plugin_instances.keys():
+        if plugin_name not in self.plugins["instances"]:
             self.log.error(f"❌ 插件 {plugin_name} 未加载")
             return 0
 
@@ -104,20 +109,27 @@ class Core:
     def _create_instance(self, plugin_name):
         """内部方法：创建插件实例"""
         try:
-            module_path = self.plugin_paths[plugin_name]
+            module_path = self.plugins["paths"][plugin_name]
             module_path = str(module_path.with_suffix('')).replace('\\', '.')
             module = importlib.import_module(module_path)
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 if name == plugin_name:
                     instance = obj(self)
-                    self.plugin_instances[plugin_name] = instance
+                    self.plugins["instances"][plugin_name] = instance
                     setattr(self, plugin_name, instance)
 
                     # 调用初始化方法（如果有）
                     if hasattr(instance, 'initialize'):
                         instance.initialize()
 
-                    self.log.info(f"✅ 成功创建插件实例: {plugin_name}")
+                    self.plugins["info"][plugin_name] = {
+                        "display_name": getattr(module, "PLUGIN_NAME", plugin_name),
+                        "version": getattr(module, "PLUGIN_VERSION", "未知"),
+                        "author": getattr(module, "PLUGIN_AUTHOR", "未知"),
+                        "description": getattr(module, "PLUGIN_DESCRIPTION", "无")
+                    }
+
+                    self.log.info(f"✅ 成功创建插件实例: {getattr(module, "PLUGIN_NAME", plugin_name)} 版本: {getattr(module, "PLUGIN_VERSION", "未知")}")
                     return True
 
             self.log.warning(f"⚠️  {plugin_name} 中未找到匹配的类")
@@ -156,7 +168,7 @@ class Core:
         return status
 
     def config_plugin_entities(self):
-        for module_name in list(self.plugin_instances.keys()):
+        for module_name in list(self.plugins["instances"]):
             try:
                 module = getattr(self, module_name)
                 # 检查是否存在 config 属性
@@ -171,12 +183,16 @@ class Core:
                     self.log.debug(f"{module_name} 成功新增 {len(c)} 个主题")
                 else:
                     self.log.debug(f"⚠️ {module_name} 无 config ,跳过发现")
+
+                if hasattr(module, 'discovery'):
+                    module.discovery()
+                    self.log.info(f"{module_name} 执行自定义发现")
             except Exception as e:
                 self.log.error(f"❌ 插件 {module_name} 实体新增失败: {str(e)}")
         self.log.info(f"✅ 插件实体发现完成")
 
     def config_plugin_timer(self):
-        for module_name in list(self.plugin_instances.keys()):
+        for module_name in list(self.plugins["instances"]):
             try:
                 module = getattr(self, module_name)
                 # 添加定时器
@@ -261,8 +277,8 @@ class Core:
 
     def delattr_all_plugin(self):
         try:
-            for module_name in list(self.plugin_instances.keys()):
-                instance = self.plugin_instances.pop(module_name)
+            for module_name in list(self.plugins["instances"]):
+                instance = self.plugins["instances"].pop(module_name)
                 if hasattr(instance, 'on_delattr'):
                     instance.on_delattr()
                 delattr(self, module_name)
@@ -276,11 +292,11 @@ class Core:
         """禁用插件：重命名文件为.py.disabled"""
         module_name = self._normalize_module_name(module_name)
 
-        if module_name not in self.plugin_paths:
+        if module_name not in self.plugins["paths"]:
             self.log.error(f"❌ 插件 {module_name} 不存在")
             return False
 
-        file_path = self.plugin_paths[module_name]
+        file_path = self.plugins["paths"][module_name]
         if file_path.suffix == '.disabled':
             self.log.warning(f"⚠️ 插件 {module_name} 已经是禁用状态")
             return False
@@ -289,12 +305,12 @@ class Core:
         disabled_path = file_path.with_suffix('.py.disabled')
         try:
             file_path.rename(disabled_path)
-            self.disabled_plugins.add(module_name)
-            self.plugin_paths[module_name] = disabled_path  # 更新保存的路径
+            self.plugins["disabled"].add(module_name)
+            self.plugins["paths"][module_name] = disabled_path  # 更新保存的路径
 
             # 清理已加载的实例
-            if module_name in self.plugin_instances:
-                instance = self.plugin_instances.pop(module_name)
+            if module_name in self.plugins["instances"]:
+                instance = self.plugins["instances"].pop(module_name)
                 if hasattr(instance, 'on_delattr'):
                     instance.on_delattr()
                 delattr(self, module_name)
@@ -310,11 +326,11 @@ class Core:
         """启用插件：将.py.disabled重命名回.py"""
         module_name = self._normalize_module_name(module_name)
 
-        if module_name not in self.plugin_paths:
+        if module_name not in self.plugins["paths"]:
             self.log.error(f"❌ 插件 {module_name} 不存在")
             return False
 
-        file_path = self.plugin_paths[module_name]
+        file_path = self.plugins["paths"][module_name]
         print(file_path)
         if file_path.suffix != '.disabled':
             self.log.info(f"⚠️ 插件 {module_name} 不是禁用状态")
@@ -324,8 +340,8 @@ class Core:
         enabled_path = file_path.parent / (file_path.stem.removesuffix('.py') + '.py')
         try:
             file_path.rename(enabled_path)
-            self.disabled_plugins.discard(module_name)
-            self.plugin_paths[module_name] = enabled_path  # 更新保存的路径
+            self.plugins["disabled"].discard(module_name)
+            self.plugins["paths"][module_name] = enabled_path  # 更新保存的路径
             self.log.info(f"✅ 已启用插件: {module_name}")
             if self.gui and self.is_initialized:
                 self.gui.show_snackbar("启用插件后请重启软件")

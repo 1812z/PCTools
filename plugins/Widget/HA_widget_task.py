@@ -3,6 +3,11 @@ import os
 import sys
 import flet as ft
 
+PLUGIN_NAME = "Ha侧边栏"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "按下快捷键(默认Menu)快速开启Ha网页，需要自定义网页Url"
+
 def run_ha_widget():
     from Widget import _HA_widget
     _HA_widget.main()

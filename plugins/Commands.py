@@ -4,7 +4,10 @@ import flet as ft
 import os
 import subprocess
 
-
+PLUGIN_NAME = "程序启动器"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "同步commands文件夹程序到Ha，方便快速打开程序，支持快捷方式和bat文件等"
 def generate_short_id(filename: str) -> str:
     '''
     生成校验id
@@ -23,8 +26,6 @@ class Commands:
         self.current_directory =  os.path.join(os.path.dirname(os.path.dirname(current_file_path)), "commands")
 
         self.command_data = {}
-
-        self.discovery()
 
     def discovery(self):
         count = 0

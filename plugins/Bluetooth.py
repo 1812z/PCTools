@@ -1,5 +1,10 @@
 from winsdk.windows.devices import radios
 
+PLUGIN_NAME = "蓝牙开关"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "控制系统蓝牙开关"
+
 
 class Bluetooth:
     def __init__(self, core):

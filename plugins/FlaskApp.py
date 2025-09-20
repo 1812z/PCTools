@@ -8,6 +8,11 @@ import os
 import mss
 import requests
 
+PLUGIN_NAME = "远程画面"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "以网页流形式显示电脑摄像头/电脑截图/电脑画面 \n屏幕截图:http://127.0.0.1:5000/screenshot.jpg\n电脑摄像头: http://127.0.0.1:5000/video_feed\n实时画面: http://127.0.0.1:5000/screen"
+
 app = Flask(__name__)
 select_monitor = 1  # 默认选择第一个显示器
 

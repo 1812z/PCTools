@@ -6,6 +6,11 @@ import time
 import keyboard
 import flet as ft
 
+PLUGIN_NAME = "显示器控制"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "通过Twinkle Tray实现显示器控制，支持亮度调节，自定义DDC/CI命令"
+
 
 def _remove_ansi_escape(text):
     ansi_escape = re.compile(r'\x1b\[[0-9;]*m')

@@ -1,5 +1,10 @@
 import subprocess
 
+PLUGIN_NAME = "远程终端"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "执行来自Ha的远程命令，仅支持Cmd和PowerShell"
+
 class Cmd:
     def __init__(self, core):
         self.core = core

@@ -2,6 +2,11 @@ from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 from comtypes import CLSCTX_ALL
 import comtypes
 
+PLUGIN_NAME = "音量调节"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "调节系统音量，需要注意软件会自动选择当前扬声器，暂不支持指定"
+
 
 class Volume:
     def __init__(self, core):

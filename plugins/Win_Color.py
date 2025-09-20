@@ -1,5 +1,9 @@
 import time
 
+PLUGIN_NAME = "深色模式开关"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "控制系统的'应用深色模式'与'系统深色模式'"
 
 class Win_Color:
     def __init__(self,core):

@@ -2,6 +2,10 @@ import os
 import subprocess
 from typing import Optional
 
+PLUGIN_NAME = "壁纸引擎"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "控制壁纸引擎"
 
 class Wallpaper:
     def __init__(self, core=None):

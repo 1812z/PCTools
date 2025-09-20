@@ -31,7 +31,7 @@ class UpdateChecker:
             self.current_version = "0.0.0"
             return self.current_version
 
-    def check_for_updates(self) -> Tuple[bool, Optional[str]]:
+    def check_for_updates(self, manual_check: bool = False) -> Tuple[bool, Optional[str]]:
         """检查更新并返回是否有更新和最新版本号"""
         self.current_version = self.load_current_version()
         self.latest_release = self.get_latest_release()
@@ -41,15 +41,18 @@ class UpdateChecker:
 
         self.latest_version = self.latest_release["tag_name"]
         self.update_available = version.parse(self.latest_version) > version.parse(self.current_version)
-        self.gui.core.log.info(f"当前版本: {self.current_version}，最新版本: {self.latest_version} 更新状态: {self.update_available}")
-        if self.update_available:
+        self.gui.core.log.info(
+            f"当前版本: {self.current_version}，最新版本: {self.latest_version} 更新状态: {self.update_available}")
 
+        if self.update_available:
             if self.gui.core.config.get_config("auto_update"):
-                self.gui.core.show_toast("PCTools更新中",f"最新版本: {self.latest_version}")
+                self.gui.core.show_toast("PCTools更新中", f"最新版本: {self.latest_version}")
                 self._perform_update()
             else:
                 self.gui.show_snackbar(f"新版本{self.latest_version}可用，转到关于以更新", 4000)
-                self.gui.core.show_toast("PCTools新版本可用",f"当前版本: {self.current_version}，最新版本: {self.latest_version}")
+                if not manual_check:
+                    self.gui.core.show_toast("PCTools新版本可用",
+                                             f"当前版本: {self.current_version}，最新版本: {self.latest_version}")
 
         return self.update_available, self.latest_version
 
@@ -86,34 +89,26 @@ class UpdateChecker:
 
     def create_update_ui(self, page: ft.Page) -> ft.Column:
         """创建更新检查UI组件"""
-        has_update, latest_ver = self.check_for_updates()
-
         version_info = ft.Column(
             controls=[
-                ft.Text("版本信息", size=18, weight=ft.FontWeight.BOLD),
-                ft.Text(f"当前版本: {self.current_version}", size=15),
-                ft.Text(f"最新版本: {latest_ver if latest_ver else '未知'}", size=15),
+                ft.Text(f"未检查更新", size=15),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=7
         )
 
-        status_row = ft.Row(alignment=ft.MainAxisAlignment.CENTER)
+        # 添加手动检查按钮
+        check_button = ft.ElevatedButton(
+            "检查更新",
+            icon=ft.Icons.REFRESH,
+            on_click=lambda e: self._manual_check_update(version_info)
+        )
 
-        if has_update:
-            update_btn = ft.ElevatedButton(
-                "立即更新",
-                icon=ft.Icons.UPDATE,
-                on_click=lambda _: self._perform_update()
-            )
-            status_row.controls.append(update_btn)
-        elif latest_ver:
-            status_text = ft.Text("当前已是最新版本", color=ft.Colors.BLUE, size=16)
-            status_row.controls.append(status_text)
-        else:
-            status_text = ft.Text("获取失败,请检查日志", color=ft.Colors.RED, size=16)
-            status_row.controls.append(status_text)
+        status_row = ft.Row(
+            controls=[check_button],
+            alignment=ft.MainAxisAlignment.CENTER
+        )
 
         return ft.Column(
             controls=[version_info, status_row],
@@ -121,6 +116,38 @@ class UpdateChecker:
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
+
+    def _manual_check_update(self, version_info: ft.Column):
+        """手动检查更新"""
+        has_update, latest_ver = self.check_for_updates(manual_check=True)
+        version = ft.Column(
+            controls=[
+                ft.Text(f"当前版本: {self.current_version}", size=15),
+                ft.Text(f"最新版本: {latest_ver}", size=15),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=7
+        )
+        # 更新UI显示状态
+        version_info.controls.clear()  # 清除现有控件
+        version_info.controls.append(version)
+        if has_update:
+            update_btn = ft.ElevatedButton(
+                "立即更新",
+                icon=ft.Icons.UPDATE,
+                on_click=lambda _: self._perform_update()
+            )
+
+            version_info.controls.append(update_btn)
+        elif latest_ver:
+            status_text = ft.Text("当前已是最新版本", color=ft.Colors.BLUE, size=16)
+            version_info.controls.append(status_text)
+        else:
+            status_text = ft.Text("获取失败,请检查日志", color=ft.Colors.RED, size=16)
+            version_info.controls.append(status_text)
+
+        version_info.update()
 
     def _perform_update(self):
         if not self.latest_release:

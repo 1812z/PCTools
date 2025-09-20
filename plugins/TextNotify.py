@@ -1,10 +1,12 @@
 import re
 import time
-
 import keyboard
 import pyperclip
-from trio import sleep
 
+PLUGIN_NAME = "Toast通知"
+PLUGIN_VERSION = "1.0"
+PLUGIN_AUTHOR = "1812z"
+PLUGIN_DESCRIPTION = "显示来自Ha输入框的通知内容"
 
 class TextNotify:
     def __init__(self, core):

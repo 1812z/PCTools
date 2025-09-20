@@ -10,12 +10,12 @@
     "Hotkey_suppress": false,
     "Widget_url": "https://bing.com",
     "monitor_power_type": 2,
-    "version": "v5.4",
+    "version": "v5.5",
     "check_update": true,
     "aida64_updater": 5,
     "auto_update": false,
     "post_api_url": "https://api-usage.1812z.top/api",
     "post_api_key": "your-secret",
-    "post_device_id": "电脑"
-
+    "post_device_id": "电脑",
+    "post_enabled": false
 }
