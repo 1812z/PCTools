@@ -577,8 +577,8 @@ if __name__ == "__main__":
     while gui.tray.is_running:
         try:
             if gui.show_menu_flag:
-                gui.show_menu_flag = False
                 ft.app(target=gui.main)
+                gui.show_menu_flag = False
             time.sleep(1)
         except KeyboardInterrupt as e:
             gui.exit()
