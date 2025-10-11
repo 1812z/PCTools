@@ -148,6 +148,9 @@ class GUI:
             width=120
         )
 
+        # 添加状态显示组件
+        status_panel = self._create_status_panel()
+
         # 按钮
         buttons = [
             self._create_action_button(
@@ -169,10 +172,107 @@ class GUI:
         ]
 
         return ft.Column(
-            [logo, version_text, github_link] + buttons,
+            [logo, version_text, github_link] + buttons + [status_panel],  # 添加状态面板
             spacing=10,
             scroll=ft.ScrollMode.AUTO,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+    def _create_status_panel(self) -> ft.Container:
+        """创建状态显示面板(两行布局，带状态点)"""
+        # 运行状态点
+        self.running_dot = ft.Icon(
+            name=ft.Icons.CIRCLE,
+            size=10,
+            color=ft.Colors.GREY
+        )
+
+        # 运行状态文本
+        self.running_text = ft.Text(
+            "未运行",
+            size=12,
+        )
+
+        # MQTT状态点
+        self.mqtt_dot = ft.Icon(
+            name=ft.Icons.CIRCLE,
+            size=10,
+            color=ft.Colors.GREY
+        )
+
+        # MQTT状态文本
+        self.mqtt_text = ft.Text(
+            "MQTT: 未连接",
+            size=12,
+        )
+
+        # 状态更新函数
+        def update_status():
+            # 更新运行状态点
+            if self.is_running:
+                self.running_dot.color = ft.Colors.GREEN
+                self.running_text.value = "运行中"
+            else:
+                self.running_dot.color = ft.Colors.GREY
+                self.running_text.value = "未运行"
+
+            # 更新MQTT状态点
+            if hasattr(self.core, 'mqtt') and self.core.mqtt and hasattr(self.core.mqtt, 'mqttc'):
+                if self.core.mqtt.mqttc.is_connected():
+                    self.mqtt_dot.color = ft.Colors.GREEN
+                    self.mqtt_text.value = "MQTT: 已连接"
+                elif self.is_running:
+                    self.mqtt_dot.color = ft.Colors.RED
+                    self.mqtt_text.value = "MQTT: 未连接"
+                else:
+                    self.mqtt_dot.color = ft.Colors.GREY
+                    self.mqtt_text.value = "MQTT: 未连接"
+            else:
+                self.mqtt_dot.color = ft.Colors.GREY
+                self.mqtt_text.value = "MQTT: 未初始化"
+
+            self.page.update()
+
+        # 设置定时更新
+        self.page.on_resize = lambda e: update_status()
+        self.page.on_scroll = lambda e: update_status()
+
+        # 初始更新
+        update_status()
+
+        return ft.Container(
+            content=ft.Row(
+                [ft.Column(
+                    [
+                        # 第一行：运行状态
+                        ft.Row(
+                            [
+                                self.running_dot,
+                                ft.Container(width=5),  # 小间距
+                                self.running_text
+                            ],
+                            spacing=0
+                        ),
+
+                        # 第二行：MQTT状态
+                        ft.Row(
+                            [
+                                self.mqtt_dot,
+                                ft.Container(width=5),  # 小间距
+                                self.mqtt_text
+                            ],
+                            spacing=0
+                        )
+                    ],
+                    spacing=5,  # 行间距
+                    horizontal_alignment=ft.CrossAxisAlignment.START
+                )],
+                alignment=ft.MainAxisAlignment.END,
+                spacing=10
+            ),
+            padding=ft.padding.only(top=10, bottom=10),
+            alignment=ft.alignment.bottom_right,
+            width=500
         )
 
     def _create_action_button(self, icon: str, text: str, on_click) -> ft.ElevatedButton:
@@ -300,6 +400,7 @@ class GUI:
         mqtt_dialog = self._create_mqtt_dialog()
         self.page.open(mqtt_dialog)
         self.page.update()
+
 
     def _create_mqtt_dialog(self) -> ft.AlertDialog:
         """创建MQTT设置对话框"""
