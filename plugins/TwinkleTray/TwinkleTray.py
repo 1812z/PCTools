@@ -115,7 +115,7 @@ class TwinkleTray:
     def update_state(self):
         monitors = self.get_monitors_state()
         for monitor_num, info in monitors.items():
-            topic = f"Twinkle_Tray_{monitor_num}"
+            topic = f"TwinkleTray_{monitor_num}"
             self.core.mqtt.update_state_data(info.get("Brightness") * 255/100,topic,"light")
 
     def handle_mqtt(self, key, data):

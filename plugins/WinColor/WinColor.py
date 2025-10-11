@@ -109,7 +109,7 @@ class WinColor:
 
     def update_state(self):
         status = self.get_status()
-        topic = f"Win_Color_APP_Dark_Mode"
+        topic = f"WinColor_APP_Dark_Mode"
         if status["status"][0]:
             self.APP_enabled = False
             state = "OFF"
@@ -118,7 +118,7 @@ class WinColor:
             state = "ON"
         self.core.mqtt.update_state_data(state, topic, "switch")
 
-        topic = f"Win_Color_SYS_Dark_Mode"
+        topic = f"WinColor_SYS_Dark_Mode"
         if status["status"][1]:
             self.Sys_enabled = False
             state = "OFF"
