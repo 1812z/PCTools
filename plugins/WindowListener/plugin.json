@@ -1,0 +1,8 @@
+{
+    "name": "前台应用",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "显示前台运行的应用，支持接入到Runtime Tracker统计面板",
+    "dependencies": []
+}
+

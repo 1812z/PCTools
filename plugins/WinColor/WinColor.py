@@ -1,11 +1,6 @@
 import time
 
-PLUGIN_NAME = "深色模式开关"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "控制系统的'应用深色模式'与'系统深色模式'"
-
-class Win_Color:
+class WinColor:
     def __init__(self,core):
         self.core = core
         self.APP_enabled = False
@@ -39,7 +34,7 @@ class Win_Color:
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
         try:
             # 使用self.core.reg类写入注册表值
-            self.core.reg.write_value(
+            self.core.WinReg.write_value(
                 "HKEY_CURRENT_USER",
                 key_path,
                 "AppsUseLightTheme",
@@ -47,7 +42,7 @@ class Win_Color:
                 "REG_DWORD"
             )
 
-            self.core.reg.write_value(
+            self.core.WinReg.write_value(
                 "HKEY_CURRENT_USER",
                 key_path,
                 "SystemUsesLightTheme",
@@ -56,7 +51,7 @@ class Win_Color:
             )
 
             # 发送系统通知（这部分与注册表无关，保留原样）
-            self.core.reg.notify_system("ImmersiveColorSet")
+            self.core.WinReg.notify_system("ImmersiveColorSet")
             self.core.log.info(f"Windows颜色设置成功,应用深色:{APP_enabled} 系统深色:{Sys_enabled}")
             time.sleep(0.3)
             self.update_state()
@@ -76,14 +71,14 @@ class Win_Color:
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
         try:
             # 使用self.core.reg类读取注册表值
-            apps_light = self.core.reg.read_value(
+            apps_light = self.core.WinReg.read_value(
                 "HKEY_CURRENT_USER",
                 key_path,
                 "AppsUseLightTheme",
                 1  # 默认值（浅色模式）
             )
 
-            system_light = self.core.reg.read_value(
+            system_light = self.core.WinReg.read_value(
                 "HKEY_CURRENT_USER",
                 key_path,
                 "SystemUsesLightTheme",

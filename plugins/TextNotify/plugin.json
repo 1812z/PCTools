@@ -1,0 +1,7 @@
+{
+    "name": "Toast通知",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "显示来自Ha输入框的通知内容",
+    "dependencies": []
+}

@@ -1,31 +1,53 @@
+"""
+GUI 视图层
+负责UI组件的创建和显示，不包含业务逻辑
+"""
+
 import time
+from typing import Dict
+
 import flet as ft
-import startup
+from gui_logic import GUILogic
 from TrayManager import TrayManager
 from Updater import UpdateChecker
 
 
 class GUI:
+    """GUI视图类"""
+
     def __init__(self, core_instance):
-        self.is_starting = False
-        self.is_stopping = False
-        self.ft = ft
-        self.version = "v5.4"
-
-        self.is_running = False
-        self.show_menu_flag = False
-        self.icon_flag = False
-        self.core = None
-        self.page = None
-        self.tray = None
-        self.updater = None
-
+        """初始化GUI"""
+        # 逻辑层
+        self.logic = GUILogic(core_instance)
         self.core = core_instance
 
-    def show_snackbar(self, message: str, duration=2000):
+        # UI组件
+        self.page: ft.Page = None
+        self.plugins_view: ft.ListView = None
+
+        # 外部组件
+        self.tray: TrayManager = None
+        self.updater: UpdateChecker = None
+
+        # 标志
+        self.show_menu_flag = False
+
+        # 设置UI回调
+        self.logic.set_ui_callbacks(
+            show_snackbar=self.show_snackbar,
+            update_ui=self._update_page
+        )
+
+    def _update_page(self):
+        """更新页面"""
+        if self.page:
+            self.page.update()
+
+    def show_snackbar(self, message: str, duration: int = 2000):
         """显示通知条消息"""
         if not self.page:
             return
+
         try:
             snackbar = ft.SnackBar(
                 content=ft.Text(message),
@@ -35,495 +57,618 @@ class GUI:
             self.page.open(snackbar)
             self.page.update()
         except Exception as e:
-            if self.core:
-                self.core.log.debug(f"窗口未找到无法显示Snackbar: {e}")
-
-    def start(self):
-        """启动服务"""
-        try:
-            if self.core:
-                self.is_starting = True
-                self.core.initialize()
-                self.core.start()
-                self.is_running = True
-                self.is_starting = False
-                return True
-            return False
-        except Exception as e:
-            if self.core:
-                self.core.log.error(f"服务启动失败: {e}")
-                self.core.show_toast(f"错误", "服务启动失败: {e}")
-            return False
+            self.logic.log_debug(f"无法显示Snackbar: {e}")
 
     def close_windows(self):
         """关闭窗口"""
         try:
             if self.page:
                 self.page.window.close()
-                return None
-            return None
         except Exception as e:
-            return e
+            self.logic.log_error(f"关闭窗口失败: {e}")
 
-    def stop(self):
-        """停止服务"""
-        if self.is_running and not self.is_starting and not self.is_stopping:
-            self.is_stopping = True
-            self.show_snackbar("停止进程中...")
-            self.core.log.info("停止进程中...")
-            self.core.stop()
-            self.is_running = False
-            self.show_snackbar("成功停止所有进程")
-            self.core.log.info("成功停止所有进程")
-            self.is_stopping = False
-        elif not self.is_starting and not self.is_stopping:
-            self.show_snackbar("都还没运行呀")
-        elif not self.is_stopping:
-            self.show_snackbar("启动中无法停止...")
-        else:
-            self.show_snackbar("如果卡死请使用任务管理器终止python进程")
+    # ===== 属性代理（为了兼容旧代码） =====
 
-    def handle_input(self, field_name, input_type="string"):
-        def callback(e):
-            value = e.control.value
-            if input_type == "int":
-                parsed_value = int(value)
-            else:
-                parsed_value = value
-            self.core.config.set_config(field_name, parsed_value)
+    @property
+    def is_running(self):
+        return self.logic.is_running
 
-        return callback
+    @property
+    def is_starting(self):
+        return self.logic.is_starting
+
+    @property
+    def is_stopping(self):
+        return self.logic.is_stopping
+
+    # ===== 主界面 =====
+
     def main(self, new_page: ft.Page):
-        """主要UI逻辑函数"""
+        """主界面入口"""
         self.page = new_page
-        self.page.window.width= 550
+        self._setup_window()
+
+        # 创建标签页
+        tabs = ft.Tabs(
+            selected_index=0,
+            tabs=[
+                ft.Tab(text="主页", content=self._create_home_page()),
+                ft.Tab(text="设置", content=self._create_setting_page()),
+                ft.Tab(text="插件", content=self._create_plugin_page()),
+                ft.Tab(text="关于", content=self._create_about_page()),
+            ],
+            on_change=self._on_tab_changed
+        )
+
+        self.page.add(tabs)
+
+    def _setup_window(self):
+        """设置窗口属性"""
+        self.page.window.width = 550
         self.page.window.height = 590
         self.page.window.resizable = False
         self.page.window.maximizable = False
         self.page.theme_mode = ft.ThemeMode.LIGHT
         self.page.title = "PCTools"
-        tab_home = ft.Tab(text="主页")
-        tab_setting = ft.Tab(text="设置")
-        tab_plugins = ft.Tab(text="插件")
-        tab_about = ft.Tab(text="关于")
 
-        def button_send_data(e):
-            try:
-                self.core.initialize()
-                self.core.update_module_status()
-            except Exception as e:
-                dialog = ft.AlertDialog(
-                    title=ft.Text("错误"),
-                    content=ft.Text(value=f"数据更新失败:{e}"),
-                    scrollable=True
-                )
-                self.page.open(dialog)
-                self.page.update()
-            else:
-                self.show_snackbar("数据更新成功")
-                self.page.update()
+    def _on_tab_changed(self, e):
+        """标签页切换事件"""
+        if e.control.selected_index == 1:  # 设置页
+            self.show_snackbar("修改设置后建议重启软件")
+        elif e.control.selected_index == 2:  # 插件页
+            if self.logic.is_running:
+                self.show_snackbar("运行时无法配置")
+            self._update_plugin_page()
 
-        def button_start(e):
-            if self.is_running or self.is_starting:
-                self.show_snackbar("请勿多次启动!")
-            else:
-                self.show_snackbar("启动进程...")
-                if self.start():
-                    self.show_snackbar("服务启动成功")
+    # ===== 主页 =====
 
-        def switch_auto_start(e):
-            if e.control.value:
-                self.show_snackbar(startup.add_to_startup())
-                self.core.config.set_config("auto_start", True)
-            else:
-                self.show_snackbar(startup.remove_from_startup())
-                self.core.config.set_config("auto_start", False)
-            self.page.update()
-
-        def open_repo(e):
-            self.page.launch_url('https://github.com/1812z/PCTools')
-
-        def follow(e):
-            self.page.launch_url('https://space.bilibili.com/336130050')
-
-        def tab_changed(e):
-            if e.control.selected_index == 1:
-                self.show_snackbar("修改设置后建议重启软件")
-            elif e.control.selected_index == 2:
-                if self.is_running:
-                    self.show_snackbar("运行时无法配置")
-                update_plugin_page()
-
-        # 创建动态页面
-        plugins_view = ft.ListView(height=450, width=450, spacing=5)
-
-        def show_page(e, h):
-            if h is None:
-                self.show_snackbar("该插件没有设置页面")
-                return
-
-            try:
-                bubble_page = h(e)
-                dlg = ft.AlertDialog(
-                    adaptive=True,
-                    title=ft.Text("插件设置"),
-                    content=ft.Container(
-                        content=bubble_page,
-                        height=300,
-                        width=400,
-                        margin=10,
-                    ),
-                    actions=[
-                        ft.TextButton("返回", on_click=lambda e: e.page.close(dlg)),
-                    ],
-                )
-                e.page.open(dlg)
-                e.page.update()
-            except Exception as ex:
-                self.core.log.error(f"打开设置页面失败: {ex}")
-                self.show_snackbar(f"打开设置失败: {ex}")
-
-        def show_plugin_info(e, name, version, author, description, path, load_status):
-            plugin_info = ft.AlertDialog(
-                adaptive=True,
-                title=ft.Text(f"{name} 详细信息"),
-                content=ft.Container(
-                    content=ft.Column(
-                        [
-                            ft.Text(f"作者: {author}"),
-                            ft.Text(f"版本: {version}"),
-                            ft.Text(f"描述: {description}"),
-                            ft.Text(f"路径: {path}"),
-                            ft.Text(f"状态: {'已加载' if load_status else '未加载'}")
-                        ],
-                        spacing=10
-                    ),
-                    height=300,
-                    width=400,
-                    margin=10,
-                ),
-                actions=[
-                    ft.TextButton("返回", on_click=lambda e: e.page.close(plugin_info)),
-                ],
-            )
-            e.page.open(plugin_info)
-            e.page.update()
-
-        def update_plugin_page():
-            plugins_view.controls.clear()
-
-            if self.core.plugins["paths"]:
-                for plugin in list(self.core.plugins["paths"].keys()):
-                    status = False if plugin in self.core.plugins["disabled"] else True
-                    loaded = plugin in self.core.plugins["instances"].keys()
-
-                    available = status and loaded and not self.is_running
-                    path = self.core.plugins["paths"].get(plugin)
-
-                    plugin_name = self.core.plugins["info"].get(plugin, {}).get("display_name", plugin)
-                    if plugin in self.core.plugins["instances"].keys():
-                        plugin_name = "✅" + plugin_name
-                    elif plugin in self.core.plugins["errors"]:
-                        plugin_name = "❌" + plugin_name
-                    name_text = ft.Text(plugin_name, size=16, weight=ft.FontWeight.BOLD, width=250)
-
-                    # 插件设置按钮
-                    handler = getattr(self.core.plugins["instances"].get(plugin), "setting_page", None)
-                    setting_disabled = False if available and handler else True
-
-                    settings_btn = ft.IconButton(
-                        icon=ft.Icons.SETTINGS,
-                        icon_size=20,
-                        tooltip="插件设置",
-                        disabled=setting_disabled,
-                        on_click=lambda e, h=handler: show_page(e, h)
-                    )
-                    # 插件详情按钮
-                    info_btn = ft.IconButton(
-                        icon=ft.Icons.INFO_OUTLINE,
-                        icon_size=20,
-                        tooltip=f"插件信息\n加载状态: {loaded}\n插件路径: {path}\n",
-                        on_click=lambda e, name=plugin,
-                                        version=self.core.plugins["info"].get(plugin, {}).get("version"),
-                                        author=self.core.plugins["info"].get(plugin, {}).get("author"),
-                                        description=self.core.plugins["info"].get(plugin, {}).get("description"),
-                                        path=path,
-                                        load_status=loaded: show_plugin_info(e, name, version, author, description,
-                                                                             path, load_status)
-                    )
-
-                    def create_switch_callback(plugin, settings_btn, info_btn):
-                        def callback(e):
-                            new_status = e.control.value
-                            self.core.plugin_manage(plugin, new_status)
-                            settings_btn.disabled = not new_status or setting_disabled
-                            e.page.update()
-
-                        return callback
-
-                    switch = ft.Switch(
-                        value=status,
-                        tooltip="启用/禁用插件",
-                        on_change=create_switch_callback(plugin, settings_btn, info_btn),
-                        disabled=self.is_running
-                    )
-
-                    # 将控件组合成一行
-                    row = ft.Row(
-                        controls=[
-                            name_text,
-                            settings_btn,
-                            info_btn,
-                            switch
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=10
-                    )
-
-                    # 添加边框和边距
-                    container = ft.Container(
-                        content=row,
-                        padding=8,
-                        border=ft.border.all(2, ft.Colors.GREY),
-                        border_radius=8,
-                        margin=0
-                    )
-                    plugins_view.controls.append(container)
-            else:
-                info_row = ft.Row(
-                    [
-                        ft.Container(width=180),
-                        ft.Text("TAT..啥都木有", size=15)
-                    ])
-                plugins_view.controls.append(info_row)
-            self.page.update()
-            return
-
+    def _create_home_page(self) -> ft.Column:
+        """创建主页"""
         logo = ft.Container(
             content=ft.Image(
-                src="img\\home-assistant-wordmark-with-margins-color-on-light.png",
+                src="img/home-assistant-wordmark-with-margins-color-on-light.png",
                 fit=ft.ImageFit.CONTAIN,
                 width=500
             )
         )
 
-        def create_button(icon: str, text: str, on_click=None):
-            return ft.ElevatedButton(
-                content=ft.Row(
-                    [ft.Icon(icon), ft.Text(text, weight=ft.FontWeight.W_600)],
-                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                ),
-                on_click=on_click,
-                width=130,
-                height=40
+        version_text = ft.Container(
+            content=ft.Text(
+                f"{self.logic.get_version()} by 1812z",
+                size=20,
             )
-
-        def build_setting_option(
-                icon_name: str,
-                title: str,
-                subtitle: str,
-                toggle_value: bool = False,
-                on_change=None,
-                control_type="switch"
-        ):
-            if control_type == "switch":
-                right_control = ft.Switch(
-                    value=toggle_value,
-                    on_change=on_change,
-                )
-            else:
-                right_control =  ft.IconButton(
-                    icon=ft.Icons.ARROW_FORWARD_IOS,
-                    icon_size=20,
-                    on_click=on_change)
-
-            """构建带图标的设置选项"""
-            return (ft.Column(
-                controls=[
-                    ft.Divider(height=10),
-                    ft.Container(
-                        content=ft.Row(
-                            controls=[
-                                # 左侧图标和文字
-                                ft.Row(
-                                    controls=[
-                                        ft.Icon(icon_name, size=25),
-                                        ft.Column(
-                                            controls=[
-                                                ft.Text(title, weight=ft.FontWeight.BOLD),
-                                                ft.Text(subtitle, size=12, color=ft.Colors.GREY_600),
-                                            ],
-                                            spacing=2
-                                        )
-                                    ],
-                                    spacing=10,
-                                    alignment=ft.MainAxisAlignment.START,
-                                    expand=True
-                                ),
-                                # 右侧开关
-                                right_control
-                            ],
-                            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                            vertical_alignment=ft.CrossAxisAlignment.CENTER
-                        ),
-                        padding=ft.padding.symmetric(vertical=5, horizontal=10),
-                        on_click=on_change if on_change else None
-                    )]
-                )
-            )
-
-
-
-        start_button = create_button(ft.Icons.PLAY_ARROW, "开始", button_start)
-        stop_button = create_button(ft.Icons.STOP_ROUNDED, "停止", lambda e: self.stop())
-        send_data_button = create_button(ft.Icons.SEND_AND_ARCHIVE, "发送数据", button_send_data)
-        follow_button = create_button(ft.Icons.THUMB_UP_ALT_ROUNDED, "关注我", follow)
-
-        home_page = ft.Column(
-            [
-                logo,
-                ft.Container(
-                    content=ft.Text(
-                        self.version + ' by 1812z',
-                        size=20,
-                    )
-                ),
-                ft.Container(
-                    content=ft.TextButton(
-                        "Github",
-                        animate_size=20,
-                        on_click=open_repo
-                    ),
-                    width=120
-                ),
-                            start_button,
-                            stop_button,
-                            send_data_button,
-                            follow_button,
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            run_alignment=ft.MainAxisAlignment.CENTER,
-            spacing=10,
-            expand=True
         )
 
-        def open_mqtt_setting(self):
-            self.page.open(mqtt_setting)
-            self.page.update()
-
-        # MQTT设置
-        mqtt_setting = ft.AlertDialog(
-            adaptive=True,
-            title=ft.Text("MQTT设置(每一项输入框按回车保存)"),
-            content=ft.Container(
-                content=ft.Column(
-                    [
-                        ft.TextField(
-                            label="HA_MQTT_Broker",
-                            on_submit=self.handle_input("HA_MQTT"),
-                            value=self.core.config.get_config("HA_MQTT")
-                        ),
-                        ft.TextField(
-                            label="PORT",
-                            on_submit=self.handle_input("HA_MQTT_port", "int"),
-                            value=self.core.config.get_config("HA_MQTT_port")
-                        ),
-                        ft.TextField(
-                            label="HA_MQTT账户",
-                            on_submit=self.handle_input("username"),
-                            value=self.core.config.get_config("username")
-                        ),
-                        ft.TextField(
-                            label="HA_MQTT密码",
-                            on_submit=self.handle_input("password"),
-                            value=self.core.config.get_config("password")
-                        ),
-                        ft.TextField(
-                            label="发现前缀",
-                            on_submit=self.handle_input("ha_prefix"),
-                            value=self.core.config.get_config("ha_prefix")
-                        ),
-                        ft.TextField(
-                            label="设备唯一标识符(仅支持英文字符)",
-                            on_submit=self.handle_input("device_name"),
-                            value=self.core.config.get_config("device_name")
-                        ),
-                    ]
-                ),
-                height=300,
-                width=400,
-                margin=10,
+        github_link = ft.Container(
+            content=ft.TextButton(
+                "Github",
+                animate_size=20,
+                on_click=lambda e: self.page.launch_url('https://github.com/1812z/PCTools')
             ),
-            actions=[
-                ft.TextButton("返回", on_click=lambda e: e.page.close(mqtt_setting)),
-            ],
+            width=120
         )
 
-        setting_page = ft.ListView(
-            controls=[
-                logo,
-                build_setting_option(
-                    icon_name=ft.Icons.NETWORK_CELL,
-                    title="MQTT设置",
-                    subtitle="配置MQTT连接信息",
-                    toggle_value=False,
-                    on_change=open_mqtt_setting,
-                    control_type="dialog"
-                ),
-                build_setting_option(
-                    icon_name=ft.Icons.UPDATE,
-                    title="检查更新",
-                    subtitle="启动时自动检查新版本并提示",
-                    toggle_value=self.core.config.get_config("check_update"),
-                    on_change=lambda e: self.core.config.set_config("check_update",e.control.value)
-                ),
-                build_setting_option(
-                    icon_name=ft.Icons.BROWSER_UPDATED,
-                    title="自动更新",
-                    subtitle="检查到新版本时自动更新",
-                    toggle_value=self.core.config.get_config("auto_update"),
-                    on_change=lambda e: self.core.config.set_config("auto_update", e.control.value)
-                ),
-                build_setting_option(
-                    icon_name=ft.Icons.POWER_SETTINGS_NEW,
-                    title="自启动",
-                    subtitle="开机后自动打开程序",
-                    toggle_value=self.core.config.get_config("auto_start"),
-                    on_change=lambda e: switch_auto_start(e)
-                ),
-            ],
+        # 按钮
+        buttons = [
+            self._create_action_button(
+                ft.Icons.PLAY_ARROW, "开始",
+                lambda e: self.logic.start_service()
+            ),
+            self._create_action_button(
+                ft.Icons.STOP_ROUNDED, "停止",
+                lambda e: self.logic.stop_service()
+            ),
+            self._create_action_button(
+                ft.Icons.SEND_AND_ARCHIVE, "发送数据",
+                lambda e: self.logic.send_data()
+            ),
+            self._create_action_button(
+                ft.Icons.THUMB_UP_ALT_ROUNDED, "关注我",
+                lambda e: self.page.launch_url('https://space.bilibili.com/336130050')
+            ),
+        ]
+
+        return ft.Column(
+            [logo, version_text, github_link] + buttons,
+            spacing=10,
+            scroll=ft.ScrollMode.AUTO,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+    def _create_action_button(self, icon: str, text: str, on_click) -> ft.ElevatedButton:
+        """创建操作按钮"""
+        return ft.ElevatedButton(
+            content=ft.Row(
+                [ft.Icon(icon), ft.Text(text, weight=ft.FontWeight.W_600)],
+                alignment=ft.MainAxisAlignment.SPACE_AROUND,
+            ),
+            on_click=on_click,
+            width=130,
+            height=40
+        )
+
+    # ===== 设置页 =====
+
+    def _create_setting_page(self) -> ft.ListView:
+        """创建设置页"""
+        logo = ft.Container(
+            content=ft.Image(
+                src="img/home-assistant-wordmark-with-margins-color-on-light.png",
+                fit=ft.ImageFit.CONTAIN,
+                width=500
+            )
+        )
+
+        settings = [
+            logo,
+            self._create_setting_item(
+                ft.Icons.NETWORK_CELL,
+                "MQTT设置",
+                "配置MQTT连接信息",
+                on_click=self._open_mqtt_setting,
+                control_type="button"
+            ),
+            self._create_setting_item(
+                ft.Icons.UPDATE,
+                "检查更新",
+                "启动时自动检查新版本并提示",
+                toggle_value=self.logic.get_config("check_update", False),
+                on_change=lambda e: self.logic.set_config("check_update", e.control.value)
+            ),
+            self._create_setting_item(
+                ft.Icons.BROWSER_UPDATED,
+                "自动更新",
+                "检查到新版本时自动更新",
+                toggle_value=self.logic.get_config("auto_update", False),
+                on_change=lambda e: self.logic.set_config("auto_update", e.control.value)
+            ),
+            self._create_setting_item(
+                ft.Icons.POWER_SETTINGS_NEW,
+                "自启动",
+                "开机后自动打开程序",
+                toggle_value=self.logic.get_config("auto_start", False),
+                on_change=self._on_auto_start_changed
+            ),
+        ]
+
+        return ft.ListView(
+            controls=settings,
             spacing=15,
             padding=ft.padding.only(left=60, right=60),
             expand=True
         )
 
-        plugin_page = ft.Column(
-                [
-                    ft.Container(height=10),
-                    ft.Row(
-                        [
-                            ft.Container(width=20),
-                            plugins_view,
-                        ]
-                    )
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    def _create_setting_item(
+        self,
+        icon: str,
+        title: str,
+        subtitle: str,
+        toggle_value: bool = False,
+        on_change=None,
+        on_click=None,
+        control_type: str = "switch"
+    ) -> ft.Column:
+        """创建设置项"""
+        if control_type == "switch":
+            right_control = ft.Switch(value=toggle_value, on_change=on_change)
+        else:
+            right_control = ft.IconButton(
+                icon=ft.Icons.ARROW_FORWARD_IOS,
+                icon_size=20,
+                on_click=on_click
             )
 
-        update_component = self.updater.create_update_ui(self.page)
-        about_page = ft.Column(
+        return ft.Column(
+            controls=[
+                ft.Divider(height=10),
+                ft.Container(
+                    content=ft.Row(
+                        controls=[
+                            ft.Row(
+                                controls=[
+                                    ft.Icon(icon, size=25),
+                                    ft.Column(
+                                        controls=[
+                                            ft.Text(title, weight=ft.FontWeight.BOLD),
+                                            ft.Text(subtitle, size=12, color=ft.Colors.GREY_600),
+                                        ],
+                                        spacing=2
+                                    )
+                                ],
+                                spacing=10,
+                                expand=True
+                            ),
+                            right_control
+                        ],
+                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER
+                    ),
+                    padding=ft.padding.symmetric(vertical=5, horizontal=10),
+                    on_click=on_click if on_click else None
+                )
+            ]
+        )
+
+    def _on_auto_start_changed(self, e):
+        """自启动开关变更"""
+        result = self.logic.set_auto_start(e.control.value)
+        self.show_snackbar(result)
+        self.page.update()
+
+    def _open_mqtt_setting(self, e):
+        """打开MQTT设置对话框"""
+        mqtt_dialog = self._create_mqtt_dialog()
+        self.page.open(mqtt_dialog)
+        self.page.update()
+
+    def _create_mqtt_dialog(self) -> ft.AlertDialog:
+        """创建MQTT设置对话框"""
+        def create_text_field(label: str, config_key: str, value_type: str = "string"):
+            return ft.TextField(
+                label=label,
+                value=str(self.logic.get_config(config_key, "")),
+                on_submit=lambda e: self.logic.handle_config_change(
+                    config_key, e.control.value, value_type
+                )
+            )
+
+        return ft.AlertDialog(
+            title=ft.Text("MQTT设置（每项输入框按回车保存）"),
+            content=ft.Container(
+                content=ft.Column([
+                    create_text_field("HA_MQTT_Broker", "HA_MQTT"),
+                    create_text_field("PORT", "HA_MQTT_port", "int"),
+                    create_text_field("HA_MQTT账户", "username"),
+                    create_text_field("HA_MQTT密码", "password"),
+                    create_text_field("发现前缀", "ha_prefix"),
+                    create_text_field("设备唯一标识符(仅支持英文字符)", "device_name"),
+                ]),
+                height=300,
+                width=400,
+                margin=10,
+            ),
+            actions=[
+                ft.TextButton("返回", on_click=lambda e: self.page.close(e.control.parent))
+            ],
+        )
+
+    # ===== 插件页 =====
+
+    def _create_plugin_page(self) -> ft.Column:
+        """创建插件页"""
+        self.plugins_view = ft.ListView(
+            height=450,
+            width=450,
+            spacing=5
+        )
+
+        return ft.Column(
+            [
+                ft.Container(height=10),
+                ft.Row([
+                    ft.Container(width=20),
+                    self.plugins_view,
+                ])
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+    def _update_plugin_page(self):
+        """更新插件列表"""
+        if not self.plugins_view:
+            return
+
+        self.plugins_view.controls.clear()
+
+        # 获取所有插件
+        all_plugins = self.logic.get_all_plugins()
+
+        if not all_plugins:
+            self.plugins_view.controls.append(
+                ft.Row([
+                    ft.Container(width=180),
+                    ft.Text("TAT..啥都木有", size=15)
+                ])
+            )
+            self.page.update()
+            return
+
+        # 按名称排序
+        sorted_plugins = self.logic.get_sorted_plugins()
+
+        # 创建插件卡片
+        for plugin_name, plugin_info in sorted_plugins:
+            card = self._create_plugin_card(plugin_name, plugin_info)
+            self.plugins_view.controls.append(card)
+
+        self.page.update()
+
+    def _create_plugin_card(self, plugin_name: str, plugin_info: Dict) -> ft.Container:
+        """创建插件卡片"""
+        # 获取状态
+        enabled = plugin_info["enabled"]
+        loaded = plugin_info["loaded"]
+        has_error = plugin_info["error"] is not None
+
+        # 状态信息
+        status_icon, status_color_name, status_text = self.logic.get_plugin_status_info(plugin_info)
+        status_color = getattr(ft.Colors, status_color_name.upper())
+
+        # 插件名称
+        name_text = ft.Text(
+            f"{status_icon} {plugin_info['display_name']}",
+            size=16,
+            weight=ft.FontWeight.BOLD,
+            color=status_color,
+            width=200
+        )
+
+        # 版本信息
+        meta_text = ft.Text(
+            f"v{plugin_info['version']} by {plugin_info['author']}",
+            size=11,
+            color=ft.Colors.GREY_600,
+            width=200
+        )
+
+        # 按钮组
+        buttons = self._create_plugin_buttons(plugin_name, plugin_info)
+
+        # 组装
+        left_col = ft.Column([name_text, meta_text], spacing=2, tight=True)
+        right_row = ft.Row(buttons, spacing=5, tight=True)
+
+        main_row = ft.Row(
+            controls=[left_col, right_row],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=10
+        )
+
+        return ft.Container(
+            content=main_row,
+            padding=12,
+            border=ft.border.all(2, status_color),
+            border_radius=8,
+            margin=ft.margin.only(bottom=5),
+            bgcolor=ft.Colors.WHITE if enabled else ft.Colors.GREY_100
+        )
+
+    def _create_plugin_buttons(self, plugin_name: str, plugin_info: Dict) -> list:
+        """创建插件按钮组"""
+        enabled = plugin_info["enabled"]
+        loaded = plugin_info["loaded"]
+        available = self.logic.is_plugin_available(plugin_info)
+
+        # 设置按钮
+        has_settings = self.logic.has_plugin_settings(plugin_name)
+        settings_btn = ft.IconButton(
+            icon=ft.Icons.SETTINGS,
+            icon_size=20,
+            tooltip="插件设置",
+            disabled=not (available and has_settings),
+            on_click=lambda e, name=plugin_name: self._open_plugin_settings(e, name),
+            icon_color=ft.Colors.BLUE if (available and has_settings) else ft.Colors.GREY
+        )
+
+        # 信息按钮
+        info_btn = ft.IconButton(
+            icon=ft.Icons.INFO_OUTLINE,
+            icon_size=20,
+            tooltip="查看详情",
+            on_click=lambda e, name=plugin_name, info=plugin_info:
+                self._show_plugin_info(e, name, info)
+        )
+
+        # 重载按钮
+        reload_btn = ft.IconButton(
+            icon=ft.Icons.REFRESH,
+            icon_size=20,
+            tooltip="重载插件",
+            disabled=not (loaded and self.logic.can_modify_plugins()),
+            on_click=lambda e, name=plugin_name: self._reload_plugin(e, name),
+            icon_color=ft.Colors.GREEN if (loaded and self.logic.can_modify_plugins()) else ft.Colors.GREY
+        )
+
+        # 启用/禁用开关
+        switch = ft.Switch(
+            value=enabled,
+            tooltip="启用/禁用插件",
+            on_change=lambda e, name=plugin_name: self._toggle_plugin(e, name),
+            disabled=self.logic.is_running
+        )
+
+        return [settings_btn, info_btn, reload_btn, switch]
+
+    def _open_plugin_settings(self, e, plugin_name: str):
+        """打开插件设置"""
+        handler = self.logic.get_plugin_settings_handler(plugin_name)
+
+        if not handler:
+            self.show_snackbar("该插件没有设置页面")
+            return
+
+        try:
+            content = handler(e)
+            dialog = ft.AlertDialog(
+                title=ft.Text("插件设置"),
+                content=ft.Container(
+                    content=content,
+                    height=300,
+                    width=400,
+                    margin=10,
+                ),
+                actions=[
+                    ft.TextButton("返回", on_click=lambda e: self.page.close(e.control.parent))
+                ],
+            )
+            self.page.open(dialog)
+            self.page.update()
+        except Exception as ex:
+            self.logic.log_error(f"打开设置页面失败: {ex}")
+            self.show_snackbar(f"打开设置失败: {ex}")
+
+    def _show_plugin_info(self, e, plugin_name: str, plugin_info: Dict):
+        """显示插件详细信息"""
+        _, _, status_text = self.logic.get_plugin_status_info(plugin_info)
+
+        # 创建信息内容
+        info_controls = [
+            # 标题区域
+            ft.Text("插件信息", size=18, weight=ft.FontWeight.BOLD),
+
+            # 分隔线
+            ft.Divider(height=1, color=ft.Colors.BLUE_200),
+
+            # 状态指示器
+            ft.Container(
+                content=ft.Row([
+                    ft.Icon(
+                        ft.Icons.CHECK_CIRCLE if plugin_info['loaded'] else ft.Icons.ERROR,
+                        size=18,
+                        color=ft.Colors.GREEN if plugin_info['loaded'] else ft.Colors.RED
+                    ),
+                    ft.Text(
+                        status_text,
+                        size=14,
+                        weight=ft.FontWeight.W_500,
+                        color=ft.Colors.GREEN_800 if plugin_info['loaded'] else ft.Colors.RED_800
+                    ),
+                ], spacing=8),
+                bgcolor=ft.Colors.GREEN_50 if plugin_info['loaded'] else ft.Colors.RED_50,
+                padding=10,
+                border_radius=8,
+                margin=ft.margin.only(bottom=5)
+            ),
+
+            # 基本信息卡片
+            ft.Container(
+                content=ft.Column([
+                    # 版本和作者 - 水平布局
+                    ft.Row([
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.TAG, size=16, color=ft.Colors.BLUE_700),
+                                ft.Text(f"v{plugin_info['version']}", size=14, weight=ft.FontWeight.W_500)
+                            ], spacing=5),
+                            padding=5
+                        ),
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.PERSON, size=16, color=ft.Colors.BLUE_700),
+                                ft.Text(plugin_info['author'], size=14, weight=ft.FontWeight.W_500)
+                            ], spacing=5),
+                            padding=5
+                        ),
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.FOLDER, size=16, color=ft.Colors.BLUE_700),
+                                ft.Text(
+                                    self.logic.get_plugin_path(plugin_name),
+                                    size=14,
+                                    color=ft.Colors.GREY_700,
+                                    italic=True
+                                ),
+                            ], spacing=5),
+                            padding=5
+                        ),
+                    ], spacing=15),
+
+                    # 描述
+                    ft.Container(
+                        content=ft.Text(
+                            plugin_info['description'],
+                            size=13,
+                            color=ft.Colors.GREY_800,
+                            weight=ft.FontWeight.W_400
+                        ),
+                        padding=ft.padding.only(top=5, bottom=5)
+                    ),
+                ]),
+                bgcolor=ft.Colors.BLUE_50,
+                padding=14,
+                border_radius=8,
+                margin=ft.margin.only(top=5, bottom=5)
+            ),
+        ]
+
+        # 显示依赖
+        if plugin_info['dependencies']:
+            info_controls.append(
+                ft.Container(
+                    content=ft.Column([
+                        ft.Row([
+                            ft.Icon(ft.Icons.ACCOUNT_TREE, size=16, color=ft.Colors.INDIGO_700),
+                            ft.Text("依赖插件", size=13, weight=ft.FontWeight.W_500, color=ft.Colors.INDIGO_900)
+                        ], spacing=5),
+                        ft.Container(
+                            content=ft.Text(
+                                ', '.join(plugin_info['dependencies']),
+                                size=12,
+                                color=ft.Colors.INDIGO_800
+                            ),
+                            padding=ft.padding.only(left=21, top=5)
+                        )
+                    ], spacing=5),
+                    bgcolor=ft.Colors.BLUE_50,
+                    padding=12,
+                    border_radius=8,
+                    margin=ft.margin.only(top=8, bottom=8),
+                )
+            )
+
+        dialog = ft.AlertDialog(
+            title=ft.Text(f"{plugin_info['display_name']} 详细信息"),
+            content=ft.Container(
+                content=ft.Column(info_controls, spacing=8, tight=True),
+                width=400,
+                height=300
+            ),
+            scrollable=True,
+            actions=[
+                ft.TextButton("关闭", on_click=lambda e: self.page.close(e.control.parent))
+            ]
+        )
+
+        self.page.open(dialog)
+        self.page.update()
+
+    def _toggle_plugin(self, e, plugin_name: str):
+        """切换插件启用状态"""
+        new_status = e.control.value
+        success = self.logic.toggle_plugin(plugin_name, new_status)
+
+        if success and not new_status:
+            # 禁用成功，刷新页面
+            self._update_plugin_page()
+        elif not success:
+            # 操作失败，恢复开关状态
+            e.control.value = not new_status
+            self.page.update()
+
+    def _reload_plugin(self, e, plugin_name: str):
+        """重载插件"""
+        if self.logic.reload_plugin(plugin_name):
+            self._update_plugin_page()
+
+    # ===== 关于页 =====
+
+    def _create_about_page(self) -> ft.Column:
+        """创建关于页"""
+        update_component = self.updater.create_update_ui(self.page) if self.updater else ft.Container()
+
+        return ft.Column(
             [
                 update_component,
                 ft.Container(
                     content=ft.Text(
-                        "感谢使用,求投喂,有需要的功能也可以联系我(VX: |1812z| )，会尽快写(AI)好",
+                        "感谢使用，求投喂，有需要的功能也可以联系我(VX: 1812z)，会尽快写(AI)好",
                         size=15
                     )
                 ),
                 ft.Container(
                     content=ft.Image(
-                        src="img\\wechat.png",
+                        src="img/wechat.png",
                         fit=ft.ImageFit.CONTAIN,
                         width=300
                     )
@@ -534,51 +679,53 @@ class GUI:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        tab_home.content = home_page
-        tab_setting.content = setting_page
-        tab_plugins.content = plugin_page
-        tab_about.content = about_page
-        tabs = ft.Tabs(
-            selected_index=0,
-            tabs=[tab_home, tab_setting, tab_plugins,tab_about],
-            on_change=tab_changed
-        )
-
-        self.page.add(tabs)
+    # ===== 退出 =====
 
     def exit(self):
+        """退出程序"""
         try:
-            if self.is_running:
-                self.stop()
+            if self.logic.is_running:
+                self.logic.stop_service()
             self.close_windows()
-            self.tray.stop()
+            if self.tray:
+                self.tray.stop()
         except Exception as e:
-            self.core.log.error(f"退出异常: {e}")
+            self.logic.log_error(f"退出异常: {e}")
 
-icon_flag = True
-gui = None
-core = None
+
+# ===== 程序入口 =====
+
 if __name__ == "__main__":
     from Core import Core
+
+    # 初始化核心
     core = Core(None)
+
+    # 初始化GUI
     gui = GUI(core)
     core.gui = gui
+
+    # 初始化托盘和更新器
     gui.tray = TrayManager(gui)
     gui.updater = UpdateChecker(gui, "1812z", "PCTools", "config_example.json")
     gui.tray.start()
 
-    if not gui.core.config.get_config("auto_start"):
+    # 启动方式
+    if not gui.logic.get_config("auto_start", False):
+        # 直接显示GUI
         ft.app(target=gui.main)
     else:
-        gui.start()
-        if gui.core.config.get_config("check_update"):
+        # 后台启动
+        gui.logic.start_service()
+        if gui.logic.get_config("check_update", False):
             gui.updater.check_for_updates()
 
+    # 主循环
     while gui.tray.is_running:
         try:
             if gui.show_menu_flag:
                 ft.app(target=gui.main)
                 gui.show_menu_flag = False
             time.sleep(1)
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             gui.exit()

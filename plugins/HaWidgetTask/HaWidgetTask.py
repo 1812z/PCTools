@@ -3,21 +3,14 @@ import os
 import sys
 import flet as ft
 
-PLUGIN_NAME = "Ha侧边栏"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "按下快捷键(默认Menu)快速开启Ha网页，需要自定义网页Url"
-
 def run_ha_widget():
-    from Widget import _HA_widget
-    _HA_widget.main()
+    from HaWidgetTask import HA_widget
+    HA_widget.main()
 
-class HA_widget_task:
+class HaWidgetTask:
     def __init__(self, core):
         self.core = core
         self.process = None
-
-        self.read_Widget_url = self.core.config.get_config("Widget_url")
 
         parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         if parent_dir not in sys.path:
@@ -41,7 +34,7 @@ class HA_widget_task:
     def save_url(self):
         def callback(e):
             value = e.control.value
-            self.core.config.set_config("Widget_url", str(value))
+            self.core.set_plugin_config("HaWidgetTask", "Widget_url", str(value))
         return callback
 
     def setting_page(self, e):
@@ -49,7 +42,7 @@ class HA_widget_task:
         return ft.Column(
             [
                 ft.TextField(label="网页URL", width=250,
-                             on_submit=self.save_url(), value=self.read_Widget_url),
+                             on_submit=self.save_url(), value=self.core.get_plugin_config("HaWidgetTask", "Widget_url", "https://bing.com")),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,

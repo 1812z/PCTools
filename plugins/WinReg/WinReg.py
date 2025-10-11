@@ -2,9 +2,11 @@ import ctypes
 import winreg
 from typing import Any, Union, Optional
 
+class WinReg:
+    def __init__(self,core):
+        self.core = core
 
-class WindowsRegistry:
-    """
+    """r
     Windows 注册表操作工具类
 
     功能：
@@ -42,7 +44,7 @@ class WindowsRegistry:
     @staticmethod
     def get_root_key(root_key_name: str) -> int:
         """获取根键句柄"""
-        root_key = WindowsRegistry._ROOT_KEYS.get(root_key_name.upper())
+        root_key = WinReg._ROOT_KEYS.get(root_key_name.upper())
         if root_key is None:
             raise ValueError(f"无效的根键名称: {root_key_name}")
         return root_key
@@ -50,7 +52,7 @@ class WindowsRegistry:
     @staticmethod
     def get_value_type(type_name: str) -> int:
         """获取值类型"""
-        value_type = WindowsRegistry._VALUE_TYPES.get(type_name.upper())
+        value_type = WinReg._VALUE_TYPES.get(type_name.upper())
         if value_type is None:
             raise ValueError(f"无效的值类型: {type_name}")
         return value_type
@@ -75,7 +77,7 @@ class WindowsRegistry:
             注册表值或默认值
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
+            root_key = WinReg.get_root_key(root_key_name)
             with winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_READ) as key:
                 value, value_type = winreg.QueryValueEx(key, value_name)
                 return value
@@ -103,11 +105,11 @@ class WindowsRegistry:
             value_type: 值类型 (如 'REG_DWORD')
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
-            reg_type = WindowsRegistry.get_value_type(value_type)
+            root_key = WinReg.get_root_key(root_key_name)
+            reg_type = WinReg.get_value_type(value_type)
 
             # 确保子键存在
-            WindowsRegistry.create_key(root_key_name, sub_key)
+            WinReg.create_key(root_key_name, sub_key)
 
             with winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_WRITE) as key:
                 winreg.SetValueEx(key, value_name, 0, reg_type, value)
@@ -129,7 +131,7 @@ class WindowsRegistry:
             force: 如果为True，会创建路径中所有不存在的键
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
+            root_key = WinReg.get_root_key(root_key_name)
 
             if force:
                 # 递归创建所有不存在的子键
@@ -164,7 +166,7 @@ class WindowsRegistry:
             recursive: 是否递归删除子项
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
+            root_key = WinReg.get_root_key(root_key_name)
 
             if recursive:
                 # 递归删除需要从最深层开始
@@ -177,7 +179,7 @@ class WindowsRegistry:
                         pass
 
                 for child_key in sub_keys:
-                    WindowsRegistry.delete_key(
+                    WinReg.delete_key(
                         root_key_name,
                         f"{sub_key}\\{child_key}",
                         True
@@ -202,7 +204,7 @@ class WindowsRegistry:
             value_name: 要删除的值名称
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
+            root_key = WinReg.get_root_key(root_key_name)
             with winreg.OpenKey(root_key, sub_key, 0, winreg.KEY_WRITE) as key:
                 winreg.DeleteValue(key, value_name)
         except Exception as e:
@@ -224,7 +226,7 @@ class WindowsRegistry:
             子键名称列表
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
+            root_key = WinReg.get_root_key(root_key_name)
             with winreg.OpenKey(root_key, sub_key) as key:
                 sub_keys = []
                 index = 0
@@ -254,7 +256,7 @@ class WindowsRegistry:
             字典 {值名称: 值}
         """
         try:
-            root_key = WindowsRegistry.get_root_key(root_key_name)
+            root_key = WinReg.get_root_key(root_key_name)
             with winreg.OpenKey(root_key, sub_key) as key:
                 values = {}
                 index = 0
@@ -285,11 +287,11 @@ class WindowsRegistry:
         try:
             result = ctypes.c_long()
             ctypes.windll.user32.SendMessageTimeoutW(
-                WindowsRegistry.HWND_BROADCAST,
-                WindowsRegistry.WM_SETTINGCHANGE,
+                WinReg.HWND_BROADCAST,
+                WinReg.WM_SETTINGCHANGE,
                 0,
                 message,
-                WindowsRegistry.SMTO_ABORTIFHUNG,
+                WinReg.SMTO_ABORTIFHUNG,
                 timeout,
                 ctypes.byref(result)
             )

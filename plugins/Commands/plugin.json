@@ -1,0 +1,7 @@
+{
+    "name": "程序启动器",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "同步commands文件夹中的程序到Ha，方便快速打开程序，支持快捷方式和bat文件等",
+    "dependencies": []
+}

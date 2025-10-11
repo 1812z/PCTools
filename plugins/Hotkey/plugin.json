@@ -1,0 +1,7 @@
+{
+    "name": "键盘快捷键",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "将键盘作为Ha的触发器，支持组合快捷键",
+    "dependencies": []
+}

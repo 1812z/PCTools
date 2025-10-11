@@ -1,0 +1,7 @@
+{
+    "name": "Aida64传感器",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "使用Aida64内存共享功能读取相应传感器数据，并同步显示到Ha",
+    "dependencies": []
+}

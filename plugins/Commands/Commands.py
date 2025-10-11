@@ -4,10 +4,6 @@ import flet as ft
 import os
 import subprocess
 
-PLUGIN_NAME = "程序启动器"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "同步commands文件夹程序到Ha，方便快速打开程序，支持快捷方式和bat文件等"
 def generate_short_id(filename: str) -> str:
     '''
     生成校验id
@@ -23,7 +19,13 @@ class Commands:
     def __init__(self, core):
         self.core = core
         current_file_path = os.path.abspath(__file__)
-        self.current_directory =  os.path.join(os.path.dirname(os.path.dirname(current_file_path)), "commands")
+        # 自动处理文件夹层级，找到 plugins/Command/commands 目录
+        self.current_directory = os.path.join(
+            os.path.dirname(current_file_path),  # 当前文件所在目录(plugins/Command)
+            "commands"  # 添加commands子目录
+        )
+        # 如果目录不存在则创建
+        os.makedirs(self.current_directory, exist_ok=True)
 
         self.command_data = {}
 
@@ -56,15 +58,14 @@ class Commands:
             file_type = run_file.split('.')[1]
             if file_type == "lnk":  # 快捷方式
                 self.core.log.info("命令:" + key + "打开快捷方式:" + run_file)
-                run = self.current_directory + '\\' + run_file
-                # os.system(f'start "" "{run}"')
+                run = os.path.join(self.current_directory, run_file)
                 subprocess.Popen(['explorer', run])
             elif file_type == "bat":  # 批处理文件
-                bat_file = self.current_directory + '\\' + run_file
+                bat_file = os.path.join(self.current_directory, run_file)
                 subprocess.Popen(
                     bat_file, creationflags=subprocess.CREATE_NO_WINDOW)
             else:  # 其它文件
-                run = self.current_directory + '\\' + run_file
+                run = os.path.join(self.current_directory, run_file)
                 os.system(f'start "" "{run}"')
 
     def setting_page(self, e):

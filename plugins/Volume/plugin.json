@@ -1,0 +1,7 @@
+{
+    "name": "音量",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "调节系统音量，需要注意软件会自动选择当前扬声器，暂不支持指定",
+    "dependencies": []
+}

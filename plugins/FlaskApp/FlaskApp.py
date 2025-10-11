@@ -7,12 +7,7 @@ import signal
 import os
 import mss
 import requests
-
-PLUGIN_NAME = "远程画面"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "以网页流形式显示电脑摄像头/电脑截图/电脑画面 \n屏幕截图:http://127.0.0.1:5000/screenshot.jpg\n电脑摄像头: http://127.0.0.1:5000/video_feed\n实时画面: http://127.0.0.1:5000/screen"
-
+import flet as ft
 app = Flask(__name__)
 select_monitor = 1  # 默认选择第一个显示器
 
@@ -106,15 +101,32 @@ class FlaskApp:
                 "entity_type": "number",
                 "entity_id": "index",
                 "icon": "mdi:monitor"
-            }]
+            },
+            {
+                "name": "FlaskApp_网页主路径",
+                "entity_type": "text",
+                "entity_id": "web_path",
+                "icon": "mdi:web"
+            },
+            {
+                "name": "FlaskApp_帧率(FPS)",
+                "entity_type": "number",
+                "entity_id": "fps",
+                "icon": "mdi:speedometer"
+            }
+        ]
 
     def start(self):
         if self.process is None:
             try:
+                # 从配置中获取主机和端口
+                web_path = self.core.get_plugin_config("FlaskApp", "web_path", "0.0.0.0")
+                fps = self.core.get_plugin_config("FlaskApp", "fps", 30)
+
                 self.process = multiprocessing.Process(
-                    target=run_flask_app, args=(self.host, self.port))
+                    target=run_flask_app, args=(web_path, self.port))
                 self.process.start()
-                self.core.log.info(f"Flask进程启动 http://{self.host}:{self.port}")
+                self.core.log.info(f"Flask进程启动 http://{web_path}:{self.port}，帧率: {fps}")
             except Exception as e:
                 self.core.log.error(f"Flask进程启动失败: {e}")
         self.core.mqtt.update_state_data(1, "FlaskApp_index", "number")
@@ -132,7 +144,7 @@ class FlaskApp:
             response = requests.get(url)
             data = response.json()
             if data['success']:
-                global  select_monitor
+                global select_monitor
                 select_monitor = index
                 self.core.log.info(f"成功切换到显示器 {index}")
                 self.update_state()
@@ -144,6 +156,47 @@ class FlaskApp:
     def handle_mqtt(self, entity, payload):
         self.change_monitor(int(payload))
 
-
     def update_state(self):
         self.core.mqtt.update_state_data(select_monitor, "FlaskApp_index", "number")
+
+    def setting_page(self, e):
+        """设置页面"""
+        return ft.Column(
+            [
+                ft.TextField(label="网页URL", width=250,
+                             on_submit=self.save_url,
+                             value=self.core.get_plugin_config("FlaskApp", "web_path", "0.0.0.0")),
+                ft.TextField(label="帧率(FPS)", width=250,
+                             on_submit=self.save_fps,
+                             value=str(self.core.get_plugin_config("FlaskApp", "fps", 30))),
+                ft.Divider(),
+                ft.TextField(label="显示器选择", width=250,
+                             on_submit=self.change_monitor,
+                             value=str(self.core.get_plugin_config("FlaskApp", "index", 1))),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
+    def save_url(self, e):
+        """保存网页URL"""
+        url = e.control.value
+        self.core.set_plugin_config("FlaskApp", "web_path", url)
+        self.core.log.info(f"网页URL已更新为: {url}")
+
+    def save_secret(self, e):
+        """保存网页URL"""
+        url = e.control.value
+        self.core.set_plugin_config("FlaskApp", "web_path", url)
+        self.core.log.info(f"网页URL已更新为: {url}")
+
+    def save_fps(self, e):
+        """保存帧率设置"""
+        try:
+            fps = int(e.control.value)
+            if fps <= 0:
+                raise ValueError("帧率必须大于0")
+            self.core.set_plugin_config("FlaskApp", "fps", fps)
+            self.core.log.info(f"帧率已更新为: {fps}")
+        except ValueError as e:
+            self.core.log.error(f"无效的帧率设置: {e}")

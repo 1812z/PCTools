@@ -1,0 +1,7 @@
+{
+    "name": "深色模式",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "控制系统的'应用深色模式'与'系统深色模式'",
+    "dependencies": ["WinReg"]
+}

@@ -2,18 +2,13 @@ import keyboard
 import time
 import flet as ft
 
-PLUGIN_NAME = "键盘快捷键"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "将键盘作为Ha的触发器，支持组合快捷键"
-
 class Hotkey:
     def __init__(self, core):
         self.core = core
         self.listening = False
 
-        self.hotkey_notify = self.core.config.get_config("Hotkey_notify")
-        self.suppress = self.core.config.get_config("Hotkey_suppress")
+        self.hotkey_notify = self.core.get_plugin_config("Hotkey", "Hotkey_notify", False)
+        self.suppress = self.core.get_plugin_config("Hotkey", "Hotkey_suppress", False)
         self.device_name = self.core.config.get_config("device_name")
         self.prefix = self.core.config.get_config("ha_prefix")
         self.hotkeys = self.load_hotkeys()
@@ -199,7 +194,7 @@ class Hotkey:
         """开关按钮回调"""
         def callback(e):
             value = e.control.value
-            self.core.config.set_config(field_name, value)
+            self.core.set_plugin_config("Hotkey", field_name, value)
 
         return callback
 

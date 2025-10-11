@@ -2,16 +2,11 @@ import json
 import flet as ft
 import python_aida64
 
-PLUGIN_NAME = "Aida64"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "使用Aida64内存共享功能读取相应传感器数据，并同步显示到Ha"
-
 class Aida64:
     def __init__(self, core):
         self.core = core
         self.updater = {
-            "timer": 5 if not core.config.get_config("aida64_updater") else core.config.get_config("aida64_updater"),
+            "timer": self.core.get_plugin_config("Aida64", "aida64_updater", 5),
         }
 
     def get_aida64_data(self):
@@ -61,6 +56,12 @@ class Aida64:
             data = json.dumps(aida64_data)
             self.core.mqtt.update_state_data(data, "Aida64", "sensor")
 
+    def save_updater(self):
+        def callback(e):
+            value = e.control.value
+            self.core.set_plugin_config("Aida64", "aida64_updater", int(value))
+        return callback
+
     def setting_page(self, e):
         """设置页面"""
         return ft.Column(
@@ -70,8 +71,8 @@ class Aida64:
                         ft.Text("数据更新间隔"),
                         ft.TextField(
                             label="单位:秒",
-                            on_submit=self.core.gui.handle_input("aida64_updater", "int"),
-                            value=self.core.config.get_config("aida64_updater")
+                            on_submit=self.save_updater(),
+                            value=self.core.get_plugin_config("Aida64", "aida64_updater", 5)
                         ),
 
                     ]
