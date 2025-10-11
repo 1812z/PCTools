@@ -1,0 +1,6 @@
+{
+    "enabled": true,
+    "settings": {
+        "read_monitor_power_type": 2
+    }
+}
