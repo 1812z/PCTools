@@ -4,3 +4,4 @@ python-3.12.10-embed-amd64/
 .idea
 *.pyc
 app.log
+*.pyc

@@ -1,16 +1,19 @@
 import ctypes
 import json
+import os
 import webview
 import screeninfo
 import keyboard
 
 window_show = False
 
+
 class Api:
     def close_window(self):
         global window_show
         window.hide()
         window_show = False
+
 
 def get_scaling_factor():
     try:
@@ -24,6 +27,7 @@ def get_scaling_factor():
     except Exception as e:
         print(f"获取DPI缩放因子失败: {e}")
         return 1.0  # 默认缩放因子
+
 
 def inject_js(window):
     # 注入的 JavaScript 代码，用于添加关闭按钮和刷新按钮，使用相对单位
@@ -93,6 +97,7 @@ def inject_js(window):
     except Exception as e:
         print(f"注入 JavaScript 失败: {e}")
 
+
 def command(h):
     global window_show
     if window_show:
@@ -103,16 +108,47 @@ def command(h):
         window_show = True
         window.show()
 
+
+def load_config():
+    """加载或创建配置文件"""
+    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    default_config = {
+        "enabled": True,
+        "settings": {
+            "Widget_select_key": "menu",
+            "Widget_url": "https://bing.com"
+        }
+    }
+
+    try:
+        if not os.path.exists(config_path):
+            with open(config_path, 'w') as f:
+                json.dump(default_config, f, indent=4)
+            return default_config
+
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+            # 确保所有设置项都存在
+            for key, value in default_config['settings'].items():
+                if key not in config['settings']:
+                    config['settings'][key] = value
+
+            return config
+
+    except Exception as e:
+        print(f"加载配置文件失败: {e}")
+        return default_config
+
+
 def main():
     global select_key
-    with open('config.json', 'r') as file:
-        json_data = json.load(file)
-        select_key = json_data.get("Widget_select_key")
-        if not select_key:
-            select_key = 'menu'
-        keyboard.add_hotkey(select_key, lambda h=select_key: command(h), suppress=False)
-        
-        url = json_data.get("Widget_url")
+    config = load_config()
+
+    select_key = config['settings'].get("Widget_select_key", "menu")
+    url = config['settings'].get("Widget_url", "https://bing.com")
+
+    keyboard.add_hotkey(select_key, lambda h=select_key: command(h), suppress=False)
 
     api = Api()
     global window
@@ -127,10 +163,8 @@ def main():
     height = int(screen.height * scaling_factor)
 
     # 窗口位置
-    x = int(screen.width  -  width *scaling_factor)
+    x = int(screen.width - width * scaling_factor)
     y = 0
-
-    # print(f"窗口宽度: {width}, 窗口高度: {height}, 窗口位置: ({x}, {y})")
 
     window = webview.create_window(
         'WebView',
@@ -145,9 +179,10 @@ def main():
 
     window.events.loaded += lambda: inject_js(window)
 
-    window.hidden=True
-    window.easy_drag=False
+    window.hidden = True
+    window.easy_drag = False
     webview.start(private_mode=False)
+
 
 if __name__ == '__main__':
     main()

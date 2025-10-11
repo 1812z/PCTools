@@ -1,0 +1,7 @@
+{
+    "name": "远程画面",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "以网页流形式显示电脑摄像头/电脑截图/电脑画面 \n屏幕截图:http://127.0.0.1:5000/screenshot.jpg\n电脑摄像头: http://127.0.0.1:5000/video_feed\n实时画面: http://127.0.0.1:5000/screen \n需要注意默认无密码访问！",
+    "dependencies": []
+}

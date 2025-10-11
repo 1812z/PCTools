@@ -1,0 +1,7 @@
+{
+    "name": "Windows注册表",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "写入系统的注册表",
+    "dependencies": []
+}

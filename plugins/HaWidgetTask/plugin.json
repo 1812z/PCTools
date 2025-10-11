@@ -1,0 +1,7 @@
+{
+    "name": "网页侧边栏",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "按下快捷键(默认Menu)快速开启Ha网页，需要自定义网页Url",
+    "dependencies": []
+}

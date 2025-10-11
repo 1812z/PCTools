@@ -1,0 +1,7 @@
+{
+    "name": "远程终端",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "执行来自Ha的远程命令，仅支持Cmd和PowerShell",
+    "dependencies": []
+}

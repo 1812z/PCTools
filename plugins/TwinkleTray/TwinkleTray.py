@@ -6,12 +6,6 @@ import time
 import keyboard
 import flet as ft
 
-PLUGIN_NAME = "显示器控制"
-PLUGIN_VERSION = "1.0"
-PLUGIN_AUTHOR = "1812z"
-PLUGIN_DESCRIPTION = "通过Twinkle Tray实现显示器控制，支持亮度调节，自定义DDC/CI命令"
-
-
 def _remove_ansi_escape(text):
     ansi_escape = re.compile(r'\x1b\[[0-9;]*m')
     return ansi_escape.sub('', text)
@@ -45,20 +39,17 @@ def extract_monitors_info(info_str):
     return monitors
 
 
-class Twinkle_Tray:
+class TwinkleTray:
     def __init__(self, core):
         self.core = core
-        self.device_name = core.config.get_config("device_name")
         self.path =  os.path.expanduser("~") + "\\AppData\\Local\\Programs\\twinkle-tray\\Twinkle Tray.exe"
         self.updater = {
             "timer": 60
         }
         self.config = []
         self.generate_entity()
-        self.read_monitor_power_type = core.config.get_config("read_monitor_power_type")
-        if self.read_monitor_power_type is None:
-            self.read_monitor_power_type = 2
-            self.core.config.set_config("monitor_power_type", 2)
+        self.read_monitor_power_type = self.core.set_plugin_config("TwinkleTray", "read_monitor_power_type", 2)
+
     def generate_entity(self):
         monitors = self.get_monitors_state()
         if monitors:
@@ -188,15 +179,10 @@ class Twinkle_Tray:
         except:
             print("未能获取到监视器信息。")
 
-    def save_power_type(self):
-        def callback(e):
-            value = e.control.value
-            self.core.config.set_config("monitor_power_type", int(value))
-        return callback
-
     def on_option_changed(self, e):
         self.read_monitor_power_type = e.control.value
-        self.core.config.set_config("monitor_power_type", int(e.control.value))
+        self.core.set_plugin_config("TwinkleTray", "monitor_power_type", int(e.control.value))
+
     def setting_page(self, e):
         """设置页面"""
         radio0 = ft.Radio(value="0", label="系统层关闭画面")

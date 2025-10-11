@@ -1,0 +1,7 @@
+{
+    "name": "蓝牙",
+    "version": "2.0",
+    "author": "1812z",
+    "description": "控制系统蓝牙开关",
+    "dependencies": []
+}

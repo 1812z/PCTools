@@ -280,7 +280,7 @@ class MQTT:
         # 提取模块名（匹配loaded_plugins中的模块）
         module_name = None
         for plugin in self.core.plugins["instances"].keys():
-            # 查找主题中是否包含插件名（如 "Twinkle_Tray"）
+            # 查找主题中是否包含插件名（如 "TwinkleTray"）
             if f"_{plugin}_" in topic or topic.endswith(f"_{plugin}"):
                 module_name = plugin
                 s = topic.split('/')
