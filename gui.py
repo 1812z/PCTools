@@ -496,7 +496,7 @@ class GUI:
                     content=content,
                     height=300,
                     width=400,
-                    margin=10,
+                    margin=5,
                 ),
                 actions=[
                     ft.TextButton("返回", on_click=lambda e: self.page.close(e.control.parent))

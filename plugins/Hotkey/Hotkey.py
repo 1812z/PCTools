@@ -2,20 +2,23 @@ import keyboard
 import time
 import flet as ft
 
+
 class Hotkey:
     def __init__(self, core):
         self.core = core
         self.listening = False
 
+        # 从配置中获取快捷键设置
         self.hotkey_notify = self.core.get_plugin_config("Hotkey", "Hotkey_notify", False)
         self.suppress = self.core.get_plugin_config("Hotkey", "Hotkey_suppress", False)
+        self.hotkeys = self.core.get_plugin_config("Hotkey", "hotkeys", [])  # 从配置中读取快捷键列表
+
         self.device_name = self.core.config.get_config("device_name")
         self.prefix = self.core.config.get_config("ha_prefix")
-        self.hotkeys = self.load_hotkeys()
 
         self.hotkey_view = ft.ListView(height=320, width=600, spacing=10)
-        self._page_ready = False  # 添加标志，表示控件是否已添加到页面     
-                
+        self._page_ready = False  # 添加标志，表示控件是否已添加到页面
+
     def show_toast(self, title, message):
         """显示通知"""
         if hasattr(self.core, 'show_toast'):
@@ -38,11 +41,13 @@ class Hotkey:
             self.core.mqtt.publish(topic, "OFF")
 
     def save_hotkey(self, hotkey):
-        existing_hotkeys = self.load_hotkeys()
+        """保存快捷键到配置"""
+        existing_hotkeys = self.core.get_plugin_config("Hotkey", "hotkeys", [])
         if hotkey not in existing_hotkeys:
-            with open('hotkeys.txt', 'a') as file:
-                file.write(hotkey + '\n')
-                self.core.log.info(f"保存快捷键: {hotkey}")
+            existing_hotkeys.append(hotkey)
+            self.core.set_plugin_config("Hotkey", "hotkeys", existing_hotkeys)
+            self.hotkeys = existing_hotkeys  # 更新本地缓存
+            self.core.log.info(f"保存快捷键: {hotkey}")
         else:
             self.core.log.info(f"快捷键 '{hotkey}' 已存在，未保存。")
 
@@ -66,24 +71,6 @@ class Hotkey:
         hotkey_join = '+'.join(captured_hotkeys)
         self.save_hotkey(hotkey_join)
         return hotkey_join
-
-    def load_hotkeys(self):
-        try:
-            with open('hotkeys.txt', 'r') as file:
-                hotkeys = [line.strip() for line in file.readlines()]
-                return hotkeys
-        except FileNotFoundError:
-            self.core.log.error("hotkeys.txt加载失败")
-            return []
-
-    def save_hotkeys_to_file(self):
-        """保存热键到文件"""
-        try:
-            with open('hotkeys.txt', 'w') as file:
-                for hotkey in self.hotkeys:
-                    file.write(hotkey + '\n')
-        except Exception as e:
-            self.core.log.error(f"保存热键文件失败: {e}")
 
     def command(self, h: str):
         key_list = h.split('+')
@@ -122,11 +109,9 @@ class Hotkey:
     def button_add_hotkey(self, e):
         """添加新的快捷键按钮回调"""
         if not hasattr(self.core, 'is_running') or not self.core.is_running:
-
             self.core.show_toast("Hotkey", "将记录按下的所有按键,按ESC停止并保存")
             new_hotkey = self.capture_hotkeys()
             self.core.show_toast("Hotkey", "已添加新快捷键" + new_hotkey)
-            self.hotkeys.append(new_hotkey)
             self.update_hotkey_list(e)
         else:
             self.core.show_toast("Hotkey", "请先停止服务")
@@ -167,7 +152,7 @@ class Hotkey:
                             ),
                             ft.Container(width=40),
                             ft.IconButton(
-                                ft.Icons.DELETE, on_click=lambda e, h=hotkey: self.delete_hotkey(e,h)),
+                                ft.Icons.DELETE, on_click=lambda e, h=hotkey: self.delete_hotkey(e, h)),
                         ],
                     )
                 )
@@ -184,84 +169,205 @@ class Hotkey:
     def delete_hotkey(self, e, hotkey):
         """从列表中删除快捷键并更新视图"""
         if hotkey in self.hotkeys:
-            self.hotkeys.remove(hotkey)
-            self.save_hotkeys_to_file()
+            updated_hotkeys = [h for h in self.hotkeys if h != hotkey]
+            self.core.set_plugin_config("Hotkey", "hotkeys", updated_hotkeys)
+            self.hotkeys = updated_hotkeys  # 更新本地缓存
             self.update_hotkey_list(e)
-
             self.core.show_toast("Hotkey", f"已删除快捷键: {hotkey}")
 
     def button_switch(self, field_name):
         """开关按钮回调"""
+
         def callback(e):
             value = e.control.value
             self.core.set_plugin_config("Hotkey", field_name, value)
 
         return callback
 
-    def setting_page(self,e):
-        """设置页面"""
+    def setting_page(self, e):
+        """优化后的设置页面"""
         # 当设置页面被加载时，标记控件已添加到页面
         self._page_ready = True
-        hotkey_page = ft.Column(
-                [
-                    ft.Row(
-                        [
-                            ft.Switch(label="触发通知", label_position='left',
-                                      scale=1.2, value=self.hotkey_notify,
-                                      on_change=self.button_switch("Hotkey_notify")),
-                            ft.Container(width=20),
-                            ft.Switch(label="阻断按键", label_position='left',
-                                      scale=1.2, value=self.suppress, on_change=self.button_switch("Hotkey_suppress"),
-                                      tooltip="阻止快捷键被其它软件响应"),
-                        ], alignment=ft.MainAxisAlignment.CENTER
-                    ),
-                    ft.Row(
-                        [
-                            ft.ElevatedButton(
-                                content=ft.Row(
-                                    [
-                                        ft.Text(
-                                            "新增按键", weight=ft.FontWeight.W_600, size=17),
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                                ),
-                                on_click=self.button_add_hotkey,
-                                width=120,
-                                height=40
-                            ),
-                            ft.ElevatedButton(
-                                content=ft.Row(
-                                    [
-                                        ft.Text(
-                                            "开始监听", weight=ft.FontWeight.W_600, size=17),
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                                ),
-                                on_click=self.button_listen_hotkeys,
-                                width=120,
-                                height=40
-                            ),
-                            ft.ElevatedButton(
-                                content=ft.Row(
-                                    [
-                                        ft.Text(
-                                            "停止监听", weight=ft.FontWeight.W_600, size=17),
-                                    ],
-                                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
-                                ),
-                                on_click=self.button_stop_listen,
-                                width=120,
-                                height=40
-                            )
-                        ], alignment=ft.MainAxisAlignment.CENTER
-                    ),
-                    self.hotkey_view
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+
+        # 创建卡片容器
+        def create_card(content, title=None):
+            return ft.Card(
+                content=ft.Container(
+                    ft.Column([
+                        ft.Text(title, size=16, weight=ft.FontWeight.BOLD) if title else None,
+                        content
+                    ], spacing=10),
+                    padding=9,
+                    border_radius=10
+                ),
+                elevation=5,
+                margin=10
             )
 
+        # 快捷键列表控件
+        self.hotkey_view = ft.ListView(
+            spacing=8,
+            padding=7,
+            width=580,
+            height=300,
+            divider_thickness=1,
+            auto_scroll=True
+        )
+
+        # 创建各功能区域
+        instruction_card = create_card(
+            ft.Text(
+                "点击'新增按键'后，逐个按下所需组合键（无需同时按），按ESC结束录制并自动保存",
+                size=14,
+                color=ft.Colors.BLUE_800
+            ),
+            "操作说明"
+        )
+
+        switch_card = create_card(
+            ft.Row(
+                [
+                    ft.Switch(
+                        label="触发通知",
+                        label_position='left',
+                        value=self.hotkey_notify,
+                        on_change=self.button_switch("Hotkey_notify"),
+                        active_color=ft.Colors.GREEN
+                    ),
+                    ft.Switch(
+                        label="阻断按键",
+                        label_position='left',
+                        value=self.suppress,
+                        on_change=self.button_switch("Hotkey_suppress"),
+                        active_color=ft.Colors.GREEN,
+                        tooltip="阻止快捷键被其它软件响应"
+                    ),
+                ],
+                spacing=30,
+                alignment=ft.MainAxisAlignment.CENTER
+            ),
+            "功能设置"
+        )
+
+        button_card = create_card(
+            ft.Row(
+                [
+                    ft.ElevatedButton(
+                        "新增按键",
+                        icon=ft.Icons.ADD,
+                        on_click=self.button_add_hotkey,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=5),
+                            padding=9
+                        )
+                    ),
+                    ft.ElevatedButton(
+                        "开始监听",
+                        icon=ft.Icons.PLAY_ARROW,
+                        on_click=self.button_listen_hotkeys,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=5),
+                            padding=9,
+                            color=ft.Colors.GREEN
+                        )
+                    ),
+                    ft.ElevatedButton(
+                        "停止监听",
+                        icon=ft.Icons.STOP,
+                        on_click=self.button_stop_listen,
+                        style=ft.ButtonStyle(
+                            shape=ft.RoundedRectangleBorder(radius=5),
+                            padding=9,
+                            color=ft.Colors.RED
+                        )
+                    )
+                ],
+                spacing=15,
+                alignment=ft.MainAxisAlignment.CENTER
+            ),
+            "操作按钮"
+        )
+
+        # 构建主界面
+        hotkey_page = ft.Column(
+            [
+                instruction_card,
+                switch_card,
+                button_card,
+                create_card(
+                    self.hotkey_view,
+                    "已配置的快捷键"
+                )
+            ],
+            spacing=10,
+            alignment=ft.MainAxisAlignment.START,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            scroll=ft.ScrollMode.AUTO
+        )
 
         self.update_hotkey_list(e)
 
-        return hotkey_page
+        return ft.Container(
+            hotkey_page,
+            padding=1,
+            margin=1
+        )
+
+    def update_hotkey_list(self, e):
+        """优化后的热键列表更新函数"""
+        self.hotkey_view.controls.clear()
+
+        if hasattr(self, 'hotkeys') and self.hotkeys:
+            for idx, hotkey in enumerate(self.hotkeys):
+                # 创建带边框的每个快捷键条目
+                self.hotkey_view.controls.append(
+                    ft.Container(
+                        ft.Row(
+                            [
+                                ft.Text(f"{idx + 1}.", width=30, size=14),
+                                ft.Container(
+                                    ft.Text(
+                                        hotkey,
+                                        size=16,
+                                        weight=ft.FontWeight.W_600,
+                                        selectable=True
+                                    ),
+                                    padding=7,
+                                    border=ft.border.all(1, ft.Colors.GREY_300),
+                                    border_radius=5,
+                                    bgcolor=ft.Colors.GREY_100,
+                                    expand=True
+                                ),
+                                ft.IconButton(
+                                    ft.Icons.DELETE,
+                                    icon_color=ft.Colors.RED,
+                                    tooltip="删除该快捷键",
+                                    on_click=lambda e, h=hotkey: self.delete_hotkey(e, h)
+                                ),
+                            ],
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                            spacing=10
+                        ),
+                        padding=5
+                    )
+                )
+        else:
+            # 空列表提示
+            self.hotkey_view.controls.append(
+                ft.Container(
+                    ft.Column(
+                        [
+                            ft.Icon(ft.Icons.KEYBOARD_ALT, size=40, color=ft.Colors.GREY_400),
+                            ft.Text("暂无快捷键配置", size=16, color=ft.Colors.GREY_600)
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=10
+                    ),
+                    padding=20,
+                    alignment=ft.alignment.center
+                )
+            )
+
+        if hasattr(e, 'page'):
+            e.page.update()
+
