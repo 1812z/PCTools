@@ -94,5 +94,7 @@
 - openrgb，支持Ha接入控制RGB灯光  
 - hass_agent: 更稳定，更规范的同款工具
 
+支持无头模式：python core.py
+
 感谢大佬的开源库： https://github.com/gwy15/python_aida64  
 让刚学py的我做出来个小工具（（
