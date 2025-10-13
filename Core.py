@@ -640,7 +640,7 @@ class Core:
         """停止核心服务"""
         try:
             self.mqtt.stop_mqtt()
-            self.stop_all_timers()
+            self.timer.stop_all_timers()
             self.stop_plugin()
         except Exception as e:
             self.log.error(f"进程停止失败: {e}")
