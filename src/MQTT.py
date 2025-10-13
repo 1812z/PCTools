@@ -235,10 +235,8 @@ class MQTT:
         if state:
             if self.core.timer.get_timer("keepalive") is None:
                 self.core.timer.create_timer("keepalive",self.keepalive,29)
-            self.core.timer.start_timer("keepalive")
             self.mqttc.publish(f"{self.prefix}/{self.device_name}/availability","online")
         else:
-            self.core.timer.stop_timer("keepalive")
             self.mqttc.publish(f"{self.prefix}/{self.device_name}/availability", "offline")
 
     # 更新状态数据
@@ -343,10 +341,12 @@ class MQTT:
         if not self.mqttc.is_connected():
             self.connect_broker()
         self.mqttc.loop_start()
+        self.keepalive(True)
         self.core.config_plugin_entities()
 
 
     def stop_mqtt(self):
+        self.keepalive(False)
         self.mqttc.loop_stop()
 
 
