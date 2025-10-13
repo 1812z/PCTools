@@ -101,18 +101,6 @@ class FlaskApp:
                 "entity_type": "number",
                 "entity_id": "index",
                 "icon": "mdi:monitor"
-            },
-            {
-                "name": "FlaskApp_网页主路径",
-                "entity_type": "text",
-                "entity_id": "web_path",
-                "icon": "mdi:web"
-            },
-            {
-                "name": "FlaskApp_帧率(FPS)",
-                "entity_type": "number",
-                "entity_id": "fps",
-                "icon": "mdi:speedometer"
             }
         ]
 
