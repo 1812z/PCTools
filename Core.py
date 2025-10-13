@@ -627,29 +627,11 @@ class Core:
         )
         self.log.info(f"发送Toast通知: {title}")
 
-    def start_timer(self):
-        """启动所有定时器"""
-        for key in self.timer_dict.keys():
-            try:
-                self.timer.start_timer(key)
-            except Exception as e:
-                self.log.error(f"{key} 启动定时器失败: {e}")
-        self.mqtt.keepalive(True)
-
-    def stop_timer(self):
-        """停止所有定时器"""
-        for key in self.timer_dict.keys():
-            try:
-                self.timer.stop_timer(key)
-            except Exception as e:
-                self.log.error(f"{key} 停止定时器失败: {e}")
-        self.mqtt.keepalive(False)
-
     def start(self):
         """启动核心服务"""
         try:
             self.mqtt.start_mqtt()
-            self.start_timer()
+            self.timer.start_all_timers()
             self.start_plugin()
         except Exception as e:
             self.log.error(f"进程启动失败: {e}")
@@ -658,7 +640,7 @@ class Core:
         """停止核心服务"""
         try:
             self.mqtt.stop_mqtt()
-            self.stop_timer()
+            self.stop_all_timers()
             self.stop_plugin()
         except Exception as e:
             self.log.error(f"进程停止失败: {e}")
