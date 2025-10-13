@@ -155,7 +155,6 @@ class GUILogic:
         """启用插件"""
         try:
             if self.core.enable_plugin(plugin_name):
-                self._show_message(f"插件 {plugin_name} 已启用，请重启软件生效")
                 return True
             else:
                 self._show_message(f"启用插件失败", duration=3000)

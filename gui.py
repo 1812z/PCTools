@@ -739,10 +739,9 @@ class GUI:
         new_status = e.control.value
         success = self.logic.toggle_plugin(plugin_name, new_status)
 
-        if success and not new_status:
-            # 禁用成功，刷新页面
+        if success:
             self._update_plugin_page()
-        elif not success:
+        else:
             # 操作失败，恢复开关状态
             e.control.value = not new_status
             self.page.update()

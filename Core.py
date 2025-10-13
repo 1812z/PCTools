@@ -17,7 +17,7 @@ from dataclasses import dataclass, field, asdict
 @dataclass
 class PluginConfig:
     """插件配置"""
-    enabled: bool = True
+    enabled: bool = False
     settings: Dict = field(default_factory=dict)
 
     def to_dict(self):
@@ -348,13 +348,41 @@ class Core:
 
         # 保存配置文件
         plugin_folder = self._base_path / plugin_name
-        if self._save_plugin_config(plugin_folder, metadata.config):
-            self.log.info(f"✅ 已启用插件: {plugin_name}")
-            if self.gui:
-                self.gui.show_snackbar("启用插件后请重启软件")
-            return True
+        if not self._save_plugin_config(plugin_folder, metadata.config):
+            return False
 
-        return False
+        self.log.info(f"✅ 已启用插件: {plugin_name}")
+
+        # 立即加载插件模块和实例
+        try:
+            # 如果模块还未导入，先导入
+            if plugin_name not in self.plugins["modules"]:
+                module_path = f"plugins.{plugin_name}.{plugin_name}"
+                module = importlib.import_module(module_path)
+                self.plugins["modules"][plugin_name] = module
+                self.log.debug(f"✅ 导入插件模块: {plugin_name}")
+
+            # 创建插件实例
+            if self._create_instance(plugin_name):
+                self.log.info(f"🚀 插件 {plugin_name} 已载入实例")
+
+                if self.gui:
+                    self.gui.show_snackbar(f"插件 {plugin_name} 已启用并载入")
+
+                return True
+            else:
+                self.log.error(f"❌ 插件 {plugin_name} 实例创建失败")
+                # 回滚配置
+                metadata.config.enabled = False
+                self._save_plugin_config(plugin_folder, metadata.config)
+                return False
+
+        except Exception as e:
+            self.log.error(f"❌ 启用插件 {plugin_name} 时发生错误: {str(e)}")
+            # 回滚配置
+            metadata.config.enabled = False
+            self._save_plugin_config(plugin_folder, metadata.config)
+            return False
 
     def disable_plugin(self, plugin_name: str) -> bool:
         """禁用插件"""
