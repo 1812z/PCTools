@@ -70,11 +70,11 @@ class WindowListener:
                         if self.core.get_plugin_config("WindowListener.py", "post_enabled", False):
                             self.report_app_change(window_info["exe_name"])
                         self.core.mqtt.update_state_data(window_info["window_title"],
-                                                         "Window_Listener_Foreground_Window", "sensor")
+                                                         "WindowListener_Foreground_Window", "sensor")
                         self.core.mqtt.update_state_data(window_info["exe_path"],
-                                                         "Window_Listener_Foreground_Window_path", "sensor")
+                                                         "WindowListener_Foreground_Window_path", "sensor")
                         self.core.mqtt.update_state_data(window_info["exe_name"],
-                                                         "Window_Listener_Foreground_Window_exe", "sensor")
+                                                         "WindowListener_Foreground_Window_exe", "sensor")
                 time.sleep(0.1)
             except Exception as e:
                 self.core.log.error(f"窗口监听错误: {e}")
