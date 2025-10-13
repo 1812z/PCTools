@@ -1,9 +1,9 @@
 {
     "enabled": true,
     "settings": {
-        "post_enabled": true,
+        "post_enabled": false,
         "post_device_id": "电脑",
         "post_api_url": "https://api-usage.1812z.top/api",
-        "post_secret_key": "3@2987hc235476235x3"
+        "post_secret_key": "yoursecrethere"
     }
 }
