@@ -3,8 +3,6 @@ GUI 逻辑层
 负责业务逻辑处理，不包含UI组件
 """
 
-import time
-from pathlib import Path
 from typing import Optional, Dict, List, Callable
 
 
@@ -17,7 +15,7 @@ class GUILogic:
         :param core_instance: Core实例
         """
         self.core = core_instance
-        self.version = "v6.0"
+        self.version = "v6.0.1"
 
         # 状态标志
         self.is_running = False
