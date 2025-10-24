@@ -21,23 +21,28 @@ def _decode(b):
 
 
 def getXmlRawData() -> str:
-    options = [100 * i for i in range(20, 100)]  # ranges in [2k, 10k]
+    options = [100 * i for i in range(20, 100)]
     low = 0
     high = len(options) - 1
-    while low < high:  # [low, high], stops at [low, low]
-        mid = (low + high) // 2  # legit
+    result = None
+
+    while low <= high:  # 改为 <=
+        mid = (low + high) // 2
         try:
             length = options[mid]
             raw = _readRawData(length)
-            if raw[-1] == 0:  # legit ending
+            if raw[-1] == 0:  # 找到有效长度
                 decoded = _decode(raw.rstrip(b'\x00'))
-                return '<root>{}</root>'.format(decoded)
-            else:  # not long enough
-                low = mid
-                continue
-        except PermissionError:  # illegal length (too long)
-            high = mid
-            continue
+                result = '<root>{}</root>'.format(decoded)
+                high = mid - 1  # 继续寻找更小的有效长度
+            else:  # 不够长
+                low = mid + 1  # ✅ 修复
+        except (PermissionError, OSError):  # 处理更多异常
+            high = mid - 1
+
+    if result is None:
+        raise RuntimeError("无法读取AIDA64共享内存数据")
+    return result
 
 
 def getData() -> dict:

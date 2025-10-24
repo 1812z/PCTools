@@ -172,53 +172,73 @@ class MQTT:
 
             case "sys":
                 discovery_data.pop('device_class', None)
-                if "Utilization" in name:
+
+                # 通用匹配
+                if "Utilization" in name or "Activity" in name or "Volume" in name:
                     discovery_data["unit_of_measurement"] = "%"
+
+                # 磁盘
                 if "Disk" in name:
                     discovery_data["icon"] = "mdi:harddisk"
-                    if "Activity" in name:
-                        discovery_data["unit_of_measurement"] = "%"
-                    else:
+                    if "Activity" not in name:
                         discovery_data["unit_of_measurement"] = "KB/s"
+
+                # 网络
                 elif "NIC" in name:
-                    discovery_data["icon"] = "mdi:"
                     if "Total" in name:
                         discovery_data["unit_of_measurement"] = "M"
                         discovery_data["icon"] = "mdi:check-network"
                     else:
                         discovery_data["unit_of_measurement"] = "KB/s"
-                        if "Download" in name:
-                            discovery_data["icon"] = "mdi:download-network"
-                        elif "Upload" in name:
-                            discovery_data["icon"] = "mdi:upload-network"
+                        discovery_data["icon"] = "mdi:download-network" if "Download" in name else "mdi:upload-network"
+
+                # 时间和时钟
                 elif "Time" in name:
                     discovery_data["icon"] = "mdi:clock-outline"
                 elif "Clock" in name:
                     discovery_data["unit_of_measurement"] = "MHz"
+
+                # 音量
                 elif "Volume" in name:
-                    discovery_data["unit_of_measurement"] = "%"
                     discovery_data["icon"] = "mdi:volume-high"
-                else:
-                    if "GPU" in name:
-                        if "Memory" in name:
-                            discovery_data["unit_of_measurement"] = "MB"
-                        discovery_data["icon"] = "mdi:expansion-card"
-                    elif "Memory" in name:
-                        discovery_data["unit_of_measurement"] = "%"
-                        discovery_data["icon"] = "mdi:memory"
-                    elif "CPU" in name:
-                        discovery_data["unit_of_measurement"] = "%"
-                        discovery_data["icon"] = "mdi:cpu-64-bit"
+
+                # GPU
+                elif "GPU" in name:
+                    discovery_data["icon"] = "mdi:expansion-card"
+                    if "Memory" in name:
+                        discovery_data["unit_of_measurement"] = "MB"
+
+                # 内存
+                elif "Memory" in name:
+                    discovery_data["unit_of_measurement"] = "%"
+                    discovery_data["icon"] = "mdi:memory"
+
+                # CPU
+                elif "CPU" in name:
+                    discovery_data["unit_of_measurement"] = "%"
+                    discovery_data["icon"] = "mdi:cpu-64-bit"
 
             case "temp":
-                discovery_data.update({
-                    "device_class": "temperature",
-                    "unit_of_measurement": "°C"
-                })
+                discovery_data["unit_of_measurement"] = "°C"
 
             case "volt":
-                discovery_data['device_class'] = "voltage"
-                discovery_data["unit_of_measurement"] = "V"
+                discovery_data.update({
+                    "device_class": "voltage",
+                    "unit_of_measurement": "V"
+                })
+
+            case "duty":
+                discovery_data["unit_of_measurement"] = "%"
+                if "GPU" in name:
+                    discovery_data["icon"] = "mdi:expansion-card"
+                elif "CPU" in name:
+                    discovery_data["icon"] = "mdi:cpu-64-bit"
+
+            case "curr":
+                discovery_data.update({
+                    "device_class": "current",
+                    "unit_of_measurement": "A"
+                })
 
         # 发送信息
         info = f"实体: {name} 发现主题: {discovery_topic}"
@@ -229,7 +249,30 @@ class MQTT:
 
     # 发送自定义消息
     def publish(self, topic, message, qos=0):
-        self.mqttc.publish(topic, message, qos)
+        try:
+            if not self.mqttc or not self.mqttc.is_connected():
+                self.core.log.error(f"MQTT未连接，无法发布消息到 {topic}")
+                return False
+
+            # 确保消息是字符串或字节
+            if isinstance(message, (dict, list)):
+                import json
+                message = json.dumps(message)
+            elif not isinstance(message, (str, bytes)):
+                message = str(message)
+
+            result = self.mqttc.publish(topic, message, qos)
+
+            if result.rc == 0:
+                self.core.log.debug(f"MQTT消息发送成功: {topic}")
+                return True
+            else:
+                self.core.log.error(f"MQTT消息发送失败: {topic}, rc={result.rc}")
+                return False
+
+        except Exception as e:
+            self.core.log.error(f"MQTT发布异常: {topic}, 错误: {e}")
+            return False
 
     def keepalive(self, state: bool = True):
         if state:
@@ -241,19 +284,78 @@ class MQTT:
 
     # 更新状态数据
     def update_state_data(self, data, topic, type):
-        match type:
-            case "number":
-                state_topic = f"{self.prefix}/number/{self.device_name}_{topic}/state"
-                self.publish(state_topic, str(data))
-            case "sensor":
-                state_topic = f"{self.prefix}/sensor/{self.device_name}_{topic}/state"
-                self.publish(state_topic, data)
-            case "light":
-                state_topic = f"{self.prefix}/light/{self.device_name}_{topic}/state"
-                self.publish(state_topic, data)
-            case "switch":
-                state_topic = f"{self.prefix}/switch/{self.device_name}_{topic}/state"
-                self.publish(state_topic, data)
+        """
+        更新设备状态数据
+
+        Args:
+            data: 状态数据
+            topic: 主题名称（实体ID）
+            type: 类型 (number/sensor/light/switch)
+
+        Returns:
+            bool: 更新成功返回True，失败返回False
+        """
+        try:
+            # 验证类型
+            valid_types = ["number", "sensor", "light", "switch"]
+            if type not in valid_types:
+                self.core.log.error(f"无效的类型: {type}, 必须是 {valid_types} 之一")
+                return False
+
+            # 构建状态主题
+            state_topic = f"{self.prefix}/{type}/{self.device_name}_{topic}/state"
+
+            # 根据类型处理数据
+            match type:
+                case "number":
+                    # 数字类型转换为字符串
+                    if not isinstance(data, (int, float, str)):
+                        self.core.log.error(f"number类型数据必须是数字: {data}")
+                        return False
+                    payload = str(data)
+
+                case "sensor":
+                    # 传感器可以是字符串或JSON
+                    if isinstance(data, (dict, list)):
+                        import json
+                        payload = json.dumps(data)
+                    else:
+                        payload = str(data)
+
+                case "light":
+                    if isinstance(data, dict):
+                        import json
+                        payload = json.dumps(data)
+                    else:
+                        payload = str(data)
+
+                case "switch":
+                    # 开关状态通常是 ON/OFF
+                    if isinstance(data, bool):
+                        payload = "ON" if data else "OFF"
+                    elif isinstance(data, dict):
+                        import json
+                        payload = json.dumps(data)
+                    else:
+                        payload = str(data).upper()
+
+                case _:
+                    # 默认处理（不应该到这里）
+                    payload = str(data)
+
+            # 发布消息
+            result = self.publish(state_topic, payload)
+
+            if result:
+                pass
+            else:
+                self.core.log.warning(f"状态更新失败: {type}/{topic}")
+
+            return result
+
+        except Exception as e:
+            self.core.log.error(f"更新状态数据异常: {type}/{topic}, 错误: {e}")
+            return False
 
 
     def mqtt_subscribe(self, topic):
