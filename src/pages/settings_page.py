@@ -128,31 +128,110 @@ class SettingsPage:
 
     def _create_mqtt_dialog(self) -> ft.AlertDialog:
         """创建MQTT设置对话框"""
-        def create_text_field(label: str, config_key: str, value_type: str = "string"):
-            return ft.TextField(
+
+        # 存储所有输入框的引用
+        text_fields = {}
+
+        def create_text_field(label: str, config_key: str, value_type: str = "string", input_filter=None, icon=None,
+                              password=False):
+
+            text_field = ft.TextField(
                 label=label,
                 value=str(self.logic.get_config(config_key, "")),
-                on_submit=lambda e: self.logic.handle_config_change(
-                    config_key, e.control.value, value_type
-                )
+                input_filter=input_filter,
+                prefix_icon=icon,
+                password=password,  # 是否隐藏密码
+                can_reveal_password=password,  # 如果是密码字段，显示切换按钮
             )
 
+            # 保存到字典中，用于后续保存
+            text_fields[config_key] = {
+                'field': text_field,
+                'value_type': value_type
+            }
+
+            return text_field
+
+        # 为 ha_prefix 和 device_name 创建字母数字过滤器
+        alphanumeric_filter = ft.InputFilter(
+            allow=True,  # 允许匹配模式
+            regex_string=r"[a-zA-Z0-9]",  # 仅允许大小写字母和数字
+            replacement_string="",
+        )
+
+        # 保存所有配置的函数
+        def save_all_configs(e):
+            # 遍历所有输入框并保存
+            for config_key, field_data in text_fields.items():
+                value = field_data['field'].value
+                value_type = field_data['value_type']
+                self.logic.handle_config_change(config_key, value, value_type)
+
+            # 关闭对话框
+            self.gui.page.close(e.control.parent)
+
+            # 显示保存成功提示
+            self.gui.show_snackbar("MQTT设置已保存")
+
         return ft.AlertDialog(
-            title=ft.Text("MQTT设置（每项输入框按回车保存）"),
+            title=ft.Text("MQTT设置"),
             content=ft.Container(
                 content=ft.Column([
-                    create_text_field("HA_MQTT_Broker", "HA_MQTT"),
-                    create_text_field("PORT", "HA_MQTT_port", "int"),
-                    create_text_field("HA_MQTT账户", "username"),
-                    create_text_field("HA_MQTT密码", "password"),
-                    create_text_field("发现前缀", "ha_prefix"),
-                    create_text_field("设备唯一标识符(仅支持英文字符)", "device_name"),
+                    create_text_field(
+                        "MQTT服务器地址",
+                        "HA_MQTT",
+                        icon=ft.Icons.CLOUD_OUTLINED
+                    ),
+                    create_text_field(
+                        "端口",
+                        "HA_MQTT_port",
+                        "int",
+                        ft.NumbersOnlyInputFilter(),
+                        icon=ft.Icons.SETTINGS_ETHERNET
+                    ),
+                    create_text_field(
+                        "MQTT账户",
+                        "username",
+                        icon=ft.Icons.PERSON_OUTLINE
+                    ),
+                    create_text_field(
+                        "MQTT密码",
+                        "password",
+                        icon=ft.Icons.LOCK_OUTLINE,
+                        password=True  # 隐藏密码
+                    ),
+                    create_text_field(
+                        "发现前缀",
+                        "ha_prefix",
+                        input_filter=alphanumeric_filter,
+                        icon=ft.Icons.TAG
+                    ),
+                    create_text_field(
+                        "设备唯一标识符",
+                        "device_name",
+                        input_filter=alphanumeric_filter,
+                        icon=ft.Icons.DEVICES
+                    ),
                 ]),
-                height=300,
+                height=400,
                 width=400,
                 margin=10,
             ),
             actions=[
-                ft.TextButton("返回", on_click=lambda e: self.gui.page.close(e.control.parent))
+                ft.ElevatedButton(
+                    "返回",
+                    on_click=lambda e: self.gui.page.close(e.control.parent),
+                    icon=ft.Icons.ARROW_BACK,
+                    bgcolor=ft.Colors.GREY_700,
+                    color=ft.Colors.WHITE
+                ),
+                ft.ElevatedButton(
+                    "保存",
+                    on_click=save_all_configs,
+                    icon=ft.Icons.SAVE,
+                    bgcolor=ft.Colors.BLUE,
+                    color=ft.Colors.WHITE
+                ),
             ],
+            actions_alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         )
