@@ -76,6 +76,40 @@ class HomePage:
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
+    def update_status(self):
+        # 更新运行状态点
+        if self.gui.is_starting:
+            self.running_dot.color = ft.Colors.ORANGE
+            self.running_text.value = "启动中..."
+        elif self.gui.is_stopping:
+            self.running_dot.color = ft.Colors.YELLOW
+            self.running_text.value = "停止中..."
+        elif self.gui.is_running:
+            self.running_dot.color = ft.Colors.GREEN
+            self.running_text.value = "运行中"
+        else:
+            self.running_dot.color = ft.Colors.GREY
+            self.running_text.value = "未运行"
+
+
+        # 更新MQTT状态点
+        if hasattr(self.gui.core, 'mqtt') and self.gui.core.mqtt and hasattr(self.gui.core.mqtt, 'mqttc'):
+            if self.gui.core.mqtt.mqttc.is_connected():
+                self.mqtt_dot.color = ft.Colors.GREEN
+                self.mqtt_text.value = "MQTT: 已连接"
+            elif self.gui.is_running:
+                self.mqtt_dot.color = ft.Colors.RED
+                self.mqtt_text.value = "MQTT: 未连接"
+            else:
+                self.mqtt_dot.color = ft.Colors.GREY
+                self.mqtt_text.value = "MQTT: 未连接"
+        else:
+            self.mqtt_dot.color = ft.Colors.GREY
+            self.mqtt_text.value = "MQTT: 未初始化"
+
+        self.gui.page.update()
+
+
     def _create_status_panel(self) -> ft.Container:
         """创建状态显示面板(两行布局，带状态点)"""
         # 运行状态点
@@ -104,39 +138,12 @@ class HomePage:
             size=12,
         )
 
-        # 状态更新函数
-        def update_status():
-            # 更新运行状态点
-            if self.gui.is_running:
-                self.running_dot.color = ft.Colors.GREEN
-                self.running_text.value = "运行中"
-            else:
-                self.running_dot.color = ft.Colors.GREY
-                self.running_text.value = "未运行"
-
-            # 更新MQTT状态点
-            if hasattr(self.gui.core, 'mqtt') and self.gui.core.mqtt and hasattr(self.gui.core.mqtt, 'mqttc'):
-                if self.gui.core.mqtt.mqttc.is_connected():
-                    self.mqtt_dot.color = ft.Colors.GREEN
-                    self.mqtt_text.value = "MQTT: 已连接"
-                elif self.gui.is_running:
-                    self.mqtt_dot.color = ft.Colors.RED
-                    self.mqtt_text.value = "MQTT: 未连接"
-                else:
-                    self.mqtt_dot.color = ft.Colors.GREY
-                    self.mqtt_text.value = "MQTT: 未连接"
-            else:
-                self.mqtt_dot.color = ft.Colors.GREY
-                self.mqtt_text.value = "MQTT: 未初始化"
-
-            self.gui.page.update()
-
         # 设置定时更新
-        self.gui.page.on_resize = lambda e: update_status()
-        self.gui.page.on_scroll = lambda e: update_status()
+        self.gui.page.on_resize = lambda e: self.update_status()
+        self.gui.page.on_scroll = lambda e: self.update_status()
 
         # 初始更新
-        update_status()
+        self.update_status()
 
         return ft.Container(
             content=ft.Row(

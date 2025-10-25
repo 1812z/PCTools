@@ -55,12 +55,14 @@ class GUILogic:
 
         try:
             self.is_starting = True
+            self.core.gui.home_page.update_status()
             self._show_message("启动进程...")
 
             if self.core:
                 self.core.start()
                 self.is_running = True
                 self.is_starting = False
+                self.core.gui.home_page.update_status()
                 self._show_message("服务启动成功")
                 return True
 
@@ -78,6 +80,7 @@ class GUILogic:
         """停止服务"""
         if self.is_running and not self.is_starting and not self.is_stopping:
             self.is_stopping = True
+            self.core.gui.home_page.update_status()
             self._show_message("停止进程中...")
 
             try:
@@ -86,10 +89,12 @@ class GUILogic:
                 self._show_message("成功停止所有进程")
                 self.core.log.info("成功停止所有进程")
                 self.is_stopping = False
+                self.core.gui.home_page.update_status()
                 return True
             except Exception as e:
                 self.core.log.error(f"停止服务失败: {e}")
                 self.is_stopping = False
+                self.core.gui.home_page.update_status()
                 return False
 
         elif not self.is_starting and not self.is_stopping:

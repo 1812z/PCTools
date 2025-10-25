@@ -38,6 +38,7 @@ class MQTT:
             self.core.log.error(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")
         else:
             self.core.log.info(f"MQTT成功连接到: {self.broker}:{self.port}")
+            self.core.gui.home_page.update_status()
             if self.subscribed_topics:
                 self.re_subscribe()
 
