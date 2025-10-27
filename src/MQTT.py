@@ -17,13 +17,16 @@ class MQTT:
         self.mqttc.on_connect_fail = self.on_connect_fail
         self.mqttc.on_disconnect = self.on_disconnect
 
-        self.connect_broker()
+        self.status = [-1, "init"]
 
     def on_disconnect(self, *args):
         if args[3] == "Normal disconnection":
             self.core.log.info(f"MQTT断开连接")
+            self.status = [0, f"MQTT断开连接"]
         else:
             self.core.log.error(f"MQTT断开连接 | 原因: {args[3]}")
+            self.status = [1, f"MQTT断开连接| 原因: {args[3]}"]
+        self.core.gui.logic.update_home_status()
 
     def read_config(self):
         self.device_name = self.core.config.get_config("device_name")
@@ -38,12 +41,15 @@ class MQTT:
             self.core.log.error(f"连接MQTT服务器失败: {reason_code} 尝试重新连接..")
         else:
             self.core.log.info(f"MQTT成功连接到: {self.broker}:{self.port}")
-            self.core.gui.home_page.update_status()
+            self.status = [0, f"connected to {self.broker}:{self.port}"]
+            self.core.gui.logic.update_home_status()
             if self.subscribed_topics:
                 self.re_subscribe()
 
     def on_connect_fail(self, reason_code):
         self.core.log.error(f"连接 {self.broker}:{self.port} 失败,错误码:{reason_code},请检查MQTT配置")
+        self.status = [1, f"连接 {self.broker}:{self.port} 失败,错误码:{reason_code}"]
+        self.core.gui.logic.update_home_status()
 
 
     def on_message(self, client, userdata, data):

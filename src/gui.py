@@ -44,7 +44,6 @@ class GUI:
 
         # 设置UI回调
         self.logic.set_ui_callbacks(
-            show_snackbar=self.show_snackbar,
             update_ui=self._update_page
         )
 
@@ -74,6 +73,10 @@ class GUI:
         try:
             if self.page:
                 self.page.window.close()
+        except RuntimeError as e:
+        # 忽略事件循环相关的错误
+            if "Event loop is closed" not in str(e):
+                self.logic.log_error(f"关闭窗口失败: {e}")
         except Exception as e:
             self.logic.log_error(f"关闭窗口失败: {e}")
 

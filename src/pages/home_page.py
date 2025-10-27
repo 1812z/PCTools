@@ -99,10 +99,11 @@ class HomePage:
                 self.mqtt_text.value = "MQTT: 已连接"
             elif self.gui.is_running:
                 self.mqtt_dot.color = ft.Colors.RED
-                self.mqtt_text.value = "MQTT: 未连接"
+                self.mqtt_text.value = "MQTT: 连接失败"
             else:
                 self.mqtt_dot.color = ft.Colors.GREY
                 self.mqtt_text.value = "MQTT: 未连接"
+            self.mqtt_text.tooltip = f"MQTT: {self.gui.core.mqtt.status}"
         else:
             self.mqtt_dot.color = ft.Colors.GREY
             self.mqtt_text.value = "MQTT: 未初始化"
@@ -136,6 +137,7 @@ class HomePage:
         self.mqtt_text = ft.Text(
             "MQTT: 未连接",
             size=12,
+            tooltip=""
         )
 
         # 设置定时更新
