@@ -1,6 +1,6 @@
 {
     "name": "显示器控制",
-    "version": "2.0",
+    "version": "2.1",
     "author": "1812z",
     "description": "通过Twinkle Tray实现控制显示器亮度，电源，支持自定义DDC/CI命令",
     "dependencies": []

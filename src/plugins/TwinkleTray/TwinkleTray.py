@@ -48,7 +48,7 @@ class TwinkleTray:
         }
         self.config = []
         self.generate_entity()
-        self.read_monitor_power_type = self.core.set_plugin_config("TwinkleTray", "read_monitor_power_type", 2)
+        self.read_monitor_power_type = self.core.get_plugin_config("TwinkleTray", "read_monitor_power_type", 2)
 
     def generate_entity(self):
         monitors = self.get_monitors_state()

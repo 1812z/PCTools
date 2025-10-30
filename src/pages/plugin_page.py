@@ -128,7 +128,7 @@ class PluginPage:
             icon=ft.Icons.SETTINGS,
             icon_size=20,
             tooltip="插件设置",
-            disabled=not (available and has_settings),
+            disabled=not has_settings,
             on_click=lambda e, name=plugin_name: self._open_plugin_settings(e, name),
             icon_color=ft.Colors.BLUE if (available and has_settings) else ft.Colors.GREY
         )
@@ -176,8 +176,6 @@ class PluginPage:
                 title=ft.Text("插件设置"),
                 content=ft.Container(
                     content=content,
-                    height=300,
-                    width=400,
                     margin=5,
                 ),
                 actions=[

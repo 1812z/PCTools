@@ -137,7 +137,8 @@ class HomePage:
         self.mqtt_text = ft.Text(
             "MQTT: 未连接",
             size=12,
-            tooltip=""
+            tooltip="",
+            selection_cursor_color=ft.Colors.GREY
         )
 
         # 设置定时更新

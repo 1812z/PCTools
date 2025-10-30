@@ -177,8 +177,19 @@ class WindowListener:
                     width=250,
                     on_submit=self.handle_url_input("post_secret_key"),
                     value=self.core.get_plugin_config("WindowListener.py", "post_secret_key", "")
-                )
+                ),
+                ft.Text("应用数据上报功能使用说明:", weight=ft.FontWeight.BOLD, size=14),
+                ft.Text(
+                    "• 用于接入Runtime Tracker\n"
+                    "• 自动同步软件名称到后端\n",
+                    size=12,
+                    color=ft.Colors.GREY_700,
+                ),
+                ft.TextButton(
+                    "Runtime Tracker",
+                    animate_size=20,
+                    on_click=lambda e: self.core.gui.page.launch_url('https://github.com/1812z/RunTime_Tracker')
+                ),
             ],
-            alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         )
