@@ -145,14 +145,14 @@ class GUI:
         """退出程序"""
         try:
             if self.logic.is_starting:
-                self.core.show_toast("正在启动中，请稍后再试")
+                self.core.show_toast("退出错误", "正在启动中，请稍后再试")
                 return
             if self.logic.is_stopping:
-                self.core.show_toast("正在停止中，请稍后再试")
+                self.core.show_toast("退出错误", "正在停止中，请稍后再试")
                 return
             if self.logic.is_running:
+                self.core.show_toast("退出", "正在停止服务，即将退出")
                 self.logic.stop_service()
-                self.core.show_toast("正在停止服务，即将退出")
             self.close_windows()
             if self.tray:
                 self.tray.stop()
