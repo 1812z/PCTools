@@ -425,7 +425,7 @@ class Core:
         plugin_name = self._normalize_module_name(plugin_name)
 
         if plugin_name not in self.plugins["metadata"]:
-            self.log.warning(f"⚠️ 插件 {plugin_name} 不存在")
+            self.log.warning(f"⚠️ 获取配置出错，插件 {plugin_name} 不存在")
             return default
 
         metadata = self.plugins["metadata"][plugin_name]
@@ -445,7 +445,7 @@ class Core:
         plugin_name = self._normalize_module_name(plugin_name)
 
         if plugin_name not in self.plugins["metadata"]:
-            self.log.warning(f"⚠️ 插件 {plugin_name} 不存在")
+            self.log.warning(f"⚠️ 获取配置出错，插件 {plugin_name} 不存在")
             return False
 
         metadata = self.plugins["metadata"][plugin_name]
