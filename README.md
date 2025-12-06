@@ -31,6 +31,7 @@
 
 ### HA界面展示:
 1.另类副屏(页面示例见example/dashboard.txt):  
+推荐使用 [HA_Helper](https://github.com/1812z/Ha_Helper)控制手机屏幕开关，实现人来亮屏人走息屏等  
 <img src=".github\images\1743859715274.jpg" alt="图片" width="400" height="250" />  
 2.主页面:  
 <img src=".github\images\image.png" alt="手机视图" height="500"/>
