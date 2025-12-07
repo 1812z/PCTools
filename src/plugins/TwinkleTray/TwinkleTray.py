@@ -106,10 +106,7 @@ class TwinkleTray:
                         self.handle_light_command(client, user_data, message, num)
                 )
 
-                # 设置当前亮度状态
-                brightness = info.get("Brightness", 50)
-                brightness_255 = int(brightness * 255 / 100)
-                light.brightness(brightness_255)
+                light.write_config()
 
                 self.monitor_lights[monitor_num] = light
 
@@ -208,6 +205,7 @@ class TwinkleTray:
                 data = json.loads(payload)
 
                 if "state" in data and data["state"] == "OFF":
+                    self.monitor_lights[monitor_num].off()
                     # 显示器关机方案
                     power_type = self.read_monitor_power_type
                     match power_type:
@@ -226,6 +224,7 @@ class TwinkleTray:
                             subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
                             self.log.info(f"显示器 {monitor_num_key} 关机")
                 elif "state" in data and data["state"] == "ON":
+                    self.monitor_lights[monitor_num].on()
                     # 唤醒显示器
                     self.wake_up_screen()
                     self.log.info(f"唤醒显示器 {monitor_num_key}")
