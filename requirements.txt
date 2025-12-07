@@ -1,9 +1,9 @@
-ha-mqtt-discoverable
+ha-mqtt-discoverable @ git+https://github.com/1812z/ha-mqtt-discoverable.git@main
 Flask==3.1.2
 flet==0.28.3
 opencv-python==4.10.0.84
 paho-mqtt==2.1.0
-pillow==10.3.0
+pillow==12.0.0
 mss==10.1.0
 pycaw==20251023
 pystray==0.19.5
