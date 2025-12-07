@@ -1,6 +1,8 @@
 import time
 import keyboard
 import flet as ft
+from ha_mqtt_discoverable import Settings
+from ha_mqtt_discoverable.sensors import Button, ButtonInfo, Number, NumberInfo
 
 
 class KeySim:
@@ -9,22 +11,6 @@ class KeySim:
         self.click_count = 1  # 默认点击次数
         self.sleep_time = 0.1  # 默认延迟时间（秒）
         self.custom_keys = self.core.get_plugin_config("KeySim", "custom_keys", [])
-
-        # 预设按键
-        self.config = [
-            {"name": "按键-播放/暂停", "entity_type": "button", "entity_id": "play_pause", "icon": "mdi:play-pause"},
-            {"name": "按键-上一曲", "entity_type": "button", "entity_id": "prev_track", "icon": "mdi:skip-previous"},
-            {"name": "按键-下一曲", "entity_type": "button", "entity_id": "next_track", "icon": "mdi:skip-next"},
-            {"name": "按键-音量增加", "entity_type": "button", "entity_id": "volume_up", "icon": "mdi:volume-plus"},
-            {"name": "按键-音量减少", "entity_type": "button", "entity_id": "volume_down", "icon": "mdi:volume-minus"},
-            {"name": "按键-上", "entity_type": "button", "entity_id": "up", "icon": "mdi:arrow-up"},
-            {"name": "按键-下", "entity_type": "button", "entity_id": "down", "icon": "mdi:arrow-down"},
-            {"name": "按键-左", "entity_type": "button", "entity_id": "left", "icon": "mdi:arrow-left"},
-            {"name": "按键-右", "entity_type": "button", "entity_id": "right", "icon": "mdi:arrow-right"},
-            {"name": "按键-空格", "entity_type": "button", "entity_id": "space", "icon": "mdi:keyboard-space"},
-            {"name": "按键点击次数", "entity_type": "number", "entity_id": "click_count", "icon": "mdi:counter"},
-            {"name": "按键等待时长", "entity_type": "number", "entity_id": "sleep_time", "icon": "mdi:timer"}
-        ]
 
         # 固定键映射
         self.key_map = {
@@ -44,17 +30,118 @@ class KeySim:
         for k in self.custom_keys:
             self.key_map[k] = k
 
-        # 自定义按键发现
-        for key in self.custom_keys:
-            if not any(cfg.get("entity_id") == key for cfg in self.config):
-                self.config.append({
-                    "name": f"自定义按键-{key}",
-                    "entity_type": "button",
-                    "entity_id": key,
-                    "icon": "mdi:keyboard-outline"
-                })
+        # 存储所有MQTT实体
+        self.buttons = {}
+        self.numbers = {}
 
         self.key_list_view = ft.ListView(spacing=8, padding=7, width=580, height=170, auto_scroll=True)
+
+    def setup_entities(self):
+        """设置MQTT实体"""
+        try:
+            # 获取MQTT配置
+            mqtt_settings = self.core.mqtt.get_mqtt_settings()
+            device_info = self.core.mqtt.get_device_info()
+
+            # 预设按键配置
+            button_configs = [
+                {"name": "play_pause", "display_name": "按键-播放/暂停", "icon": "mdi:play-pause"},
+                {"name": "prev_track", "display_name": "按键-上一曲", "icon": "mdi:skip-previous"},
+                {"name": "next_track", "display_name": "按键-下一曲", "icon": "mdi:skip-next"},
+                {"name": "volume_up", "display_name": "按键-音量增加", "icon": "mdi:volume-plus"},
+                {"name": "volume_down", "display_name": "按键-音量减少", "icon": "mdi:volume-minus"},
+                {"name": "up", "display_name": "按键-上", "icon": "mdi:arrow-up"},
+                {"name": "down", "display_name": "按键-下", "icon": "mdi:arrow-down"},
+                {"name": "left", "display_name": "按键-左", "icon": "mdi:arrow-left"},
+                {"name": "right", "display_name": "按键-右", "icon": "mdi:arrow-right"},
+                {"name": "space", "display_name": "按键-空格", "icon": "mdi:keyboard-space"}
+            ]
+
+            # 创建预设按钮
+            for config in button_configs:
+                button_info = ButtonInfo(
+                    display_name=config["display_name"],
+                    name=config["name"],
+                    unique_id=f"{self.core.mqtt.device_name}_KeySim_{config['name']}",
+                    device=device_info,
+                    icon=config["icon"]
+                )
+
+                settings = Settings(mqtt=mqtt_settings, entity=button_info)
+                self.buttons[config["name"]] = Button(settings, command_callback=lambda c, u, m, key=config["name"]: self.handle_button_press(key))
+                self.buttons[config["name"]].write_config()
+
+            # 创建自定义按键
+            for key in self.custom_keys:
+                button_info = ButtonInfo(
+                    display_name=f"自定义按键-{key}",
+                    name=f"custom_{key}",
+                    unique_id=f"{self.core.mqtt.device_name}_KeySim_custom_{key}",
+                    device=device_info,
+                    icon="mdi:keyboard-outline"
+                )
+
+                settings = Settings(mqtt=mqtt_settings, entity=button_info)
+                self.buttons[key] = Button(settings, command_callback=lambda c, u, m, k=key: self.handle_button_press(k))
+                self.buttons[key].write_config()
+
+            # 创建数字输入实体 - 点击次数
+            click_count_info = NumberInfo(
+                display_name="按键点击次数",
+                name="click_count",
+                unique_id=f"{self.core.mqtt.device_name}_KeySim_click_count",
+                device=device_info,
+                icon="mdi:counter",
+                min=1,
+                max=50,
+                step=1
+            )
+
+            settings = Settings(mqtt=mqtt_settings, entity=click_count_info)
+            self.numbers["click_count"] = Number(settings, command_callback=self.handle_click_count)
+            self.numbers["click_count"].set_value(self.click_count)
+
+            # 创建数字输入实体 - 等待时长
+            sleep_time_info = NumberInfo(
+                display_name="按键等待时长",
+                name="sleep_time",
+                unique_id=f"{self.core.mqtt.device_name}_KeySim_sleep_time",
+                device=device_info,
+                icon="mdi:timer",
+                min=0.0,
+                max=10.0,
+                step=0.1
+            )
+
+            settings = Settings(mqtt=mqtt_settings, entity=sleep_time_info)
+            self.numbers["sleep_time"] = Number(settings, command_callback=self.handle_sleep_time)
+            self.numbers["sleep_time"].set_value(self.sleep_time)
+
+            self.core.log.info("KeySim MQTT实体创建成功")
+        except Exception as e:
+            self.core.log.error(f"KeySim MQTT设置失败: {e}")
+
+    def handle_button_press(self, key_name):
+        """处理按钮按下"""
+        self.core.log.info(f"按键触发: {key_name}")
+        time.sleep(self.sleep_time)
+        self.press_key(key_name)
+
+    def handle_click_count(self, client, user_data, message):
+        """处理点击次数变化"""
+        try:
+            count = int(float(message.payload.decode()))
+            self.set_click_count(count)
+        except Exception as e:
+            self.core.log.error(f"处理点击次数失败: {e}")
+
+    def handle_sleep_time(self, client, user_data, message):
+        """处理等待时长变化"""
+        try:
+            time_val = float(message.payload.decode())
+            self.set_sleep_time(time_val)
+        except Exception as e:
+            self.core.log.error(f"处理等待时长失败: {e}")
 
     # --- 核心功能 ---
     def press_key(self, key_name: str) -> bool:
@@ -86,7 +173,29 @@ class KeySim:
             self.custom_keys.append(key)
             self.core.set_plugin_config("KeySim", "custom_keys", self.custom_keys)
             self.key_map[key] = key
-            self.core.log.info(f"新增自定义按键: {key}")
+
+            # 动态创建MQTT按钮实体
+            try:
+                mqtt_settings = self.core.mqtt.get_mqtt_settings()
+                device_info = self.core.mqtt.get_device_info(
+                    plugin_name="KeySim",
+                    model="PCTools KeySim"
+                )
+
+                button_info = ButtonInfo(
+                    display_name=f"自定义按键-{key}",
+                    name=f"custom_{key}",
+                    unique_id=f"{self.core.mqtt.device_name}_KeySim_custom_{key}",
+                    device=device_info,
+                    icon="mdi:keyboard-outline"
+                )
+
+                settings = Settings(mqtt=mqtt_settings, entity=button_info)
+                self.buttons[key] = Button(settings, command_callback=lambda c, u, m, k=key: self.handle_button_press(k))
+
+                self.core.log.info(f"新增自定义按键: {key}")
+            except Exception as e:
+                self.core.log.error(f"创建自定义按键MQTT实体失败: {e}")
         else:
             self.core.log.info(f"按键 {key} 已存在或无效")
 
@@ -96,17 +205,12 @@ class KeySim:
             self.custom_keys.remove(key)
             self.core.set_plugin_config("KeySim", "custom_keys", self.custom_keys)
             self.key_map.pop(key, None)
-            self.core.log.info(f"已删除按键: {key}")
 
-    def handle_mqtt(self, topic, data):
-        """MQTT 命令分流"""
-        if topic == "click_count":
-            self.set_click_count(int(data))
-        elif topic == "sleep_time":
-            self.set_sleep_time(float(data))
-        else:
-            time.sleep(self.sleep_time)
-            self.press_key(topic)
+            # 删除MQTT实体
+            if key in self.buttons:
+                del self.buttons[key]
+
+            self.core.log.info(f"已删除按键: {key}")
 
     # --- UI 页面 ---
     def setting_page(self, e):

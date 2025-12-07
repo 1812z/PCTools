@@ -8,6 +8,9 @@ import os
 import mss
 import requests
 import flet as ft
+from ha_mqtt_discoverable import Settings
+from ha_mqtt_discoverable.sensors import Select, SelectInfo
+
 app = Flask(__name__)
 select_monitor = 1  # 默认选择第一个显示器
 
@@ -95,14 +98,62 @@ class FlaskApp:
         self.port = port
         self.process = None
         self.core = core
-        self.config = [
-            {
-                "name": "FlaskApp_显示器选择",
-                "entity_type": "number",
-                "entity_id": "index",
-                "icon": "mdi:monitor"
-            }
-        ]
+        self.monitor_select = None
+        self.current_monitor = 1
+
+        # 获取可用的显示器列表
+        self.monitor_options = self.get_monitor_options()
+
+    def get_monitor_options(self):
+        """获取可用的显示器选项列表"""
+        try:
+            with mss.mss() as sct:
+                # monitors[0] 是所有显示器的组合，从1开始是真实显示器
+                monitor_count = len(sct.monitors) - 1
+                # 返回显示器编号列表，如 ["1", "2", "3"]
+                return [str(i) for i in range(1, monitor_count + 1)]
+        except Exception as e:
+            self.core.log.error(f"获取显示器列表失败: {e}")
+            return ["1"]  # 默认至少返回一个显示器
+
+    def setup_entities(self):
+        """设置MQTT实体"""
+        try:
+            # 获取MQTT配置
+            mqtt_settings = self.core.mqtt.get_mqtt_settings()
+            device_info = self.core.mqtt.get_device_info(
+                plugin_name="FlaskApp",
+                model="PCTools FlaskApp"
+            )
+
+            # 创建显示器选择下拉框
+            select_info = SelectInfo(
+                name="monitor_select",
+                unique_id=f"{self.core.mqtt.device_name}_FlaskApp_monitor_select",
+                device=device_info,
+                icon="mdi:monitor",
+                options=self.monitor_options
+            )
+            select_info.display_name = "显示器选择"
+
+            settings = Settings(mqtt=mqtt_settings, entity=select_info)
+            self.monitor_select = Select(settings, command_callback=self.handle_monitor_change)
+
+            # 设置初始选项
+            self.monitor_select.select_option(str(self.current_monitor))
+
+            self.core.log.info(f"FlaskApp MQTT实体创建成功，可用显示器: {self.monitor_options}")
+        except Exception as e:
+            self.core.log.error(f"FlaskApp MQTT设置失败: {e}")
+
+    def handle_monitor_change(self, client, user_data, message):
+        """处理显示器选择变化"""
+        try:
+            selected_monitor = message.payload.decode()
+            monitor_index = int(selected_monitor)
+            self.change_monitor(monitor_index)
+        except Exception as e:
+            self.core.log.error(f"处理显示器选择失败: {e}")
 
     def start(self):
         if self.process is None:
@@ -117,7 +168,6 @@ class FlaskApp:
                 self.core.log.info(f"Flask进程启动 http://{web_path}:{self.port}，帧率: {fps}")
             except Exception as e:
                 self.core.log.error(f"Flask进程启动失败: {e}")
-        self.core.mqtt.update_state_data(1, "FlaskApp_index", "number")
 
     def stop(self):
         if self.process is not None:
@@ -127,25 +177,22 @@ class FlaskApp:
             self.core.log.debug("Flask进程停止")
 
     def change_monitor(self, index):
-        url = f"http://localhost:5000/set_monitor/{index}"
+        url = f"http://localhost:{self.port}/set_monitor/{index}"
         try:
             response = requests.get(url)
             data = response.json()
             if data['success']:
                 global select_monitor
                 select_monitor = index
+                self.current_monitor = index
                 self.core.log.info(f"成功切换到显示器 {index}")
-                self.update_state()
+                # 更新Select实体的当前选项
+                if self.monitor_select:
+                    self.monitor_select.select_option(str(index))
             else:
                 self.core.log.error(f"错误: {data['message']}")
         except requests.exceptions.RequestException as e:
             self.core.log.error(f"请求失败: {e}")
-
-    def handle_mqtt(self, entity, payload):
-        self.change_monitor(int(payload))
-
-    def update_state(self):
-        self.core.mqtt.update_state_data(select_monitor, "FlaskApp_index", "number")
 
     def setting_page(self, e):
         """设置页面"""

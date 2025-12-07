@@ -1,6 +1,8 @@
 import keyboard
 import time
 import flet as ft
+from ha_mqtt_discoverable import Settings
+from ha_mqtt_discoverable.sensors import BinarySensor, BinarySensorInfo
 
 
 class Hotkey:
@@ -13,32 +15,62 @@ class Hotkey:
         self.suppress = self.core.get_plugin_config("Hotkey", "Hotkey_suppress", False)
         self.hotkeys = self.core.get_plugin_config("Hotkey", "hotkeys", [])  # 从配置中读取快捷键列表
 
-        self.device_name = self.core.config.get_config("device_name")
-        self.prefix = self.core.config.get_config("ha_prefix")
+        # 存储所有MQTT二进制传感器
+        self.sensors = {}
 
         self.hotkey_view = ft.ListView(height=320, width=600, spacing=10)
         self._page_ready = False  # 添加标志，表示控件是否已添加到页面
+
+    def setup_entities(self):
+        """设置MQTT实体"""
+        try:
+            # 获取MQTT配置
+            mqtt_settings = self.core.mqtt.get_mqtt_settings()
+            device_info = self.core.mqtt.get_device_info()
+
+            # 为每个已保存的快捷键创建二进制传感器
+            for hotkey in self.hotkeys:
+                self.create_hotkey_sensor(hotkey, mqtt_settings, device_info)
+
+            self.core.log.info(f"Hotkey MQTT实体创建成功，共 {len(self.sensors)} 个快捷键")
+        except Exception as e:
+            self.core.log.error(f"Hotkey MQTT设置失败: {e}")
+
+    def create_hotkey_sensor(self, hotkey, mqtt_settings=None, device_info=None):
+        """创建单个快捷键的二进制传感器"""
+        try:
+            # 如果没有提供配置，则获取
+            if mqtt_settings is None:
+                mqtt_settings = self.core.mqtt.get_mqtt_settings()
+            if device_info is None:
+                device_info = self.core.mqtt.get_device_info(
+                    plugin_name="Hotkey",
+                    model="PCTools Hotkey"
+                )
+
+            # 生成唯一ID（将+替换为-）
+            safe_id = hotkey.replace("+", "_")
+
+            sensor_info = BinarySensorInfo(
+                name=f"hotkey_{safe_id}",
+                unique_id=f"{self.core.mqtt.device_name}_Hotkey_{safe_id}",
+                device=device_info,
+                icon="mdi:keyboard"
+            )
+            sensor_info.display_name = f"快捷键-{hotkey}"
+
+            settings = Settings(mqtt=mqtt_settings, entity=sensor_info)
+            self.sensors[hotkey] = BinarySensor(settings)
+            self.sensors[hotkey].off()  # 初始化为OFF状态
+
+            self.core.log.info(f"创建快捷键传感器: {hotkey}")
+        except Exception as e:
+            self.core.log.error(f"创建快捷键传感器失败 {hotkey}: {e}")
 
     def show_toast(self, title, message):
         """显示通知"""
         if hasattr(self.core, 'show_toast'):
             self.core.show_toast("Hotkey", title, message)
-
-    def send_discovery(self, hotkeys):
-        info = "快捷键发现: \n"
-        for hotkey in hotkeys:
-            name_id = "hotkey" + hotkey.replace("+", "-")
-            self.core.mqtt.send_mqtt_discovery(name=hotkey, entity_id=name_id, entity_type="binary_sensor")
-            info = info + hotkey
-        time.sleep(0.5)
-        self.init_binary_sensor(hotkeys)
-        return info
-
-    def init_binary_sensor(self, hotkeys):
-        for hotkey in hotkeys:
-            hotkey: str
-            topic = f"{self.prefix}/binary_sensor/{self.device_name}_Hotkey_{hotkey.replace('+', '-')}/state"
-            self.core.mqtt.publish(topic, "OFF")
 
     def save_hotkey(self, hotkey):
         """保存快捷键到配置"""
@@ -47,6 +79,10 @@ class Hotkey:
             existing_hotkeys.append(hotkey)
             self.core.set_plugin_config("Hotkey", "hotkeys", existing_hotkeys)
             self.hotkeys = existing_hotkeys  # 更新本地缓存
+
+            # 动态创建MQTT传感器
+            self.create_hotkey_sensor(hotkey)
+
             self.core.log.info(f"保存快捷键: {hotkey}")
         else:
             self.core.log.info(f"快捷键 '{hotkey}' 已存在，未保存。")
@@ -79,13 +115,12 @@ class Hotkey:
         self.core.log.info(f"触发快捷键: {h}")
         if self.hotkey_notify:
             self.show_toast("Hotkey", "触发快捷键:" + h)
-        topic = f"{self.prefix}/binary_sensor/{self.device_name}_hotkey{h.replace('+', '-')}/state"
-        self.core.mqtt.publish(topic, "ON")
-        time.sleep(1)
-        self.core.mqtt.publish(topic, "OFF")
 
-    def discovery(self):
-        self.send_discovery(self.hotkeys)
+        # 使用新的传感器更新状态
+        if h in self.sensors:
+            self.sensors[h].on()
+            time.sleep(1)
+            self.sensors[h].off()
 
     def start(self):
         if not self.listening:
@@ -172,6 +207,11 @@ class Hotkey:
             updated_hotkeys = [h for h in self.hotkeys if h != hotkey]
             self.core.set_plugin_config("Hotkey", "hotkeys", updated_hotkeys)
             self.hotkeys = updated_hotkeys  # 更新本地缓存
+
+            # 删除MQTT传感器
+            if hotkey in self.sensors:
+                del self.sensors[hotkey]
+
             self.update_hotkey_list(e)
             self.core.show_toast("Hotkey", f"已删除快捷键: {hotkey}")
 

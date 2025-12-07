@@ -1,3 +1,4 @@
+ha-mqtt-discoverable
 Flask==3.1.2
 flet==0.28.3
 opencv-python==4.10.0.84

@@ -93,8 +93,8 @@ class HomePage:
 
 
         # 更新MQTT状态点
-        if hasattr(self.gui.core, 'mqtt') and self.gui.core.mqtt and hasattr(self.gui.core.mqtt, 'mqttc'):
-            if self.gui.core.mqtt.mqttc.is_connected():
+        if hasattr(self.gui.core, 'mqtt') and self.gui.core.mqtt and hasattr(self.gui.core.mqtt, 'mqtt_client'):
+            if self.gui.core.mqtt.mqtt_client.is_connected():
                 self.mqtt_dot.color = ft.Colors.GREEN
                 self.mqtt_text.value = "MQTT: 已连接"
             elif self.gui.is_running:

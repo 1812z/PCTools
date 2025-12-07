@@ -511,22 +511,9 @@ class Core:
             try:
                 module = self.plugins["instances"][module_name]
 
-                if hasattr(module, 'config'):
-                    c = module.config
-                    for entity in c:
-                        icon = entity.get("icon", None)
-                        self.mqtt.send_mqtt_discovery(
-                            entity_type=entity["entity_type"],
-                            name=entity["name"],
-                            entity_id=f"{module_name}_{entity['entity_id']}",
-                            icon=icon
-                        )
-                        sleep(0.1)
-                    self.log.debug(f"{module_name} 成功新增 {len(c)} 个主题")
-
-                if hasattr(module, 'discovery'):
-                    module.discovery()
-                    self.log.info(f"{module_name} 执行自定义发现")
+                if hasattr(module, 'setup_entities'):
+                    module.setup_entities()
+                    self.log.info(f"{module_name} 执行实体发现")
 
             except Exception as e:
                 self.log.error(f"❌ 插件 {module_name} 实体新增失败: {str(e)}")
