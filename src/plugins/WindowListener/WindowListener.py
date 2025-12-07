@@ -34,10 +34,7 @@ class WindowListener:
         """设置 MQTT 实体"""
         try:
             mqtt_settings = self.core.mqtt.get_mqtt_settings()
-            device_info = self.core.mqtt.get_device_info(
-                plugin_name="WindowListener",
-                model="PCTools WindowListener"
-            )
+            device_info = self.core.mqtt.get_device_info()
 
             # 创建窗口标题传感器
             title_info = SensorInfo(
