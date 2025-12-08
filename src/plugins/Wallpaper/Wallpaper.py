@@ -31,10 +31,7 @@ class Wallpaper:
         """设置 MQTT 实体"""
         try:
             mqtt_settings = self.core.mqtt.get_mqtt_settings()
-            device_info = self.core.mqtt.get_device_info(
-                plugin_name="Wallpaper",
-                model="PCTools Wallpaper Engine"
-            )
+            device_info = self.core.mqtt.get_device_info()
 
             # 检查 Wallpaper Engine 是否安装
             if not self.exe_path:
@@ -78,7 +75,7 @@ class Wallpaper:
                     'attr': 'unmute_button'
                 },
                 {
-                    'name': 'next_wallpaper',
+                    'name': 'next',
                     'display_name': '下一个壁纸',
                     'icon': 'mdi:skip-next',
                     'command': 'nextWallpaper',
