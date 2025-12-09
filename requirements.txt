@@ -1,4 +1,4 @@
-ha-mqtt-discoverable @ git+https://github.com/1812z/ha-mqtt-discoverable.git@main
+ha-mqtt-discoverable @ git+https://github.com/1812z/ha-mqtt-discoverable.git@test
 Flask==3.1.2
 flet==0.28.3
 opencv-python==4.10.0.84
