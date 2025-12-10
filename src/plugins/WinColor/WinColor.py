@@ -39,8 +39,8 @@ class WinColor:
             # 创建应用深色模式开关
             app_dark_info = SwitchInfo(
                 name="app_dark_mode",
-                unique_id=f"app_dark_mode",
-                object_id=f"app_dark_mode",
+                unique_id=f"{self.core.mqtt.device_name}_app_dark_mode",
+                object_id=f"{self.core.mqtt.device_name}_app_dark_mode",
                 device=device_info,
                 icon="mdi:theme-light-dark",
                 display_name="应用深色模式"
