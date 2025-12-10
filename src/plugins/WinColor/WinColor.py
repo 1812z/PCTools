@@ -59,8 +59,8 @@ class WinColor:
             # 创建系统深色模式开关
             sys_dark_info = SwitchInfo(
                 name="sys_dark_mode",
-                unique_id=f"sys_dark_mode",
-                object_id=f"sys_dark_mode",
+                unique_id=f"{self.core.mqtt.device_name}_sys_dark_mode",
+                object_id=f"{self.core.mqtt.device_name}_sys_dark_mode",
                 device=device_info,
                 icon="mdi:theme-light-dark",
                 display_name="系统深色模式"
