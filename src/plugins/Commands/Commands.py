@@ -70,8 +70,8 @@ class Commands:
                     # 创建按钮实体
                     button_info = ButtonInfo(
                         name=short_id,
-                        unique_id=f"commands_{short_id}",
-                        object_id=f"commands_{short_id}",
+                        unique_id=f"{self.core.mqtt.device_name}_commands_{short_id}",
+                        object_id=f"{self.core.mqtt.device_name}_commands_{short_id}",
                         device=device_info,
                         icon=icon,
                         display_name=filename
