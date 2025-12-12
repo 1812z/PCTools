@@ -1,103 +1,133 @@
-# PCTools
-#### A simple Python program to help Windows integrate with Home Assistant for hardware monitoring, remote control, and other functions.
-点击 [这里](https://github.com/1812z/PCTools/releases/latest) 下载最新版本
-***
-## 内置功能
+# 🖥️ PCTools
 
-- **Aida64数据监控** ：定时更新Aida64选定的传感器数据
-- **远程命令**： 把需要运行的 程序/文件放入commands文件夹，重新运行程序，新的命令会自动同步文件到Ha,支持 `.bat` `.lnk`
-- **Web监控**:
-    - 屏幕截图: `http://127.0.0.1:5000/screenshot.jpg`
-    - 电脑摄像头: `http://127.0.0.1:5000/video_feed`
-    - 实时画面: `http://127.0.0.1:5000/screen`
-    - _需手动作为视频流接入HA (MQTT视频流性能差)_
-    - _通过数值输入实体切换显示器_
+> 简单的 Python 程序，让 Windows 与 Home Assistant 无缝集成，实现硬件监控、远程控制等功能。
 
-- **消息通知**： 监听HA文本输入框，文本变化时以Toast消息显示
-- **侧边栏网页**： 默认按下键盘上的Menu菜单按键，快捷在屏幕右边20%区域显示HA窄条网页，再次按下隐藏
-- **键盘快捷键联动**：添加快捷键后,HA里会出现多个二元传感器，当快捷键按下时候，二元传感器会变 True 一秒钟
-- **前台应用状态反馈**：当切换前台应用时，自动发送当前应用的名称，支持接入Runtime Tracker(https://github.com/1812z/RunTime_Tracker)
-- **显示器控制**：多显示器亮度控制，支持HA开关显示器，自定义DDC/CI命令
-- **音量控制**：控制Windows音量
-- **深色模式**： 控制`系统深色模式` `应用深色模式` 
-- **蓝牙**： 控制系统蓝牙
-- **命令行**： 执行自定义CMD/PowerShell命令
-- **壁纸引擎**： 控制壁纸引擎
-- **按键模拟**： 模拟键盘按键输入，支持媒体按键等
-- **Url启动器**： 打开自定义Url
+[![GitHub Release](https://img.shields.io/github/v/release/1812z/PCTools?style=flat-square&logo=github)](https://github.com/1812z/PCTools/releases/latest)
+[![GitHub Downloads](https://img.shields.io/github/downloads/1812z/PCTools/total?style=flat-square&logo=github&label=Downloads)](https://github.com/1812z/PCTools/releases)
+[![GitHub Stars](https://img.shields.io/github/stars/1812z/PCTools?style=flat-square&logo=github)](https://github.com/1812z/PCTools)
+[![License](https://img.shields.io/github/license/1812z/PCTools?style=flat-square)](LICENSE)
 
-### 软件截图
-<img src=".github\images\gui.png" alt="GUI Image" width="600"/>
+---
 
-### HA界面展示:
-1.另类副屏(页面示例见example/dashboard.txt):  
-推荐使用 [HA_Helper](https://github.com/1812z/Ha_Helper)控制手机屏幕开关，实现人来亮屏人走息屏等  
-<img src=".github\images\1743859715274.jpg" alt="图片" width="400" height="250" />  
-2.主页面:  
-<img src=".github\images\image.png" alt="手机视图" height="500"/>
+## ✨ 功能特性
 
+| 功能 | 描述 |
+|------|------|
+| 📊 **Aida64 监控** | 定时更新选定传感器数据 |
+| 🎮 **远程命令** | 自动同步 `commands` 文件夹内的 `.bat` `.lnk` 文件到 HA |
+| 📸 **Web 监控** | 屏幕截图 / 摄像头 / 实时画面串流 |
+| 💬 **消息通知** | 监听 HA 文本输入，以 Toast 消息显示 |
+| 🌐 **侧边栏网页** | 快捷键呼出 HA 网页侧边栏 |
+| ⌨️ **快捷键联动** | 快捷键触发 HA 二元传感器 |
+| 📱 **前台应用反馈** | 自动上报当前应用名称，支持 [Runtime Tracker](https://github.com/1812z/RunTime_Tracker) |
+| 🖥️ **显示器控制** | 多显示器亮度 / 开关 / DDC-CI 命令 |
+| 🔊 **音量控制** | 控制 Windows 系统音量 |
+| 🌙 **深色模式** | 切换系统/应用深色模式 |
+| 📶 **蓝牙控制** | 开关系统蓝牙 |
+| ⚡ **命令行** | 执行自定义 CMD/PowerShell |
+| 🎨 **壁纸引擎** | 控制 Wallpaper Engine |
+| ⌨️ **按键模拟** | 模拟键盘输入（含媒体键） |
+| 🔗 **URL 启动器** | 打开自定义 URL |
 
+**Web 监控端点：**
+- 屏幕截图：`http://127.0.0.1:5000/screenshot.jpg`
+- 摄像头：`http://127.0.0.1:5000/video_feed`
+- 实时画面：`http://127.0.0.1:5000/screen`
 
-***
+---
 
-## 使用教程
-### 1.准备Python环境
+## 📷 截图展示
 
-**方法一**: 下载releases内打包好的压缩包，内置运行环境
+<details>
+<summary>🖼️ 软件界面</summary>
+<img src=".github/images/gui.png" alt="GUI" width="600"/>
+</details>
 
-**方法二**: 下载source code，手动配置环境
+<details>
+<summary>📱 HA 界面</summary>
 
-- Python:3.12
-- 运行库，通过如下命令安装环境  
- `pip install -r .\requirements.txt`  
+**另类副屏** (推荐配合 [HA_Helper](https://github.com/1812z/Ha_Helper))
 
-### 2.安装依赖
--  一个接入HA的MQTT服务器      
-- 电脑信息监控: 依赖Aida64(见release)
-- 显示器亮度调节: 依赖[Twinkle tray](https://github.com/xanderfrangos/twinkle-tray/releases)
+<img src=".github/images/1743859715274.jpg" alt="副屏" width="400"/>
 
-### 3.配置依赖程序
-(1)启动Aida64并到选项里打开内存共享，并勾选需要共享的数据，支持 占用/速率/温度/功率/电压 等实体，部分实体会自动添加图标
-> [!TIP]
-> 新增/修改 传感器，请手动删除HA/MQTT内整个设备并重启软件
+**主页面**
 
-![图片](https://img2.moeblog.vip/images/vO74.png "图片")
+<img src=".github/images/image.png" alt="主页面" height="500"/>
 
-(2)启动Twinkle tray，确保能正常读取显示器信息，如不支持请关闭插件里的显示器功能
+</details>
 
-(3)启动壁纸引擎，支持相关操作
+---
 
-### 4.运行python程序
-(1)启动 `打开GUI.bat`  来打开gui界面，进入后先到设置配置各项参数，注意参数**需要按回车保存**  
-(2)开启开关来启用需要的插件, 插件开关后 **建议重启程序**  ;部分插件支持设置，需要先载入插件
-(3)点击启动后,程序会自动发送Discovery信息,此时回到HA的MQTT集成中查看有无新设备  
+## 🚀 快速开始
 
+### 1️⃣ 安装环境
 
-### 5.设置自启动（可选）
-打开程序设置，点击 **自启动** ，程序将在开机时自动运行而不显示主界面，请提前配置好相关设置,后续在系统托盘中找到程序图标
+**方式一**：下载 [Releases](https://github.com/1812z/PCTools/releases/latest) 内的压缩包（内置运行环境）
 
-***
+**方式二**：手动配置
+```bash
+# Python 3.12
+pip install -r requirements.txt
+```
 
-## TODO List
-- [X] 键盘快捷键联动控制智能家具
-- [X] 优化代码 ~~(下次一定)~~ *不许下次一定!*
-- [ ] 电脑风扇控制(目前找不到合适的命令行控制软件)
-- [ ] Toast 多按钮/按钮回调函数
-- [X] 优化插件逻辑
+### 2️⃣ 安装第三方依赖软件(可选)
+
+| 依赖 | 用途 |
+|------|------|
+| MQTT 服务器 | 接入 Home Assistant |
+| [Aida64](https://github.com/1812z/PCTools/releases) | 硬件信息监控 |
+| [Twinkle Tray](https://github.com/xanderfrangos/twinkle-tray/releases) | 显示器亮度调节 |
+
+### 3️⃣ 配置依赖
+
+1. **Aida64**：开启内存共享并勾选需要的传感器数据
+2. **Twinkle Tray**：确保能正常读取显示器信息
+3. **壁纸引擎**：启动以支持相关操作
+
+> 💡 新增/修改传感器后，如有冲突，请删除 HA/MQTT 内的设备并重启软件
+
+### 4️⃣ 运行程序
+
+1. 运行 `打开GUI.bat` 启动界面
+2. 进入设置配置参数（**按回车保存**）
+3. 启用所需插件（**建议重启程序**）
+4. 点击启动，在 HA 的 MQTT 集成中查看新设备
+
+### 5️⃣ 开机自启（可选）
+
+设置中点击 **自启动**，程序将后台运行，在系统托盘查看图标
+
+---
+
+## 📋 开发计划
+
+- [x] 键盘快捷键联动
+- [x] 代码优化
+- [x] 插件逻辑优化
+- [ ] 电脑风扇控制
+- [ ] Toast 多按钮回调
 - [ ] 插件市场
 - [ ] 媒体控制
 - [ ] 网易云歌词同步
 
-## 已知问题
-部分页面不会自动刷新，需要切换页面才会刷新
-***
+---
 
-## Tips
-推荐软件:
-- openrgb，支持Ha接入控制RGB灯光  
-- hass_agent: 更稳定，更规范的同款工具
+## 💡 推荐搭配
 
-支持无头模式：python core.py
+| 软件 | 描述 |
+|------|------|
+| [OpenRGB](https://openrgb.org/) | RGB 灯光控制，支持 HA 接入 |
+| [HASS.Agent](https://github.com/hass-agent/HASS.Agent) | 更稳定的同类工具 |
 
-感谢大佬的开源库： https://github.com/gwy15/python_aida64  
-让刚学py的我做出来个小工具（（
+---
+
+## 致谢
+
+- [python_aida64](https://github.com/gwy15/python_aida64) - Aida64 数据读取
+
+---
+
+## 📝 其他
+
+- 支持无头模式：`python core.py`
+- 部分页面需切换后才会刷新
