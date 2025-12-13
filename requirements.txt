@@ -1,5 +1,5 @@
 numpy
-ha-mqtt-discoverable
+ha-mqtt-discoverable==0.23.0
 Flask==3.1.2
 flet==0.28.3
 opencv-python==4.12.0.88
