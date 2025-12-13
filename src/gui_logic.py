@@ -15,7 +15,7 @@ class GUILogic:
         :param core_instance: Core实例
         """
         self.core = core_instance
-        self.version = "v7.0.0"
+        self.version = "v7.0.2"
 
         # 状态标志
         self.is_running = False

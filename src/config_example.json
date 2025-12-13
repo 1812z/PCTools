@@ -6,7 +6,7 @@
     "HA_MQTT_port": 1883,
     "ha_prefix": "homeassistant",
     "auto_start": false,
-    "version": "v7.0.0",
+    "version": "v7.0.2",
     "check_update": false,
     "auto_update": false
 }
