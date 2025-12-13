@@ -1,7 +1,33 @@
+# Python
 __pycache__/
-config.json
-python-3.12.10-embed-amd64/
-.idea
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# 用户配置和日志
+config.json
 app.log
+
+# 嵌入式 Python
+python-3.12.10-embed-amd64/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 打包相关
+build/
+dist/
+*.spec.bak
+*.egg-info/
+
+# Windows
 *.lnk
+Thumbs.db
+desktop.ini
+
+# 其他
+.DS_Store
