@@ -1,7 +1,8 @@
+numpy
 ha-mqtt-discoverable @ git+https://github.com/1812z/ha-mqtt-discoverable.git@test
 Flask==3.1.2
 flet==0.28.3
-opencv-python==4.10.0.84
+opencv-python==4.12.0.88
 paho-mqtt==2.1.0
 pillow==12.0.0
 mss==10.1.0
@@ -16,6 +17,5 @@ winsdk==1.0.0b10
 comtypes==1.4.13
 pyperclip==1.11.0
 requests==2.32.5
-numpy==2.3.5
 trio==0.32.0
 packaging==25.0
