@@ -75,7 +75,6 @@ class Aida64:
                             unique_id=unique_id,
                             object_id=unique_id,
                             device=device_info,
-                            state_topic=self.state_topic,
                             value_template=value_template,
                             icon=self._get_icon(category, sensor_name),
                             unit_of_measurement=self._get_unit(category, sensor_name),
@@ -84,7 +83,11 @@ class Aida64:
 
                         # 创建传感器
                         sensor = Sensor(Settings(mqtt=mqtt_settings, entity=sensor_info))
+
+                        # 创建后手动设置 state_topic 并重写配置
+                        sensor.state_topic = self.state_topic
                         sensor.write_config()
+
                         # 存储传感器引用
                         key = f"{category}_{idx}"
                         self.sensors[key] = {
@@ -232,7 +235,7 @@ class Aida64:
 
                 # 重新创建传感器
                 self.sensors.clear()
-                self.setup_sensors()
+                self.setup_entities()
 
                 self.last_discovery_time = current_time
                 self.last_item_count = current_count.copy()
@@ -250,14 +253,26 @@ class Aida64:
         try:
             # 发布 JSON 数据到统一的状态主题
             payload = json.dumps(aida64_data)
-            result = self.core.mqtt.publish(self.state_topic, payload)
 
-            if result:
-                self.log.debug(f"Aida64 状态更新成功 ({len(self.sensors)} 个传感器)")
+            # 使用第一个传感器的 MQTT 客户端发布（所有传感器共享同一个客户端）
+            if self.sensors:
+                first_sensor = next(iter(self.sensors.values()))["sensor"]
+                result = first_sensor.mqtt_client.publish(self.state_topic, payload, retain=True)
+
+                if result.rc == 0:  # MQTT_ERR_SUCCESS
+                    self.log.debug(f"Aida64 状态更新成功 ({len(self.sensors)} 个传感器)")
+                    return True
+                else:
+                    self.log.warning(f"Aida64 状态更新失败，MQTT 错误码: {result.rc}")
+                    return False
             else:
-                self.log.warning("Aida64 状态更新失败")
-
-            return result
+                # 如果没有传感器，直接使用核心 MQTT 客户端
+                result = self.core.mqtt.publish(self.state_topic, payload)
+                if result:
+                    self.log.debug("Aida64 状态更新成功（无传感器情况）")
+                else:
+                    self.log.warning("Aida64 状态更新失败（无传感器情况）")
+                return result
 
         except Exception as e:
             self.log.error(f"状态更新异常: {e}")
@@ -439,7 +454,7 @@ class Aida64:
         def recreate_sensors(e):
             try:
                 self.sensors.clear()
-                self.setup_sensors()
+                self.setup_entities()
                 e.control.text = "✓ 重建完成"
                 e.control.bgcolor = ft.Colors.GREEN
             except Exception as ex:
