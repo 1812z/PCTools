@@ -17,8 +17,9 @@ class Aida64:
         self.log = core.log
 
         # 定时更新配置
+        self.update_interval = self.core.get_plugin_config("Aida64", "aida64_updater", 5)
         self.updater = {
-            "timer": self.core.get_plugin_config("Aida64", "aida64_updater", 5),
+            "timer": self.update_interval,
         }
 
         # 数据缓存
@@ -78,7 +79,8 @@ class Aida64:
                             value_template=value_template,
                             icon=self._get_icon(category, sensor_name),
                             unit_of_measurement=self._get_unit(category, sensor_name),
-                            device_class=self._get_device_class(category)
+                            device_class=self._get_device_class(category),
+                            expire_after=self.update_interval
                         )
 
                         # 创建传感器
@@ -298,29 +300,6 @@ class Aida64:
             self.log.error(f"卸载 Aida64 插件失败: {e}")
 
     # ===== GUI 设置页面 =====
-
-    def save_updater(self, e):
-        """保存更新间隔设置"""
-        try:
-            value = int(e.control.value)
-            if value < 1:
-                self.log.error("更新间隔必须大于0秒")
-                e.control.error_text = "必须大于0秒"
-                e.control.update()
-                return
-
-            self.core.set_plugin_config("Aida64", "aida64_updater", value)
-            self.updater["timer"] = value
-
-            self.log.info(f"Aida64 更新间隔已设置为 {value} 秒")
-            e.control.error_text = None
-
-        except ValueError:
-            self.log.error("更新间隔必须是数字")
-            e.control.error_text = "请输入有效数字"
-            e.control.update()
-        except Exception as ex:
-            self.log.error(f"保存设置失败: {ex}")
 
     def setting_page(self, e=None):
         """设置页面"""
