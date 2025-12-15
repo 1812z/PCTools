@@ -247,7 +247,7 @@ class Aida64:
     def update_state(self):
         """更新状态 - 发送整个 JSON 到统一主题"""
         if not self.core.mqtt.is_connected():
-            pass
+            return False
 
         aida64_data = self.get_aida64_data()
         if not aida64_data:
