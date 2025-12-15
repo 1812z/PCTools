@@ -15,7 +15,6 @@ class GUILogic:
         :param core_instance: Core实例
         """
         self.core = core_instance
-        self.version = "v7.0.2"
 
         # 状态标志
         self.is_running = False
@@ -25,25 +24,37 @@ class GUILogic:
         # UI回调（由UI层设置）
         self._show_snackbar_callback: Optional[Callable] = None
         self._update_ui_callback: Optional[Callable] = None
+        self._update_home_status_callback: Optional[Callable] = None
 
-    def set_ui_callbacks(self, update_ui: Callable):
+    def set_ui_callbacks(self, update_ui: Callable, show_snackbar: Callable, update_home_status: Callable):
         """
         设置UI回调函数
         :param update_ui: 更新UI的回调
+        :param show_snackbar: 显示通知消息的回调
+        :param update_home_status: 更新主页状态的回调
         """
         self._update_ui_callback = update_ui
+        self._show_snackbar_callback = show_snackbar
+        self._update_home_status_callback = update_home_status
 
     def _update_ui(self):
         """更新UI（内部方法）"""
         if self._update_ui_callback:
             self._update_ui_callback()
 
+    def _show_snackbar(self, message: str, duration: int = 2000):
+        """显示通知消息（内部方法）"""
+        if self._show_snackbar_callback:
+            self._show_snackbar_callback(message, duration)
+        else:
+            # 如果没有 GUI，输出到控制台
+            self.log_info(f"[通知] {message}")
+
     def update_home_status(self):
         """更新主页状态"""
         try:
-            if (self.core.gui and hasattr(self.core.gui, 'home_page') and
-                    self.core.gui.home_page is not None):
-                self.core.gui.home_page.update_status()
+            if self._update_home_status_callback:
+                self._update_home_status_callback()
         except Exception as e:
             self.log_debug(f"更新主页状态失败: {e}")
 
@@ -52,20 +63,20 @@ class GUILogic:
     def start_service(self) -> bool:
         """启动服务"""
         if self.is_running or self.is_starting:
-            self.core.gui.show_snackbar("请勿多次启动!")
+            self._show_snackbar("请勿多次启动!")
             return False
 
         try:
             self.is_starting = True
             self.update_home_status()
-            self.core.gui.show_snackbar("启动进程...")
+            self._show_snackbar("启动进程...")
 
             if self.core:
                 self.core.start()
                 self.is_running = True
                 self.is_starting = False
                 self.update_home_status()
-                self.core.gui.show_snackbar("服务启动成功")
+                self._show_snackbar("服务启动成功")
                 return True
 
             self.is_starting = False
@@ -75,7 +86,7 @@ class GUILogic:
             self.is_starting = False
             if self.core:
                 self.core.log.error(f"服务启动失败: {e}")
-            self.core.gui.show_snackbar(f"服务启动失败: {e}", duration=3000)
+            self._show_snackbar(f"服务启动失败: {e}", duration=3000)
             return False
 
     def stop_service(self) -> bool:
@@ -83,12 +94,12 @@ class GUILogic:
         if self.is_running and not self.is_starting and not self.is_stopping:
             self.is_stopping = True
             self.update_home_status()
-            self.core.gui.show_snackbar("停止进程中...")
+            self._show_snackbar("停止进程中...")
 
             try:
                 self.core.stop()
                 self.is_running = False
-                self.core.gui.show_snackbar("成功停止所有进程")
+                self._show_snackbar("成功停止所有进程")
                 self.core.log.info("成功停止所有进程")
                 self.is_stopping = False
                 self.update_home_status()
@@ -100,24 +111,24 @@ class GUILogic:
                 return False
 
         elif not self.is_starting and not self.is_stopping:
-            self.core.gui.show_snackbar("都还没运行呀")
+            self._show_snackbar("都还没运行呀")
             return False
         elif not self.is_stopping:
-            self.core.gui.show_snackbar("启动中无法停止...")
+            self._show_snackbar("启动中无法停止...")
             return False
         else:
-            self.core.gui.show_snackbar("如果卡死请使用任务管理器终止python进程")
+            self._show_snackbar("如果卡死请使用任务管理器终止python进程")
             return False
 
     def send_data(self) -> bool:
         """发送数据更新"""
         try:
             self.core.update_module_status()
-            self.core.gui.show_snackbar("数据更新成功")
+            self._show_snackbar("数据更新成功")
             return True
         except Exception as e:
             self.core.log.error(f"数据更新失败: {e}")
-            self.core.gui.show_snackbar(f"数据更新失败: {e}", duration=3000)
+            self._show_snackbar(f"数据更新失败: {e}", duration=3000)
             return False
 
     # ===== 配置管理 =====
@@ -162,39 +173,39 @@ class GUILogic:
             if self.core.enable_plugin(plugin_name):
                 return True
             else:
-                self.core.gui.show_snackbar(f"启用插件失败", duration=3000)
+                self._show_snackbar(f"启用插件失败", duration=3000)
                 return False
         except Exception as e:
             self.core.log.error(f"启用插件失败: {e}")
-            self.core.gui.show_snackbar(f"启用失败: {e}", duration=3000)
+            self._show_snackbar(f"启用失败: {e}", duration=3000)
             return False
 
     def disable_plugin(self, plugin_name: str) -> bool:
         """禁用插件"""
         try:
             if self.core.disable_plugin(plugin_name):
-                self.core.gui.show_snackbar(f"插件 {plugin_name} 已禁用")
+                self._show_snackbar(f"插件 {plugin_name} 已禁用")
                 return True
             else:
-                self.core.gui.show_snackbar(f"禁用插件失败", duration=3000)
+                self._show_snackbar(f"禁用插件失败", duration=3000)
                 return False
         except Exception as e:
             self.core.log.error(f"禁用插件失败: {e}")
-            self.core.gui.show_snackbar(f"禁用失败: {e}", duration=3000)
+            self._show_snackbar(f"禁用失败: {e}", duration=3000)
             return False
 
     def reload_plugin(self, plugin_name: str) -> bool:
         """重载插件"""
         try:
             if self.core.reload_plugin(plugin_name):
-                self.core.gui.show_snackbar(f"插件 {plugin_name} 重载成功")
+                self._show_snackbar(f"插件 {plugin_name} 重载成功")
                 return True
             else:
-                self.core.gui.show_snackbar(f"重载插件失败", duration=3000)
+                self._show_snackbar(f"重载插件失败", duration=3000)
                 return False
         except Exception as e:
             self.core.log.error(f"重载插件失败: {e}")
-            self.core.gui.show_snackbar(f"重载失败: {e}", duration=3000)
+            self._show_snackbar(f"重载失败: {e}", duration=3000)
             return False
 
     def toggle_plugin(self, plugin_name: str, enabled: bool) -> bool:
@@ -293,7 +304,7 @@ class GUILogic:
 
     def get_version(self) -> str:
         """获取版本号"""
-        return self.version
+        return self.core.config.version
 
     def log_info(self, message: str):
         """记录信息日志"""

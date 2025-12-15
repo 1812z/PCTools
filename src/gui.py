@@ -44,13 +44,23 @@ class GUI:
 
         # 设置UI回调
         self.logic.set_ui_callbacks(
-            update_ui=self._update_page
+            update_ui=self._update_page,
+            show_snackbar=self.show_snackbar,
+            update_home_status=self._update_home_status
         )
 
     def _update_page(self):
         """更新页面"""
         if self.page:
             self.page.update()
+
+    def _update_home_status(self):
+        """更新主页状态"""
+        try:
+            if self.home_page is not None:
+                self.home_page.update_status()
+        except Exception as e:
+            self.logic.log_debug(f"更新主页状态失败: {e}")
 
     def show_snackbar(self, message: str, duration: int = 2000):
         """显示通知条消息"""
