@@ -105,7 +105,6 @@ class Aida64:
                     except (KeyError, IndexError) as e:
                         self.log.error(f"创建传感器失败: {e}, item: {item}")
 
-            self.update_state()
             self.log.info(f"Aida64 传感器创建完成: 共 {created_count} 个")
 
             # 打印各类别统计
@@ -247,6 +246,9 @@ class Aida64:
 
     def update_state(self):
         """更新状态 - 发送整个 JSON 到统一主题"""
+        if not self.core.mqtt.is_connected():
+            pass
+
         aida64_data = self.get_aida64_data()
         if not aida64_data:
             self.log.warning("状态更新失败：无法获取 Aida64 数据")
