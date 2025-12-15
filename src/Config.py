@@ -10,6 +10,13 @@ class Config:
         self._config_example_file = Path("config_example.json")
         self.config_data = self.load_config()
 
+        try:
+            with open(self._config_example_file, "r", encoding="utf-8") as f:
+                example_data = json.load(f)
+                self.version = example_data.get("version", "v0.0.0")
+        except Exception as e:
+            self.core.log.warning(f"无法从 config_example.json 读取 version，使用默认值: {e}")
+
     def load_config(self) -> Optional[Dict[str, Any]]:
         """从文件加载配置数据，成功返回字典，失败返回None"""
         try:

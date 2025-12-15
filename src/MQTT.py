@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 from ha_mqtt_discoverable import Settings, DeviceInfo
+from ha_mqtt_discoverable.sensors import SensorInfo, Sensor
 
 
 class MQTT:
@@ -27,6 +28,8 @@ class MQTT:
         self.mqtt_client.on_disconnect = self.on_disconnect
 
         self.status = [-1, "init"]
+        self.version_entity = None
+        self.version_timer = None  # 版本实体心跳定时器
 
     def get_mqtt_settings(self):
         """
@@ -84,6 +87,10 @@ class MQTT:
 
             # 配置插件实体
             self.core.config_plugin_entities()
+
+            # 创建并启动版本实体
+            self.create_version_entity()
+            self.start_version_heartbeat()
 
     def on_connect_fail(self, client, userdata):
         """连接失败回调"""
@@ -229,6 +236,17 @@ class MQTT:
 
     def stop_mqtt(self):
         """停止MQTT服务"""
+        # 停止版本心跳定时器
+        self.stop_version_heartbeat()
+
+        # 设置版本实体为不可用
+        if self.version_entity:
+            try:
+                self.version_entity.set_availability(False)
+                self.core.log.info("版本实体已设置为不可用")
+            except Exception as e:
+                self.core.log.error(f"设置版本实体不可用失败: {e}")
+
         self.mqtt_client.loop_stop()
         self.core.log.info("MQTT服务已停止")
 
@@ -241,3 +259,59 @@ class MQTT:
     def is_connected(self):
         """检查MQTT是否已连接"""
         return self.mqtt_client.is_connected()
+
+    def create_version_entity(self):
+        """创建版本实体"""
+        if self.version_entity is not None:
+            self.core.log.debug("版本实体已存在，跳过创建")
+            return
+
+        version_info = SensorInfo(
+            name="online_version",
+            unique_id=f"{self.core.mqtt.device_name}_PCTools",
+            object_id=f"{self.core.mqtt.device_name}_PCTools",
+            device=self.get_device_info(),
+            expire_after=30  # 30秒后自动不可用
+        )
+
+        version_settings = Settings(
+            mqtt=self.get_mqtt_settings(),
+            entity=version_info,
+            manual_availability=True
+        )
+
+        self.version_entity = Sensor(version_settings)
+        self.version_entity.set_availability(True)
+        self.version_entity.set_state(self.core.config.version)
+        self.core.log.info(f"版本实体已创建: {self.core.config.version}")
+
+    def update_version_state(self):
+        """更新版本实体状态（心跳）"""
+        if self.version_entity and self.mqtt_client.is_connected():
+            try:
+                self.version_entity.set_availability(True)
+                self.version_entity.set_state(self.core.config.version)
+                self.core.log.debug(f"版本实体心跳更新: {self.core.config.version}")
+            except Exception as e:
+                self.core.log.error(f"更新版本实体失败: {e}")
+
+    def start_version_heartbeat(self):
+        """启动版本实体心跳定时器"""
+        if self.version_timer is None:
+            self.version_timer = self.core.timer.create_timer(
+                name="version_heartbeat",
+                function=self.update_version_state,
+                interval=20
+            )
+            self.version_timer.start()
+
+    def stop_version_heartbeat(self):
+        """停止版本实体心跳定时器"""
+        if self.version_timer:
+            try:
+                self.core.timer.stop_timer("version_heartbeat")
+                self.core.timer.remove_timer("version_heartbeat")
+                self.version_timer = None
+                self.core.log.info("版本实体心跳定时器已停止")
+            except Exception as e:
+                self.core.log.error(f"停止版本实体心跳定时器失败: {e}")
