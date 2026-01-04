@@ -1,7 +1,7 @@
 numpy
 ha-mqtt-discoverable @ git+https://github.com/unixorn/ha-mqtt-discoverable.git@main
 Flask==3.1.2
-flet==0.28.3
+flet==0.80.1
 opencv-python==4.12.0.88
 paho-mqtt==2.1.0
 pillow==12.0.0
