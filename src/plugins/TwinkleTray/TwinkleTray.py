@@ -91,7 +91,8 @@ class TwinkleTray:
                     device=device_info,
                     icon="mdi:monitor",
                     display_name=monitor_name,
-                    brightness=True  # 支持亮度控制
+                    brightness=True,  # 支持亮度控制
+                    retain=False
                 )
 
                 light_settings = Settings(
@@ -205,29 +206,33 @@ class TwinkleTray:
                 data = json.loads(payload)
 
                 if "state" in data and data["state"] == "OFF":
-                    self.monitor_lights[monitor_num].off()
                     # 显示器关机方案
                     power_type = self.read_monitor_power_type
-                    match power_type:
-                        case 0:
-                            # 方案一，仅熄灭显示器，不关闭电源
-                            ctypes.windll.user32.SendMessageW(0xFFFF, 0x112, 0xF170, 2)
-                            self.log.info("系统层关闭画面")
-                        case 1:
-                            # 方案二，休眠显示器
-                            run = [self.path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x04"]
-                            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-                            self.log.info(f"显示器 {monitor_num_key} 待机")
-                        case 2:
-                            # 方案三，显示器关机
-                            run = [self.path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x05"]
-                            subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
-                            self.log.info(f"显示器 {monitor_num_key} 关机")
+                    try:
+                        match power_type:
+                            case 0:
+                                # 方案一，仅熄灭显示器，不关闭电源
+                                ctypes.windll.user32.SendMessageW(0xFFFF, 0x112, 0xF170, 2)
+                                self.log.info("系统层关闭画面")
+                            case 1:
+                                # 方案二，休眠显示器
+                                run = [self.path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x04"]
+                                subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+                                self.log.info(f"显示器 {monitor_num_key} 待机")
+                            case 2:
+                                # 方案三，显示器关机
+                                run = [self.path, "--MonitorNum=" + str(monitor_num_key), "--VCP=0xD6:0x05"]
+                                subprocess.Popen(run, creationflags=subprocess.CREATE_NO_WINDOW)
+                                self.log.info(f"显示器 {monitor_num_key} 关机")
+                        self.monitor_lights[monitor_num].off()
+                    except Exception as e:
+                        self.log.error(f"显示器 {monitor_num_key} 关机失败: {e}")
                 elif "state" in data and data["state"] == "ON":
                     self.monitor_lights[monitor_num].on()
                     # 唤醒显示器
                     self.wake_up_screen()
                     self.log.info(f"唤醒显示器 {monitor_num_key}")
+                    self.monitor_lights[monitor_num].on()
                 if "brightness" in data:
                     brightness_255 = data.get("brightness", 128)
                     brightness = int(brightness_255 * 100 / 255)
