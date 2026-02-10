@@ -13,7 +13,7 @@ from ha_mqtt_discoverable.sensors import Select, SelectInfo
 
 app = Flask(__name__)
 select_monitor = 1  # 默认选择第一个显示器
-
+camera_index = 2
 
 @app.route('/set_monitor/<int:monitor_index>', methods=['GET'])
 def set_monitor(monitor_index):
@@ -56,6 +56,15 @@ def video_feed():
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+@app.route('/set_camera/<int:cam_index>', methods=['GET'])
+def set_camera(cam_index):
+    global camera_index
+    try:
+        camera_index = cam_index
+        return jsonify({'success': True, 'message': f'Camera set to {cam_index}'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 def generate_screenshots():
     with mss.mss() as sct:
         monitor = sct.monitors[select_monitor]
@@ -73,7 +82,8 @@ def generate_screenshots():
 
 
 def generate_frames():
-    camera = cv2.VideoCapture(2)
+    global camera_index
+    camera = cv2.VideoCapture(camera_index)
     while True:
         success, frame = camera.read()
         if not success:
@@ -100,6 +110,7 @@ class FlaskApp:
         self.core = core
         self.monitor_select = None
         self.current_monitor = 1
+        self.camera_index = 2
 
         # 获取可用的显示器列表
         self.monitor_options = self.get_monitor_options()
@@ -194,6 +205,20 @@ class FlaskApp:
         except requests.exceptions.RequestException as e:
             self.core.log.error(f"请求失败: {e}")
 
+    def change_camera(self, index):
+        """切换摄像头"""
+        url = f"http://localhost:{self.port}/set_camera/{index}"
+        try:
+            response = requests.get(url)
+            data = response.json()
+            if data['success']:
+                self.camera_index = index
+                self.core.log.info(f"成功切换到摄像头 {index}")
+            else:
+                self.core.log.error(f"错误: {data['message']}")
+        except requests.exceptions.RequestException as e:
+            self.core.log.error(f"请求失败: {e}")
+
     def setting_page(self, e):
         """设置页面"""
         return ft.Column(
@@ -206,8 +231,11 @@ class FlaskApp:
                              value=str(self.core.get_plugin_config("FlaskApp", "fps", 30))),
                 ft.Divider(),
                 ft.TextField(label="显示器选择", width=250,
-                             on_submit=self.change_monitor,
+                             on_submit=lambda e: self.change_monitor(int(e.control.value)),
                              value=str(self.core.get_plugin_config("FlaskApp", "index", 1))),
+                ft.TextField(label="摄像头索引", width=250,
+                             on_submit=lambda e: self.change_camera(int(e.control.value)),
+                             value=str(self.core.get_plugin_config("FlaskApp", "camera_index", 2))),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
