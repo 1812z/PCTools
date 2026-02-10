@@ -15,6 +15,7 @@ app = Flask(__name__)
 select_monitor = 1  # 默认选择第一个显示器
 camera_index = 2
 
+
 @app.route('/set_monitor/<int:monitor_index>', methods=['GET'])
 def set_monitor(monitor_index):
     global select_monitor
@@ -65,6 +66,7 @@ def set_camera(cam_index):
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
+
 def generate_screenshots():
     with mss.mss() as sct:
         monitor = sct.monitors[select_monitor]
@@ -109,6 +111,7 @@ class FlaskApp:
         self.process = None
         self.core = core
         self.monitor_select = None
+        self.camera_select = None
         self.current_monitor = 1
         self.camera_index = 2
 
@@ -153,7 +156,27 @@ class FlaskApp:
             # 设置初始选项
             self.monitor_select.select_option(str(self.current_monitor))
 
-            self.core.log.info(f"FlaskApp MQTT实体创建成功，可用显示器: {self.monitor_options}")
+            # 创建摄像头选择下拉框
+            camera_options = [str(i) for i in range(10)]  # 摄像头选项 0-9
+
+            camera_select_info = SelectInfo(
+                name="camera_select",
+                unique_id=f"{self.core.mqtt.device_name}_FlaskApp_camera_select",
+                device=device_info,
+                icon="mdi:camera",
+                options=camera_options
+            )
+            camera_select_info.display_name = "摄像头选择"
+
+            camera_settings = Settings(mqtt=mqtt_settings, entity=camera_select_info)
+            self.camera_select = Select(camera_settings, command_callback=self.handle_camera_change)
+
+            # 设置初始摄像头选项
+            initial_camera = self.core.get_plugin_config("FlaskApp", "camera_index", 2)
+            self.camera_select.select_option(str(initial_camera))
+
+            self.core.log.info(
+                f"FlaskApp MQTT实体创建成功，可用显示器: {self.monitor_options}, 摄像头: {camera_options}")
         except Exception as e:
             self.core.log.error(f"FlaskApp MQTT设置失败: {e}")
 
@@ -165,6 +188,15 @@ class FlaskApp:
             self.change_monitor(monitor_index)
         except Exception as e:
             self.core.log.error(f"处理显示器选择失败: {e}")
+
+    def handle_camera_change(self, client, user_data, message):
+        """处理摄像头选择变化"""
+        try:
+            selected_camera = message.payload.decode()
+            camera_index = int(selected_camera)
+            self.change_camera(camera_index)
+        except Exception as e:
+            self.core.log.error(f"处理摄像头选择失败: {e}")
 
     def start(self):
         if self.process is None:
@@ -214,6 +246,9 @@ class FlaskApp:
             if data['success']:
                 self.camera_index = index
                 self.core.log.info(f"成功切换到摄像头 {index}")
+                # 更新Select实体的当前选项
+                if self.camera_select:
+                    self.camera_select.select_option(str(index))
             else:
                 self.core.log.error(f"错误: {data['message']}")
         except requests.exceptions.RequestException as e:
