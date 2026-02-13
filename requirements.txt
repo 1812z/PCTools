@@ -12,7 +12,7 @@ plyer==2.1.0
 pywin32==311
 keyboard==0.13.5
 screeninfo==0.8.1
-pywebview==5.3.2
+pywebview==6.1
 winsdk==1.0.0b10
 comtypes==1.4.15
 pyperclip==1.11.0
