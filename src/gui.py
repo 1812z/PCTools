@@ -70,7 +70,6 @@ class GUI:
         try:
             snackbar = ft.SnackBar(
                 content=ft.Text(message),
-                action="OK",
                 duration=duration
             )
             self.page.show_dialog(snackbar)
