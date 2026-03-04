@@ -1,6 +1,7 @@
 """
 前台窗口监听插件
 """
+import webbrowser
 import win32gui
 import win32process
 import threading
@@ -256,7 +257,7 @@ class WindowListener:
                 ft.TextButton(
                     "Runtime Tracker",
                     animate_size=20,
-                    on_click=lambda e: self.core.gui.page.launch_url('https://github.com/1812z/RunTime_Tracker')
+                    on_click=lambda e: webbrowser.open('https://github.com/1812z/RunTime_Tracker')
                 ),
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,

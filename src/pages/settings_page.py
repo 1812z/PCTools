@@ -19,7 +19,7 @@ class SettingsPage:
         logo = ft.Container(
             content=ft.Image(
                 src="img/home-assistant-wordmark-with-margins-color-on-light.png",
-                fit=ft.ImageFit.CONTAIN,
+                fit=ft.BoxFit.CONTAIN,
                 width=500
             )
         )
@@ -123,7 +123,7 @@ class SettingsPage:
     def _open_mqtt_setting(self, e):
         """打开MQTT设置对话框"""
         mqtt_dialog = self._create_mqtt_dialog()
-        self.gui.page.open(mqtt_dialog)
+        self.gui.page.show_dialog(mqtt_dialog)
         self.gui.page.update()
 
     def _create_mqtt_dialog(self) -> ft.AlertDialog:
@@ -168,7 +168,7 @@ class SettingsPage:
                 self.logic.handle_config_change(config_key, value, value_type)
 
             # 关闭对话框
-            self.gui.page.close(e.control.parent)
+            self.gui.page.pop_dialog()
 
             # 显示保存成功提示
             self.gui.show_snackbar("MQTT设置已保存")
@@ -220,7 +220,7 @@ class SettingsPage:
             actions=[
                 ft.ElevatedButton(
                     "返回",
-                    on_click=lambda e: self.gui.page.close(e.control.parent),
+                    on_click=lambda e: self.gui.page.pop_dialog(),
                     icon=ft.Icons.ARROW_BACK,
                     bgcolor=ft.Colors.GREY_700,
                     color=ft.Colors.WHITE

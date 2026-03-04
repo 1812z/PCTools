@@ -179,10 +179,10 @@ class PluginPage:
                     margin=5,
                 ),
                 actions=[
-                    ft.TextButton("返回", on_click=lambda e: self.gui.page.close(e.control.parent))
+                    ft.TextButton("返回", on_click=lambda e: self.gui.page.pop_dialog())
                 ],
             )
-            self.gui.page.open(dialog)
+            self.gui.page.show_dialog(dialog)
             self.gui.page.update()
         except Exception as ex:
             self.logic.log_error(f"打开设置页面失败: {ex}")
@@ -306,11 +306,11 @@ class PluginPage:
             ),
             scrollable=True,
             actions=[
-                ft.TextButton("关闭", on_click=lambda e: self.gui.page.close(e.control.parent))
+                ft.TextButton("关闭", on_click=lambda e: self.gui.page.pop_dialog())
             ]
         )
 
-        self.gui.page.open(dialog)
+        self.gui.page.show_dialog(dialog)
         self.gui.page.update()
 
     def _toggle_plugin(self, e, plugin_name: str):

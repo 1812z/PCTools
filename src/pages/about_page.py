@@ -30,7 +30,7 @@ class AboutPage:
                 ft.Container(
                     content=ft.Image(
                         src="img/wechat.png",
-                        fit=ft.ImageFit.CONTAIN,
+                        fit=ft.BoxFit.CONTAIN,
                         width=300
                     )
                 ),

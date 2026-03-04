@@ -1,8 +1,8 @@
 numpy
 ha-mqtt-discoverable @ git+https://github.com/unixorn/ha-mqtt-discoverable.git@main
 Flask==3.1.3
-flet==0.28.3
-opencv-python==4.12.0.88
+flet==0.81.0
+opencv-python==4.13.0.92
 paho-mqtt==2.1.0
 pillow==12.1.1
 mss==10.1.0
@@ -14,8 +14,8 @@ keyboard==0.13.5
 screeninfo==0.8.1
 pywebview==5.3.2
 winsdk==1.0.0b10
-comtypes==1.4.15
+comtypes==1.4.16
 pyperclip==1.11.0
 requests==2.32.5
 trio==0.32.0
-packaging==25.0
+packaging==26.0

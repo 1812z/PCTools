@@ -73,7 +73,7 @@ class GUI:
                 action="OK",
                 duration=duration
             )
-            self.page.open(snackbar)
+            self.page.show_dialog(snackbar)
             self.page.update()
         except Exception as e:
             self.logic.log_debug(f"无法显示Snackbar: {e}")
@@ -82,7 +82,7 @@ class GUI:
         """关闭窗口"""
         try:
             if self.page:
-                self.page.window.close()
+                self.page.run_task(self.page.window.close)
         except RuntimeError as e:
         # 忽略事件循环相关的错误
             if "Event loop is closed" not in str(e):
@@ -119,13 +119,25 @@ class GUI:
 
         # 创建标签页
         tabs = ft.Tabs(
+            content=ft.Column([
+                ft.TabBar(tabs=[
+                    ft.Tab(label="主页"),
+                    ft.Tab(label="设置"),
+                    ft.Tab(label="插件"),
+                    ft.Tab(label="关于"),
+                ]),
+                ft.TabBarView(
+                    controls=[
+                        self.home_page.create(),
+                        self.settings_page.create(),
+                        self.plugin_page.create(),
+                        self.about_page.create(),
+                    ],
+                    expand=True,
+                ),
+            ]),
+            length=4,
             selected_index=0,
-            tabs=[
-                ft.Tab(text="主页", content=self.home_page.create()),
-                ft.Tab(text="设置", content=self.settings_page.create()),
-                ft.Tab(text="插件", content=self.plugin_page.create()),
-                ft.Tab(text="关于", content=self.about_page.create()),
-            ],
             on_change=self._on_tab_changed
         )
 
@@ -142,9 +154,10 @@ class GUI:
 
     def _on_tab_changed(self, e):
         """标签页切换事件"""
-        if e.control.selected_index == 1:  # 设置页
+        idx = int(e.data)
+        if idx == 1:  # 设置页
             self.show_snackbar("修改设置后建议重启软件")
-        elif e.control.selected_index == 2:  # 插件页
+        elif idx == 2:  # 插件页
             if self.logic.is_running:
                 self.show_snackbar("运行时无法配置")
             self.plugin_page.update_plugin_list()
@@ -190,7 +203,7 @@ if __name__ == "__main__":
     # 启动方式
     if not gui.logic.get_config("auto_start", False):
         # 直接显示GUI
-        ft.app(target=gui.main)
+        ft.run(gui.main)
     else:
         # 后台启动
         gui.logic.start_service()
@@ -201,7 +214,7 @@ if __name__ == "__main__":
     while gui.tray.is_running:
         try:
             if gui.show_menu_flag:
-                ft.app(target=gui.main)
+                ft.run(gui.main)
                 gui.show_menu_flag = False
             time.sleep(1)
         except KeyboardInterrupt:

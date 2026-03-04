@@ -2,6 +2,8 @@
 主页模块
 """
 
+import webbrowser
+
 import flet as ft
 
 
@@ -25,7 +27,7 @@ class HomePage:
         logo = ft.Container(
             content=ft.Image(
                 src="img/home-assistant-wordmark-with-margins-color-on-light.png",
-                fit=ft.ImageFit.CONTAIN,
+                fit=ft.BoxFit.CONTAIN,
                 width=500
             )
         )
@@ -41,7 +43,7 @@ class HomePage:
             content=ft.TextButton(
                 "Github",
                 animate_size=20,
-                on_click=lambda e: self.gui.page.launch_url('https://github.com/1812z/PCTools')
+                on_click=lambda e: webbrowser.open('https://github.com/1812z/PCTools')
             ),
             width=120
         )
@@ -65,7 +67,7 @@ class HomePage:
             ),
             self._create_action_button(
                 ft.Icons.THUMB_UP_ALT_ROUNDED, "关注我",
-                lambda e: self.gui.page.launch_url('https://space.bilibili.com/336130050')
+                lambda e: webbrowser.open('https://space.bilibili.com/336130050')
             ),
         ]
 
@@ -115,7 +117,7 @@ class HomePage:
         """创建状态显示面板(两行布局，带状态点)"""
         # 运行状态点
         self.running_dot = ft.Icon(
-            name=ft.Icons.CIRCLE,
+            ft.Icons.CIRCLE,
             size=10,
             color=ft.Colors.GREY
         )
@@ -128,7 +130,7 @@ class HomePage:
 
         # MQTT状态点
         self.mqtt_dot = ft.Icon(
-            name=ft.Icons.CIRCLE,
+            ft.Icons.CIRCLE,
             size=10,
             color=ft.Colors.GREY
         )
@@ -179,7 +181,7 @@ class HomePage:
                 spacing=10
             ),
             padding=ft.padding.only(top=10, bottom=10),
-            alignment=ft.alignment.bottom_right,
+            alignment=ft.Alignment.BOTTOM_RIGHT,
             width=500
         )
 

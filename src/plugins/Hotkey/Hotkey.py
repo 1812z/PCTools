@@ -404,7 +404,7 @@ class Hotkey:
                         spacing=10
                     ),
                     padding=20,
-                    alignment=ft.alignment.center
+                    alignment=ft.Alignment.CENTER
                 )
             )
 
