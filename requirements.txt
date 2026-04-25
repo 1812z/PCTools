@@ -18,4 +18,4 @@ comtypes==1.4.16
 pyperclip==1.11.0
 requests==2.33.0
 trio==0.32.0
-packaging==26.0
+packaging==26.2
