@@ -1,0 +1,7 @@
+{
+    "name": "HDR调节插件",
+    "version": "1.0",
+    "author": "1812z",
+    "description": "按显示器控制 Windows HDR 开关与 HDR 下 SDR 亮度，不依赖 DDC/CI",
+    "dependencies": []
+}
