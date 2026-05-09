@@ -16,6 +16,10 @@ class SettingsPage:
 
     def create(self) -> ft.ListView:
         """创建设置页"""
+        current_log_level = str(self.logic.get_config("log_level", "INFO")).upper()
+        if current_log_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+            current_log_level = "INFO"
+
         logo = ft.Container(
             content=ft.Image(
                 src="img/home-assistant-wordmark-with-margins-color-on-light.png",
@@ -54,6 +58,15 @@ class SettingsPage:
                 toggle_value=self.logic.get_config("auto_start", False),
                 on_change=self._on_auto_start_changed
             ),
+            self._create_setting_item(
+                ft.Icons.TUNE,
+                "日志级别",
+                "设置日志输出和日志组件过滤级别",
+                control_type="dropdown",
+                dropdown_value=current_log_level,
+                dropdown_options=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+                on_change=self._on_log_level_changed
+            ),
         ]
 
         return ft.ListView(
@@ -71,11 +84,23 @@ class SettingsPage:
         toggle_value: bool = False,
         on_change=None,
         on_click=None,
-        control_type: str = "switch"
+        control_type: str = "switch",
+        dropdown_value: str = "INFO",
+        dropdown_options=None
     ) -> ft.Column:
         """创建设置项"""
         if control_type == "switch":
             right_control = ft.Switch(value=toggle_value, on_change=on_change)
+        elif control_type == "dropdown":
+            options = dropdown_options or ["INFO"]
+            right_control = ft.Dropdown(
+                value=dropdown_value,
+                options=[ft.dropdown.Option(option) for option in options],
+                on_change=on_change,
+                width=160,
+                dense=True,
+                text_size=13,
+            )
         else:
             right_control = ft.IconButton(
                 icon=ft.Icons.ARROW_FORWARD_IOS,
@@ -124,6 +149,13 @@ class SettingsPage:
         """打开MQTT设置对话框"""
         mqtt_dialog = self._create_mqtt_dialog()
         self.gui.page.show_dialog(mqtt_dialog)
+        self.gui.page.update()
+
+    def _on_log_level_changed(self, e):
+        """日志级别变更"""
+        level = str(e.control.value).upper()
+        self.logic.set_log_level(level)
+        self.gui.show_snackbar(f"日志级别已切换为 {level}")
         self.gui.page.update()
 
     def _create_mqtt_dialog(self) -> ft.AlertDialog:

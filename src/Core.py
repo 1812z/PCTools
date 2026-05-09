@@ -72,6 +72,7 @@ class Core:
         self.gui = gui
         self.log = Logger(log_file="app.log")
         self.config = Config(self)
+        self.log.set_level(self.config.get_config("log_level", "INFO"))
 
         self.timer_dict = {}
 

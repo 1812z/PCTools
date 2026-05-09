@@ -141,6 +141,11 @@ class GUILogic:
         """设置配置"""
         self.core.config.set_config(key, value)
 
+    def set_log_level(self, level: str):
+        """设置日志级别"""
+        self.core.log.set_level(level)
+        self.core.config.set_config("log_level", level.upper())
+
     def handle_config_change(self, field_name: str, value, value_type: str = "string"):
         """处理配置变更"""
         try:
