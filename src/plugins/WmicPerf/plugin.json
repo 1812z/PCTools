@@ -1,0 +1,7 @@
+{
+    "name": "WMIC性能监控",
+    "version": "1.0",
+    "author": "1812z",
+    "description": "通过WMIC读取CPU与内存基础占用并同步到HA",
+    "dependencies": []
+}
