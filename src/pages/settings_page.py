@@ -14,7 +14,7 @@ class SettingsPage:
         self.logic = gui.logic
         self.page = gui.page
 
-    def create(self) -> ft.ListView:
+    def create(self) -> ft.Container:
         """创建设置页"""
         current_log_level = str(self.logic.get_config("log_level", "INFO")).upper()
         if current_log_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
@@ -69,11 +69,15 @@ class SettingsPage:
             ),
         ]
 
-        return ft.ListView(
-            controls=settings,
-            spacing=15,
+        return ft.Container(
             padding=ft.padding.only(left=60, right=60),
-            expand=True
+            expand=True,
+            content=ft.ListView(
+                controls=settings,
+                spacing=15,
+                expand=True,
+                padding=ft.padding.only(bottom=56),
+            ),
         )
 
     def _create_setting_item(
@@ -96,11 +100,13 @@ class SettingsPage:
             right_control = ft.Dropdown(
                 value=dropdown_value,
                 options=[ft.dropdown.Option(option) for option in options],
-                on_change=on_change,
                 width=160,
-                dense=True,
-                text_size=13,
             )
+            if on_change:
+                if hasattr(right_control, "on_change"):
+                    right_control.on_change = on_change
+                if hasattr(right_control, "on_select"):
+                    right_control.on_select = on_change
         else:
             right_control = ft.IconButton(
                 icon=ft.Icons.ARROW_FORWARD_IOS,
@@ -153,7 +159,9 @@ class SettingsPage:
 
     def _on_log_level_changed(self, e):
         """日志级别变更"""
-        level = str(e.control.value).upper()
+        level = str(getattr(e.control, "value", None) or getattr(e, "data", "")).upper()
+        if level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+            return
         self.logic.set_log_level(level)
         self.gui.show_snackbar(f"日志级别已切换为 {level}")
         self.gui.page.update()

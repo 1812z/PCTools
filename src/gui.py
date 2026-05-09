@@ -118,26 +118,33 @@ class GUI:
 
         # 创建标签页
         tabs = ft.Tabs(
-            content=ft.Column([
-                ft.TabBar(tabs=[
-                    ft.Tab(label="主页"),
-                    ft.Tab(label="设置"),
-                    ft.Tab(label="插件"),
-                    ft.Tab(label="关于"),
-                ]),
-                ft.TabBarView(
-                    controls=[
-                        self.home_page.create(),
-                        self.settings_page.create(),
-                        self.plugin_page.create(),
-                        self.about_page.create(),
-                    ],
-                    expand=True,
-                ),
-            ]),
+            content=ft.Column(
+                expand=True,
+                controls=[
+                    ft.TabBar(tabs=[
+                        ft.Tab(label="主页"),
+                        ft.Tab(label="设置"),
+                        ft.Tab(label="插件"),
+                        ft.Tab(label="关于"),
+                    ]),
+                    ft.Container(
+                        expand=True,
+                        content=ft.TabBarView(
+                            controls=[
+                                self.home_page.create(),
+                                self.settings_page.create(),
+                                self.plugin_page.create(),
+                                self.about_page.create(),
+                            ],
+                            expand=True,
+                        ),
+                    ),
+                ],
+            ),
             length=4,
             selected_index=0,
-            on_change=self._on_tab_changed
+            on_change=self._on_tab_changed,
+            expand=True,
         )
 
         self.page.add(tabs)

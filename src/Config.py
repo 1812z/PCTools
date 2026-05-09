@@ -5,9 +5,10 @@ from typing import Dict, Any, Optional
 
 class Config:
     def __init__(self, core):
-        self._config_file = Path("config.json")
+        base_dir = Path(__file__).resolve().parent
+        self._config_file = base_dir / "config.json"
         self.core = core
-        self._config_example_file = Path("config_example.json")
+        self._config_example_file = base_dir / "config_example.json"
         self.config_data = self.load_config()
 
         try:
