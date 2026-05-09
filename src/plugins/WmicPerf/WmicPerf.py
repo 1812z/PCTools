@@ -81,18 +81,8 @@ class WmicPerf:
     def _disk_key_suffix(self):
         return "_".join(d.replace(":", "").lower() for d in self.disk_devices)
 
-    def _format_network_speed(self, bytes_per_sec):
-        value = float(bytes_per_sec)
-        units = ["B/s", "KB/s", "MB/s", "GB/s"]
-        unit = units[0]
-        for next_unit in units[1:]:
-            if value < 1024:
-                break
-            value /= 1024
-            unit = next_unit
-        if unit == "B/s":
-            return f"{int(value)} {unit}"
-        return f"{value:.1f} {unit}"
+    def _format_network_speed(self, m_per_sec):
+        return f"{float(m_per_sec):.2f} M/s"
 
     def setup_entities(self):
         """根据配置创建 MQTT 传感器"""
@@ -183,16 +173,16 @@ class WmicPerf:
 
             if self.resource_enabled["network"]:
                 net_info = SensorInfo(
-                    name="wmic_network_bytes_per_sec",
-                    unique_id=f"{self.core.mqtt.device_name}_wmic_network_bytes_per_sec",
-                    object_id=f"{self.core.mqtt.device_name}_wmic_network_bytes_per_sec",
+                    name="wmic_network_m_per_sec",
+                    unique_id=f"{self.core.mqtt.device_name}_wmic_network_m_per_sec",
+                    object_id=f"{self.core.mqtt.device_name}_wmic_network_m_per_sec",
                     device=device_info,
                     icon="mdi:network",
-                    unit_of_measurement="B/s",
+                    unit_of_measurement="M/s",
                     state_class="measurement"
                 )
                 net_info.display_name = "网络总速率"
-                self.sensors["network_bytes_per_sec"] = Sensor(Settings(mqtt=mqtt_settings, entity=net_info))
+                self.sensors["network_m_per_sec"] = Sensor(Settings(mqtt=mqtt_settings, entity=net_info))
 
             if self.resource_enabled["gpu"]:
                 gpu_usage_info = SensorInfo(
@@ -347,7 +337,7 @@ class WmicPerf:
                 value = value.strip()
                 if value.isdigit():
                     total += int(value)
-            metrics["network_bytes_per_sec"] = total
+            metrics["network_m_per_sec"] = round(total / (1024 ** 2), 2)
 
         if self.resource_enabled["gpu"]:
             gpu_engine_out = self._run_wmic([
@@ -555,7 +545,7 @@ class WmicPerf:
                         parts.append(f"{disk} {usage}% 剩余{free}GB")
                     preview.value = "; ".join(parts) if parts else "--"
                 elif resource == "network":
-                    raw = metrics.get("network_bytes_per_sec")
+                    raw = metrics.get("network_m_per_sec")
                     preview.value = self._format_network_speed(raw) if raw is not None else "--"
                 elif resource == "gpu":
                     gpu_u = metrics.get("gpu_usage", "--")
