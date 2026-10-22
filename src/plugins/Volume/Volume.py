@@ -17,6 +17,7 @@ class Volume:
         self.core = core
         self.log = core.log
         self.volume = None
+        self._com_initialized = False
         self.updater = {"timer": 60}
 
         # MQTT 实体
@@ -71,36 +72,55 @@ class Volume:
     def init(self):
         """初始化音频设备"""
         CoInitialize()
+        self._com_initialized = True
         device = AudioUtilities.GetSpeakers()   # 自动获取默认扬声器
         self.volume = device.EndpointVolume     # 新版 pycaw 官方方式
 
+    def release(self):
+        """释放 COM 引用（与 init() 配对，避免泄漏）"""
+        self.volume = None
+        if self._com_initialized:
+            self._com_initialized = False
+            try:
+                CoUninitialize()
+            except Exception:
+                pass
+
     def get_status(self):
-        """获取当前音量"""
+        """获取当前音量（0 表示静音，其余为 1-100）"""
         try:
             self.init()
+            muted = bool(self.volume.GetMute())
             vol = self.volume.GetMasterVolumeLevelScalar()
-            CoUninitialize()
-            return int(vol * 100)
+            return 0 if muted else int(round(vol * 100))
         except COMError:
             self.log.warning("找不到扬声器")
             return None
+        finally:
+            self.release()
 
     def set_volume(self, level: int):
-        """设置音量"""
+        """
+        设置音量
+        :param level: 0-100，0 表示静音（不改动 master 音量）
+        :return: True 成功 / False 失败
+        """
         try:
             self.init()
-            if level == 0:
+            if level <= 0:
                 self.volume.SetMute(1, None)
             else:
                 self.volume.SetMute(0, None)
                 self.volume.SetMasterVolumeLevelScalar(
                     max(0.0, min(1.0, level / 100.0)), None
                 )
-            CoUninitialize()
             self.log.info(f"音量设置为: {level}%")
+            return True
         except COMError:
             self.log.warning("找不到扬声器")
-            return None
+            return False
+        finally:
+            self.release()
 
     def update_state(self):
         """更新音量状态到 MQTT"""
@@ -118,13 +138,21 @@ class Volume:
         :param message: MQTT 消息
         """
         try:
-            level = int(float(message.payload.decode()))
+            level = int(round(float(message.payload.decode())))
+            level = max(0, min(100, level))
             self.log.info(f"收到音量设置命令: {level}%")
-            self.set_volume(level)
 
-            # 设置后立即更新状态
+            if not self.set_volume(level):
+                # COM 调用失败，不回显，让下一次 update_state 上报真实值
+                self.log.error("设置音量失败，跳过状态回显")
+                return
+
+            # 回读真实状态：
+            # - 静音时回读 0（master 原值不变，但对外语义为 0）
+            # - 非静音时回读实际音量，避免 int 截断导致 2→1、1→0
             if self.volume_number:
-                self.volume_number.set_value(level)
+                actual = self.get_status()
+                self.volume_number.set_value(level if actual is None else actual)
 
         except ValueError as e:
             self.log.error(f"无效的音量值: {message.payload.decode()} - {e}")
