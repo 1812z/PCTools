@@ -1,3 +1,35 @@
+
+<div align="right">
+  <details>
+    <summary >🌐 Language</summary>
+    <div>
+      <div align="center">
+        <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=en">English</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=zh-CN">简体中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=zh-TW">繁體中文</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=ja">日本語</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=ko">한국어</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=hi">हिन्दी</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=th">ไทย</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=fr">Français</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=de">Deutsch</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=es">Español</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=it">Italiano</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=ru">Русский</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=pt">Português</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=nl">Nederlands</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=pl">Polski</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=ar">العربية</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=fa">فارسی</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=tr">Türkçe</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=vi">Tiếng Việt</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=id">Bahasa Indonesia</a>
+        | <a href="https://openaitx.github.io/view.html?user=1812z&project=PCTools&lang=as">অসমীয়া</
+      </div>
+    </div>
+  </details>
+</div>
+
 # 🖥️ PCTools
 
 > 简单的 Python 程序，让 Windows 与 Home Assistant 无缝集成，实现硬件监控、远程控制等功能。
