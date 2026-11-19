@@ -16,6 +16,6 @@ pywebview==5.3.2
 winsdk==1.0.0b10
 comtypes==1.4.16
 pyperclip==1.11.0
-requests==2.33.0
+requests==2.33.1
 trio==0.32.0
 packaging==26.0
